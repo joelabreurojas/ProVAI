@@ -1,0 +1,37 @@
+# IDE & OS Files
+.vscode/
+.idea/
+.DS_Store
+
+# Local Environment & Secrets
+.env*
+!/.env.template
+
+# Python Artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+ENV/
+
+# Build Artifacts
+build/
+dist/
+*.egg-info/
+
+# Testing & Tool Caches
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Databases
+*.db
+*.db-journal*
+
+# Log & Temporary Files
+*.log
+*.err
+*.bak
+*.tmp
