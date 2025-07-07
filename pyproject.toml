@@ -1,0 +1,58 @@
+[project]
+name = "ProVAI"
+version = "0.1.0"
+description = "A RAG-powered educational tutor"
+readme = "README.md"
+requires-python = ">=3.13"
+license = { file = "LICENSE" }
+authors = [{ name = "Joel Abreu Rojas", email = "joelabreurojas@gmail.com" }]
+dependencies = [
+  "alembic>=1.16.2",
+  "fastapi>=0.116.0",
+  "passlib[bcrypt]>=1.7.4",
+  "pydantic-settings>=2.10.1",
+  "pydantic>=2.11.7",
+  "python-jose[cryptography]>=3.5.0",
+  "slowapi>=0.1.9",
+  "sqlalchemy>=2.0.41",
+  "uvicorn[standard]>=0.35.0",
+  "uvloop>=0.21.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.16.1",
+  "pytest>=8.4.1",
+  "ruff>=0.12.2",
+  "httpx>=0.28.1",
+]
+rag = [
+  "langchain>=0.3.26",
+  "langchain-community>=0.3.27",
+  "langchain-core>=0.3.68",
+  "langchain-openai>=0.3.27",
+  "langsmith>=0.4.4",
+  "llama-cpp-python>=0.3.12",
+  "sentence-transformers>=5.0.0",
+  "pypdf>=5.7.0",
+  "chromadb>=1.0.15",
+  "tavily-python>=0.7.9",
+  "langgraph>=0.5.1",
+]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "C4"]
+ignore = ["B008"]
+
+[tool.ruff.format]
+quote-style = "double"
