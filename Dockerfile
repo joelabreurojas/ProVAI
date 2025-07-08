@@ -3,11 +3,15 @@ FROM python:3.13-bookworm as builder
 
 WORKDIR /app
 
-RUN pip install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-COPY pyproject.toml uv.lock .
+ENV PATH="/root/.local/bin:${PATH}"
 
-RUN uv pip install --system .[dev]
+COPY pyproject.toml .
+
+COPY uv.lock .
+
+RUN uv venv && uv sync --locked --no-dev --no-cache
 
 # Production stage
 FROM python:3.13-slim-bookworm as production
@@ -20,10 +24,16 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-COPY --from=builder /usr/local/ /usr/local/
+COPY --from=builder /app/.venv .venv
 
-COPY ./src ./src
+COPY ./src src
+
+COPY ./alembic alembic
+
+COPY ./alembic.ini .
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop"]
+ENTRYPOINT ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop"]

@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 
 
-class BaseConfig(BaseModel):
+class BaseConfig(BaseSettings):
     API_V1_STR: str = "/api/v1"
     TITLE: str = "ProVAI"
     DESCRIPTION: str = "A RAG-powered educational tutor."
@@ -22,7 +22,7 @@ class BaseConfig(BaseModel):
 
 
 class DevConfig(BaseConfig):
-    DB_URL: str = "sqlite:///./provai.db"
+    DB_URL: str = "sqlite:///./databases/provai_dev.db"
 
 
 class TestConfig(BaseConfig):

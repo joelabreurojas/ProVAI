@@ -6,7 +6,7 @@ services:
     volumes:
       - ./src:/app/src
       - ./alembic:/app/alembic
-      - ./alembic.ini:/app/alembic.ini 
+      - ./alembic.ini:/app/alembic.ini
     env_file:
       - .env
-    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload --loop uvloop
+    command: --reload
