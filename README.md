@@ -35,7 +35,7 @@ This project aims to build a scalable and intelligent tutor that provides person
     ```
 
 2.  **Create the environment file:**
-    Copy `.env.template` to `.env`. The defaults are configured for production.
+    Copy `.env.template` to `.env`. The defaults are configured for development.
 
     ```bash
     cp .env.template .env
