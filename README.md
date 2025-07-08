@@ -18,7 +18,43 @@ This project aims to build a scalable and intelligent tutor that provides person
   - **Embedding Model:** BGE-small-en-v1.5
   - **Orchestration:** LangChain & llama-cpp
 
+## Getting Started
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Python 3.13+
+
+### Setup
+
+1.  **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/joelabreurojas/ProVAI.git
+    cd ProVAI
+    ```
+
+2.  **Create the environment file:**
+    Copy `.env.template` to `.env`. The defaults are configured for production.
+
+    ```bash
+    cp .env.template .env
+    ```
+
+3.  **Build and run the application:**
+
+    ```bash
+    docker compose up --build -d
+    ```
+
+4.  **Run database migrations:**
+
+    ```bash
+    docker compose exec api alembic upgrade head
+    ```
+
+The API will be available at `http://localhost:8000`. You can view the OpenAPI documentation at `http://localhost:8000/docs`.
+
 ## License
 
 This project is licensed under the Apache 2.0 License.
-
