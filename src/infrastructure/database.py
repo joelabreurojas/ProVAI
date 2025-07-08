@@ -5,9 +5,6 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from src.infrastructure.settings import settings
 
-if not settings.DB_URL:
-    raise ValueError("DB_URL is not set. Check your configuration.")
-
 # The connect_args is specific to SQLite and is necessary
 # to allow the database connection to be shared across different threads.
 engine = create_engine(settings.DB_URL, connect_args={"check_same_thread": False})

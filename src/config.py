@@ -1,7 +1,7 @@
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel
 
 
-class BaseConfig(BaseSettings):
+class BaseConfig(BaseModel):
     API_V1_STR: str = "/api/v1"
     TITLE: str = "ProVAI"
     DESCRIPTION: str = "A RAG-powered educational tutor."
@@ -30,14 +30,14 @@ class TestConfig(BaseConfig):
 
 
 class ProdConfig(BaseConfig):
-    DB_URL: str | None = None  # loaded from environment variable
+    DB_URL: str
 
 
-def get_config(env_state: str) -> DevConfig | TestConfig | ProdConfig:
+def get_config(env_state: str, db_url: str) -> DevConfig | TestConfig | ProdConfig:
     if env_state == "dev":
         return DevConfig()
     elif env_state == "test":
         return TestConfig()
     elif env_state == "prod":
-        return ProdConfig()
+        return ProdConfig(DB_URL=db_url)
     raise ValueError(f"Invalid environment state: {env_state}")
