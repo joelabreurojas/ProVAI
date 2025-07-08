@@ -1,20 +1,29 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from collections.abc import Generator
 
-DB_URL = "sqlite:///./provai.db"
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+
+from src.infrastructure.settings import settings
+
+if not settings.DB_URL:
+    raise ValueError("DB_URL is not set. Check your configuration.")
 
 # The connect_args is specific to SQLite and is necessary
 # to allow the database connection to be shared across different threads.
-engine = create_engine(DB_URL, connect_args={"check_same_thread": False})
+engine = create_engine(settings.DB_URL, connect_args={"check_same_thread": False})
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base = declarative_base()
+
+# Base class for all models
+class Base(DeclarativeBase):
+    pass
 
 
 # Dependency to get a DB session in endpoints
-def get_db():
+def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
+
     try:
         yield db
     finally:
