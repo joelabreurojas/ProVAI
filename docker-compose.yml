@@ -9,6 +9,7 @@ services:
       - ./src:/app/src
       - ./tests:/app/tests
       - ./pyproject.toml:/app/pyproject.toml
+      - ./uv.lock:/app/uv.lock
       - ./tox.ini:/app/tox.ini
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
