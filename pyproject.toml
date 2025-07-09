@@ -25,6 +25,7 @@ dev = [
   "pytest>=8.4.1",
   "ruff>=0.12.2",
   "httpx>=0.28.1",
+  "tox>=4.27.0",
 ]
 rag = [
   "langchain>=0.3.26",
