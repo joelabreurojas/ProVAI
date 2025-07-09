@@ -18,7 +18,7 @@ RUN uv sync --locked --no-cache
 # Dependencies stage - Development
 FROM builder AS development_dependencies
 
-RUN uv sync --locked --no-cache --extra dev
+RUN uv sync --locked --no-cache --extra ci
 
 
 # Base stage

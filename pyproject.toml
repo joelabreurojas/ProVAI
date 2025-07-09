@@ -20,12 +20,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-  "mypy>=1.16.1",
-  "pytest>=8.4.1",
-  "ruff>=0.12.2",
-  "httpx>=0.28.1",
+ci = [
   "tox>=4.27.0",
+  "tox-gh>=1.5.0",
+  "tox-uv>=1.26.1",
+]
+quality = [
+  "mypy>=1.16.1",
+  "ruff>=0.12.2",
 ]
 rag = [
   "langchain>=0.3.26",
@@ -39,6 +41,17 @@ rag = [
   "chromadb>=1.0.15",
   "tavily-python>=0.7.9",
   "langgraph>=0.5.1",
+]
+test = [
+  "pytest>=8.4.1",
+  "httpx>=0.28.1",
+]
+
+[dependency-groups]
+dev = [
+  "ProVAI[ci]",
+  "ProVAI[quality]",
+  "ProVAI[test]",
 ]
 
 [tool.mypy]

@@ -7,9 +7,11 @@ services:
       - "8000:8000"
     volumes:
       - ./src:/app/src
-      - ./databases:/app/databases
+      - ./tests:/app/tests
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./tox.ini:/app/tox.ini
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
-      - ./tests:/app/tests
+      - ./databases:/app/databases
     env_file:
       - .env
