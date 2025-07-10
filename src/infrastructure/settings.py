@@ -4,6 +4,8 @@ from src.config import get_config
 
 
 class EnvironmentSettings(BaseSettings):
+    """Reads environment variables from the .env file."""
+
     ENV_STATE: str = ""
     DB_URL: str = ""
 
