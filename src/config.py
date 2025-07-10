@@ -2,6 +2,8 @@ from pydantic import BaseModel
 
 
 class BaseConfig(BaseModel):
+    """ "Base configuration settings for the application."""
+
     API_V1_STR: str = "/api/v1"
     TITLE: str = "ProVAI"
     DESCRIPTION: str = "A RAG-powered educational tutor."

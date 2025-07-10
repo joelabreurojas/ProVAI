@@ -12,13 +12,14 @@ engine = create_engine(settings.DB_URL, connect_args={"check_same_thread": False
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-# Base class for all models
 class Base(DeclarativeBase):
+    """Base class for all models."""
+
     pass
 
 
-# Dependency to get a DB session in endpoints
 def get_db() -> Generator[Session, None, None]:
+    """Get a database session to use in endpoints."""
     db = SessionLocal()
 
     try:

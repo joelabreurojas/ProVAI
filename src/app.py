@@ -5,6 +5,7 @@ from src.infrastructure.settings import settings
 
 
 def create_app() -> FastAPI:
+    """Application factory, creating and configuring the FastAPI app."""
     app = FastAPI(
         title=settings.TITLE,
         description=settings.DESCRIPTION,
@@ -17,7 +18,7 @@ def create_app() -> FastAPI:
 
     @app.get("/", tags=["Root"])
     async def read_root() -> dict[str, str]:
-        """Returns a message welcoming the user to the API."""
+        """A welcome message to confirm that the API is running."""
         return {"message": f"Welcome to {settings.TITLE} API"}
 
     return app
