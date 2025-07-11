@@ -55,6 +55,12 @@ This project aims to build a scalable and intelligent tutor that provides person
 
 The API will be available at `http://localhost:8000`. You can view the OpenAPI documentation at `http://localhost:8000/docs`.
 
+## Architecture and Decisions
+
+This project follows a Clean/Onion Architecture to ensure a separation of concerns and maintainability.
+
+Key technical decisions are formally documented using **Architecture Decision Records (ADRs)** located in the `/docs/adr` directory.
+
 ## License
 
 This project is licensed under the Apache 2.0 License.
