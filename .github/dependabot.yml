@@ -1,6 +1,6 @@
 version: 2
 updates:
-  - package-exosystem: "pip"
+  - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
@@ -12,3 +12,4 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    open-pull-requests-limit: 5
