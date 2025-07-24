@@ -8,9 +8,9 @@ from sqlalchemy.orm import Session, sessionmaker
 
 os.environ["ENV_STATE"] = "test"
 
-from src.app import create_app
-from src.infrastructure.database import Base, get_db
-from src.infrastructure.settings import settings
+from src.core.app import create_app
+from src.core.infrastructure.database import Base, get_db
+from src.core.infrastructure.settings import settings
 
 # The connect_args is specific to SQLite and is necessary
 # to allow the database connection to be shared across different threads.
