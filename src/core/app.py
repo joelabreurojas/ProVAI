@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from src.infrastructure.api import health
-from src.infrastructure.settings import settings
+from src.core.infrastructure.api import health
+from src.core.infrastructure.settings import settings
 
 
 def create_app() -> FastAPI:
@@ -13,12 +13,13 @@ def create_app() -> FastAPI:
         openapi_tags=settings.TAGS_METADATA,
     )
 
-    # API routers
-    app.include_router(health.router)
-
+    # Root
     @app.get("/", tags=["Root"])
     async def read_root() -> dict[str, str]:
         """A welcome message to confirm that the API is running."""
         return {"message": f"Welcome to {settings.TITLE} API"}
+
+    # API routers
+    app.include_router(health.router)
 
     return app

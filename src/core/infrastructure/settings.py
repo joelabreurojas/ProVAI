@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from src.config import get_config
+from src.core.config import get_config
 
 
 class EnvironmentSettings(BaseSettings):
