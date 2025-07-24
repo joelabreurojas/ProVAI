@@ -2,17 +2,11 @@ from pydantic import BaseModel
 
 
 class BaseConfig(BaseModel):
-    """ "Base configuration settings for the application."""
+    """Defines the application's configuration schema."""
 
-    API_V1_STR: str = "/api/v1"
     TITLE: str = "ProVAI"
     DESCRIPTION: str = "A RAG-powered educational tutor."
     VERSION: str = "0.1.0"
-    CONTACT: dict[str, str] = {
-        "name": "Joel Abreu Rojas",
-        "email": "joelabreurojas@gmail.com",
-        "url": "https://github.com/joelabreurojas/ProVAI",
-    }
     LICENSE_INFO: dict[str, str] = {
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
@@ -21,25 +15,29 @@ class BaseConfig(BaseModel):
         {"name": "Status", "description": "API health and monitoring."},
         {"name": "Root", "description": "Say hello to the API."},
     ]
+    JWT_SECRET_KEY: str  # Must be provided by the environment loader
+    JWT_ALGORITHM: str = "HS26"
+    JWT_TOKEN_EXPIRE_MINUTES: int = 30
 
 
 class DevConfig(BaseConfig):
+    """Defines the development environment configuration schema."""
+
     DB_URL: str = "sqlite:///./databases/provai_dev.db"
+
+    LANGCHAIN_TRACING_V2: str = "true"
+    LANGCHAIN_API_KEY: str  # Must be provided by the environment loader
+    LANGCHAIN_ENDPOINT: str = "https://api.langchain.plus"
+    LANGCHAIN_PROJECT: str = "ProVAI"
 
 
 class TestConfig(BaseConfig):
+    """Test-specific settings."""
+
     DB_URL: str = "sqlite:///:memory:"
 
 
 class ProdConfig(BaseConfig):
-    DB_URL: str
+    """Production-specific settings."""
 
-
-def get_config(env_state: str, db_url: str) -> DevConfig | TestConfig | ProdConfig:
-    if env_state == "dev":
-        return DevConfig()
-    elif env_state == "test":
-        return TestConfig()
-    elif env_state == "prod":
-        return ProdConfig(DB_URL=db_url)
-    raise ValueError(f"Invalid environment state: {env_state}")
+    DB_URL: str  # Must be provided by the environment loader
