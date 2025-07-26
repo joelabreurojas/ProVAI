@@ -23,6 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: uv pip install --system .[ci]
+        env: SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
       - name: Run linters and tests with tox
         run: tox
