@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from src.infrastructure.api import health
-from src.infrastructure.settings import settings
+from src.core.infrastructure.settings import settings
+from src.core.modules import register_routers
 
 
 def create_app() -> FastAPI:
@@ -9,12 +9,13 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.TITLE,
         description=settings.DESCRIPTION,
+        version=settings.VERSION,
+        root_path=settings.API_ROOT_PATH,
+        contact=settings.CONTACT,
         license_info=settings.LICENSE_INFO,
-        openapi_tags=settings.TAGS_METADATA,
     )
 
-    # API routers
-    app.include_router(health.router)
+    register_routers(app)
 
     @app.get("/", tags=["Root"])
     async def read_root() -> dict[str, str]:
