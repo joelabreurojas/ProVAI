@@ -47,7 +47,7 @@ COPY --from=development_dependencies /app/.venv .venv
 
 COPY ./tests tests
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop", "--reload"]
+CMD ["uvicorn", "src.core.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop", "--reload"]
 
 
 # Production stage
@@ -55,4 +55,4 @@ FROM base AS production
 
 COPY --from=production_dependencies /app/.venv .venv
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop"]
+CMD ["uvicorn", "src.core.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop"]

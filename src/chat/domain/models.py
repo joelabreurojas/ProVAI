@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.infrastructure.database import Base
 
 if TYPE_CHECKING:
-    from src.auth.domain.models import User
+    from src.auth.domain.models import User  # Import for type hints
 
 
 class Chat(Base):
@@ -73,6 +73,7 @@ class SessionHistory(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     query: Mapped[str]
     response: Mapped[str]
     timestamp: Mapped[datetime.datetime] = mapped_column(
