@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 
+from src.core.exceptions import ApplicationException
+from src.core.infrastructure.api.handlers import application_exception_handler
 from src.core.infrastructure.settings import settings
 from src.core.modules import register_routers
 
@@ -14,6 +16,8 @@ def create_app() -> FastAPI:
         contact=settings.CONTACT,
         license_info=settings.LICENSE_INFO,
     )
+
+    app.add_exception_handler(ApplicationException, application_exception_handler)
 
     register_routers(app)
 
