@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class BaseConfig(BaseModel):
+class _BaseConfig(BaseModel):
     """Defines the shared configuration for all environments."""
 
     # Application metadata
@@ -22,16 +22,16 @@ class BaseConfig(BaseModel):
     }
 
     # Environment variables
-    SECRET_KEY: str = ""
-    DB_URL: str = ""
-    LANGCHAIN_API_KEY: str = ""
+    SECRET_KEY: str
+    DB_URL: str
+    LANGCHAIN_API_KEY: str | None = None
 
     # Security settings
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
 
-class DevConfig(BaseConfig):
+class DevConfig(_BaseConfig):
     """Development-specific settings."""
 
     DB_URL: str = "sqlite:///./databases/provai_dev.db"
@@ -41,13 +41,13 @@ class DevConfig(BaseConfig):
     LANGCHAIN_PROJECT: str = "ProVAI"
 
 
-class TestConfig(BaseConfig):
+class TestConfig(_BaseConfig):
     """Test-specific settings."""
 
     DB_URL: str = "sqlite:///:memory:"
 
 
-class ProdConfig(BaseConfig):
+class ProdConfig(_BaseConfig):
     """Production-specific settings."""
 
     pass

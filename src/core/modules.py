@@ -27,16 +27,16 @@ def _discover_routers() -> Iterator[_DiscoveredRouter]:
     the modules declared in APPLICATION_MODULES.
     """
     for module_name in APPLICATION_MODULES:
-        base_api_path = f"src.{module_name}.infrastructure.api"
+        api_path = f"src.{module_name}.infrastructure.api"
 
         try:
-            api_module_path = importlib.import_module(base_api_path).__path__
+            api_module_path = importlib.import_module(api_path).__path__
 
             # Scan all files in the api directory of the module
             for _, sub_module_name, _ in pkgutil.iter_modules(api_module_path):
                 if sub_module_name.endswith("_router"):
-                    router_module_path = f"{base_api_path}.{sub_module_name}"
-                    router_module = importlib.import_module(router_module_path)
+                    router_path = f"{api_path}.{sub_module_name}"
+                    router_module = importlib.import_module(router_path)
 
                     yield _DiscoveredRouter(
                         router=router_module.router,

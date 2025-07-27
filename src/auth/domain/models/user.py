@@ -16,5 +16,6 @@ class User(Base):
     email: Mapped[str] = mapped_column(unique=True, index=True)
     hashed_password: Mapped[str]
     role: Mapped[str] = mapped_column(default="student", nullable=False)
+
     chats: Mapped[list["Chat"]] = relationship(back_populates="owner")
     chat_memberships: Mapped[list["ChatMember"]] = relationship(back_populates="user")
