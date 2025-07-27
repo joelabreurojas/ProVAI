@@ -25,6 +25,7 @@ Base.metadata.create_all(bind=engine)
 def db_session() -> Generator[Session, None, None]:
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
+
     try:
         yield db
     finally:
