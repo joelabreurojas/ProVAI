@@ -1,7 +1,7 @@
-from src.core.errors import ErrorCode
+from src.core.domain.errors import ErrorCode
 
 
-class ApplicationException(Exception):
+class AppException(Exception):
     """Base class for all application-specific exceptions."""
 
     status_code: int = 500

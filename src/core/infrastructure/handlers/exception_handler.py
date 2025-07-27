@@ -1,18 +1,16 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from src.core.exceptions import ApplicationException
+from src.core.application.exceptions import AppException
 
 
-async def application_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def app_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Global handler to catch and format all custom application exceptions.
     """
 
     # Handle custom application exceptions
-    if isinstance(exc, ApplicationException):
+    if isinstance(exc, AppException):
         return JSONResponse(
             status_code=exc.status_code,
             content={
