@@ -10,6 +10,9 @@ the API endpoints and other services.
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
+# --- Core Dependencies ---
+from src.core.infrastructure.database import get_db
+
 # --- Auth Protocols ---
 from src.auth.application.protocols import (
     AuthServiceProtocol,
@@ -26,8 +29,6 @@ from src.auth.infrastructure.repositories.user_repository import (
 from src.auth.infrastructure.security.password_service import PasswordService
 from src.auth.infrastructure.security.token_service import TokenService
 
-# --- Core Dependencies ---
-from src.core.infrastructure.database import get_db
 
 # --- Protocol Implementations (The "Wiring") ---
 
