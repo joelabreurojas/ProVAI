@@ -12,12 +12,14 @@ from sqlalchemy.orm import Session
 
 # --- Auth Protocols ---
 from src.auth.application.protocols import (
+    AuthServiceProtocol,
     PasswordServiceProtocol,
     TokenServiceProtocol,
     UserRepositoryProtocol,
 )
 
 # --- Auth Concrete Implementations ---
+from src.auth.application.services.auth_service import AuthService
 from src.auth.infrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
 )
@@ -43,3 +45,22 @@ def get_password_service() -> PasswordServiceProtocol:
 def get_token_service() -> TokenServiceProtocol:
     """Provides a concrete implementation of the TokenServiceProtocol."""
     return TokenService()
+
+
+# --- Service Dependencies (The "Assembler") ---
+
+
+def get_auth_service(
+    user_repo: UserRepositoryProtocol = Depends(get_user_repository),
+    password_svc: PasswordServiceProtocol = Depends(get_password_service),
+    token_svc: TokenServiceProtocol = Depends(get_token_service),
+) -> AuthServiceProtocol:
+    """
+    Constructs and provides the main AuthService, assembling it with all
+    its concrete dependencies.
+    """
+    return AuthService(
+        user_repo=user_repo,
+        password_svc=password_svc,
+        token_svc=token_svc,
+    )
