@@ -19,6 +19,7 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
             name=user_create.name,
             email=user_create.email,
             hashed_password=hashed_password,
+            role="student",  # Default
         )
 
         self.db.add(db_user)
