@@ -8,10 +8,9 @@ the API endpoints and other services.
 """
 
 from fastapi import Depends
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from llama_cpp import Llama
 from sqlalchemy.orm import Session
-
-# --- Core Dependencies ---
-from src.core.infrastructure.database import get_db
 
 # --- Auth Protocols ---
 from src.auth.application.protocols import (
@@ -29,6 +28,11 @@ from src.auth.infrastructure.repositories.user_repository import (
 from src.auth.infrastructure.security.password_service import PasswordService
 from src.auth.infrastructure.security.token_service import TokenService
 
+# --- Core Dependencies ---
+from src.core.infrastructure.database import get_db
+
+# --- RAG Concrete Implementations ---
+from src.rag.infrastructure.model_loader import get_embedding_model, get_llm
 
 # --- Protocol Implementations (The "Wiring") ---
 
@@ -65,3 +69,16 @@ def get_auth_service(
         password_svc=password_svc,
         token_svc=token_svc,
     )
+
+
+# --- RAG Model Providers ---
+
+
+def get_rag_llm() -> Llama:
+    """Provides the singleton instance of the LLM."""
+    return get_llm()
+
+
+def get_rag_embedding_model() -> HuggingFaceEmbeddings:
+    """Provides the singleton instance of the embedding model."""
+    return get_embedding_model()

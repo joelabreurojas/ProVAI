@@ -35,3 +35,7 @@ htmlcov/
 *.err
 *.bak
 *.tmp
+
+# AI Models
+models/*
+!models/.gitkeep
