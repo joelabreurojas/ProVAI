@@ -2,7 +2,7 @@ import logging
 from functools import lru_cache
 
 import psutil
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from llama_cpp import Llama
 
 logger = logging.getLogger(__name__)
