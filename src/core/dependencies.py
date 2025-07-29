@@ -8,7 +8,7 @@ the API endpoints and other services.
 """
 
 from fastapi import Depends
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from llama_cpp import Llama
 from sqlalchemy.orm import Session
 
