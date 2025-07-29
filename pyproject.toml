@@ -39,6 +39,7 @@ rag = [
   "chromadb>=1.0.15",
   "tavily-python>=0.7.9",
   "langgraph>=0.5.1",
+  "psutil>=7.0.0",
 ]
 test = [
   "pytest>=8.4.1",
