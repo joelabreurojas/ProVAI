@@ -1750,13 +1750,25 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "alembic" },
+    { name = "chromadb" },
     { name = "fastapi" },
+    { name = "langchain" },
+    { name = "langchain-community" },
+    { name = "langchain-core" },
+    { name = "langchain-huggingface" },
+    { name = "langgraph" },
+    { name = "langsmith" },
+    { name = "llama-cpp-python" },
     { name = "passlib", extra = ["bcrypt"] },
+    { name = "psutil" },
     { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
+    { name = "pypdf" },
     { name = "python-jose", extra = ["cryptography"] },
+    { name = "sentence-transformers" },
     { name = "slowapi" },
     { name = "sqlalchemy" },
+    { name = "tavily-python" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "uvloop" },
 ]
@@ -1769,20 +1781,6 @@ ci = [
 quality = [
     { name = "mypy" },
     { name = "ruff" },
-]
-rag = [
-    { name = "chromadb" },
-    { name = "langchain" },
-    { name = "langchain-community" },
-    { name = "langchain-core" },
-    { name = "langchain-huggingface" },
-    { name = "langgraph" },
-    { name = "langsmith" },
-    { name = "llama-cpp-python" },
-    { name = "psutil" },
-    { name = "pypdf" },
-    { name = "sentence-transformers" },
-    { name = "tavily-python" },
 ]
 test = [
     { name = "httpx" },
@@ -1798,36 +1796,36 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.16.2" },
-    { name = "chromadb", marker = "extra == 'rag'", specifier = ">=1.0.15" },
+    { name = "chromadb", specifier = ">=1.0.15" },
     { name = "fastapi", specifier = ">=0.116.0" },
     { name = "httpx", marker = "extra == 'test'", specifier = ">=0.28.1" },
-    { name = "langchain", marker = "extra == 'rag'", specifier = ">=0.3.26" },
-    { name = "langchain-community", marker = "extra == 'rag'", specifier = ">=0.3.27" },
-    { name = "langchain-core", marker = "extra == 'rag'", specifier = ">=0.3.68" },
-    { name = "langchain-huggingface", marker = "extra == 'rag'", specifier = ">=0.3.1" },
-    { name = "langgraph", marker = "extra == 'rag'", specifier = ">=0.5.1" },
-    { name = "langsmith", marker = "extra == 'rag'", specifier = ">=0.4.4" },
-    { name = "llama-cpp-python", marker = "extra == 'rag'", specifier = ">=0.3.12" },
+    { name = "langchain", specifier = ">=0.3.26" },
+    { name = "langchain-community", specifier = ">=0.3.27" },
+    { name = "langchain-core", specifier = ">=0.3.68" },
+    { name = "langchain-huggingface", specifier = ">=0.3.1" },
+    { name = "langgraph", specifier = ">=0.5.1" },
+    { name = "langsmith", specifier = ">=0.4.4" },
+    { name = "llama-cpp-python", specifier = ">=0.3.12" },
     { name = "mypy", marker = "extra == 'quality'", specifier = ">=1.16.1" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
-    { name = "psutil", marker = "extra == 'rag'", specifier = ">=7.0.0" },
+    { name = "psutil", specifier = ">=7.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
-    { name = "pypdf", marker = "extra == 'rag'", specifier = ">=5.7.0" },
+    { name = "pypdf", specifier = ">=5.7.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.4.1" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=6.2.1" },
     { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0" },
     { name = "ruff", marker = "extra == 'quality'", specifier = ">=0.12.2" },
-    { name = "sentence-transformers", marker = "extra == 'rag'", specifier = ">=5.0.0" },
+    { name = "sentence-transformers", specifier = ">=5.0.0" },
     { name = "slowapi", specifier = ">=0.1.9" },
     { name = "sqlalchemy", specifier = ">=2.0.41" },
-    { name = "tavily-python", marker = "extra == 'rag'", specifier = ">=0.7.9" },
+    { name = "tavily-python", specifier = ">=0.7.9" },
     { name = "tox", marker = "extra == 'ci'", specifier = ">=4.27.0" },
     { name = "tox-uv", marker = "extra == 'ci'", specifier = ">=1.26.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.35.0" },
     { name = "uvloop", specifier = ">=0.21.0" },
 ]
-provides-extras = ["ci", "quality", "rag", "test"]
+provides-extras = ["ci", "quality", "test"]
 
 [package.metadata.requires-dev]
 dev = [
