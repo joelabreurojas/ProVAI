@@ -23,6 +23,14 @@ from src.auth.application.services import AuthService
 from src.auth.infrastructure.repositories import SQLAlchemyUserRepository
 from src.auth.infrastructure.security import PasswordService, TokenService
 
+# Chat
+from src.chat.application.protocols import (
+    HistoryRepositoryProtocol,
+    HistoryServiceProtocol,
+)
+from src.chat.application.services import HistoryService
+from src.chat.infrastructure.repositories import SQLAlchemyHistoryRepository
+
 # Core
 from src.core.infrastructure.database import get_db
 from src.rag.application.prompts import get_rag_prompt
@@ -36,7 +44,7 @@ from src.rag.application.services import IngestionService, RAGService
 from src.rag.infrastructure.model_loader import get_embedding_model, get_llm
 from src.rag.infrastructure.vector_store import get_vector_store
 
-# Protocol Wiring
+# Protocol Wiring (Low-Level Infrastructure Providers)
 
 
 def get_user_repository(db: Session = Depends(get_db)) -> UserRepositoryProtocol:
@@ -75,7 +83,11 @@ def get_text_splitter() -> RecursiveCharacterTextSplitter:
     )
 
 
-# Service Assemblers
+def get_history_repository(db: Session = Depends(get_db)) -> HistoryRepositoryProtocol:
+    return SQLAlchemyHistoryRepository(db)
+
+
+# Service Assemblers (High-Level Application Service Providers)
 
 
 def get_auth_service(
@@ -101,3 +113,9 @@ def get_rag_service(
     prompt: ChatPromptTemplate = Depends(get_rag_prompt_template),
 ) -> RAGServiceProtocol:
     return RAGService(llm=llm, vector_store=vector_store, prompt=prompt)
+
+
+def get_history_service(
+    history_repo: HistoryRepositoryProtocol = Depends(get_history_repository),
+) -> HistoryServiceProtocol:
+    return HistoryService(history_repo=history_repo)
