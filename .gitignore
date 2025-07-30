@@ -29,13 +29,14 @@ htmlcov/
 # Databases
 *.db
 *.db-journal*
+vector_store/*
 
 # Log & Temporary Files
 *.log
 *.err
 *.bak
 *.tmp
+!*/.gitkeep
 
 # AI Models
 models/*
-!models/.gitkeep
