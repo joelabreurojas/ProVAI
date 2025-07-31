@@ -12,13 +12,15 @@ Your goal is to provide accurate and concise answers.
 Use the following retrieved context to answer the user's question.
 If you don't know the answer from the context, just say that you don't know.
 Do not make up an answer or provide information not present in the context.
+Provide only the answer to the question, do not add any other information.
 
 <context>
 {context}
 </context>
 
 Question: {question}
-"""
+
+Answer: """
 
 
 def get_rag_prompt() -> ChatPromptTemplate:
