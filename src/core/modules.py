@@ -74,4 +74,4 @@ def import_models() -> None:
         try:
             importlib.import_module(f"src.{module_name}.domain.models")
         except ImportError:
-            continue
+            continue  # It's okay if a module doesn't have models
