@@ -1,18 +1,39 @@
+import logging
 from operator import itemgetter
 from typing import Any
 
-from langchain_community.vectorstores.chroma import Chroma
+from langchain_community.llms.llamacpp import LlamaCpp
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableParallel
-from llama_cpp import Llama
 
 from src.rag.application.protocols import RAGServiceProtocol
+
+logger = logging.getLogger(__name__)
 
 
 def _format_docs(docs: list[Document]) -> str:
     """Combines the page_content of retrieved documents into a single string."""
     return "\n\n".join(doc.page_content for doc in docs)
+
+
+def _parse_llm_output(response: dict[str, str]) -> str:
+    """
+    Safely parses the output from the Llama LLM.
+    Checks for the presence of 'choices' and that it's a non-empty list.
+    """
+    if (
+        "choices" in response
+        and isinstance(response["choices"], list)
+        and len(response["choices"]) > 0
+    ):
+        if "text" in response["choices"][0]:
+            return response["choices"][0]["text"].strip()
+
+    logger.warning("LLM output was not in the expected format. Response: %s", response)
+    return "I'm sorry, I was unable to generate a response."
 
 
 class RAGService(RAGServiceProtocol):
@@ -22,7 +43,7 @@ class RAGService(RAGServiceProtocol):
 
     def __init__(
         self,
-        llm: Llama,
+        llm: LlamaCpp,
         vector_store: Chroma,
         prompt: ChatPromptTemplate,
     ):
@@ -54,10 +75,8 @@ class RAGService(RAGServiceProtocol):
                 question=itemgetter("question"),
             )
             | self.prompt
-            | (lambda prompt_value: prompt_value.to_string())
             | self.llm
-            | itemgetter("choices")
-            | (lambda choices: choices[0]["text"].strip())
+            | StrOutputParser()
         )
 
     def answer_query(self, query: str, chat_id: int) -> str:
