@@ -28,6 +28,7 @@ dependencies = [
   "slowapi>=0.1.9",
   "sqlalchemy>=2.0.41",
   "tavily-python>=0.7.9",
+  "torch>=2.7.1",
   "uvicorn[standard]>=0.35.0",
   "uvloop>=0.21.0",
 ]
@@ -108,3 +109,17 @@ ignore = ["B008"]
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu" },
+]
+torchvision = [
+  { index = "pytorch-cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
