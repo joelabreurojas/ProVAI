@@ -1,7 +1,7 @@
 from operator import itemgetter
 from typing import Any
 
-from langchain_community.vectorstores.chroma import Chroma
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableParallel
