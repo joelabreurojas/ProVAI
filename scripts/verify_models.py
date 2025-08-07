@@ -9,6 +9,8 @@ elsewhere (e.g., in the main app factory). It is a simple client
 of the dependency providers.
 """
 
+from typing import Iterator
+
 from src.core.dependencies import get_rag_embedding_model, get_rag_llm
 
 
@@ -18,11 +20,18 @@ def main() -> None:
     llm = get_rag_llm()
     prompt = "What is the capital of France?"
 
+    print(f"Prompt: {prompt}")
+
     # LlamaCpp may log directly
     output = llm(prompt, max_tokens=32, stop=["\n"], echo=False)
+    answer = "No response generated."
 
-    print(f"Prompt: {prompt}")
-    print(f"LLM Output: {output['choices'][0]['text']}")
+    if isinstance(output, dict):
+        answer = output["choices"][0]["text"]
+    elif isinstance(output, Iterator):
+        answer = "Streamed response (not fully processed in this script)."
+
+    print(f"LLM Answer: {answer}")
     print("-" * 20)
 
     print("\n--- Verifying Embedding Model ---")
