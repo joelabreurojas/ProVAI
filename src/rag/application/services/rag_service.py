@@ -57,7 +57,7 @@ class RAGService(RAGServiceProtocol):
             | (lambda prompt_value: prompt_value.to_string())
             | self.llm
             | itemgetter("choices")
-            | (lambda choices: choices[0]["text"])
+            | (lambda choices: choices[0]["text"].strip())
         )
 
     def answer_query(self, query: str, chat_id: int) -> str:

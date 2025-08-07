@@ -6,12 +6,14 @@ from src.core.infrastructure.handlers import app_exception_handler
 from src.core.infrastructure.logging_config import setup_logging
 from src.core.infrastructure.middleware import logging_middleware
 from src.core.infrastructure.settings import settings
-from src.core.modules import register_routers
+from src.core.modules import import_models, register_routers
 
 
 def create_app() -> FastAPI:
     """Application factory, creating and configuring the FastAPI app."""
     setup_logging()
+
+    import_models()
 
     app = FastAPI(
         title=settings.TITLE,

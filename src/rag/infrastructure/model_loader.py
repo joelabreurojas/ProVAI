@@ -33,6 +33,8 @@ def get_llm() -> Llama:
         n_ctx=2048,  # The maximum context size
         n_gpu_layers=0,  # Explicitly run on CPU
         verbose=False,
+        max_tokens=256,
+        stop=[" Question:", " Human:", " Assistant:", "User:"],
     )
 
     logger.info("LLM loaded successfully.")
