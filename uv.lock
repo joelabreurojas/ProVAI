@@ -1592,6 +1592,18 @@ bcrypt = [
 ]
 
 [[package]]
+name = "pathlib2"
+version = "2.3.7.post1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/31/51/99caf463dc7c18eb18dad1fffe465a3cf3ee50ac3d1dccbd1781336fe9c7/pathlib2-2.3.7.post1.tar.gz", hash = "sha256:9fe0edad898b83c0c3e199c842b27ed216645d2e177757b2dd67384d4113c641", size = 211190, upload-time = "2022-02-10T18:01:09.996Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/09/eb/4af4bcd5b8731366b676192675221c5324394a580dfae469d498313b5c4a/pathlib2-2.3.7.post1-py2.py3-none-any.whl", hash = "sha256:5266a0fd000452f1b3467d782f079a4343c63aaa119221fbdc4e39577489ca5b", size = 18027, upload-time = "2022-02-10T18:01:07.751Z" },
+]
+
+[[package]]
 name = "pathspec"
 version = "0.12.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1760,6 +1772,7 @@ dependencies = [
     { name = "langsmith" },
     { name = "llama-cpp-python" },
     { name = "passlib", extra = ["bcrypt"] },
+    { name = "pathlib2" },
     { name = "psutil" },
     { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
@@ -1808,6 +1821,7 @@ requires-dist = [
     { name = "llama-cpp-python", specifier = ">=0.3.12" },
     { name = "mypy", marker = "extra == 'quality'", specifier = ">=1.16.1" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
+    { name = "pathlib2", specifier = ">=2.3.7" },
     { name = "psutil", specifier = ">=7.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
