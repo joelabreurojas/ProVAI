@@ -1,13 +1,12 @@
-import os
 import sys
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+from src.core.constants import PROJECT_ROOT
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.core.infrastructure.database import Base
 from src.core.infrastructure.settings import settings

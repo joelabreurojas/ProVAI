@@ -5,6 +5,8 @@ import psutil
 from langchain_huggingface import HuggingFaceEmbeddings
 from llama_cpp import Llama
 
+from src.core.constants import PROJECT_ROOT
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,8 +26,10 @@ def get_llm() -> Llama:
     logger.info("Starting to load the LLM...")
     _log_memory_usage()
 
+    model_file_path = PROJECT_ROOT / "models" / "phi-2.Q4_K_M.gguf"
+
     llm = Llama(
-        model_path="./models/phi-2.Q4_K_M.gguf",
+        model_path=str(model_file_path),
         n_ctx=2048,  # The maximum context size
         n_gpu_layers=0,  # Explicitly run on CPU
         verbose=False,
