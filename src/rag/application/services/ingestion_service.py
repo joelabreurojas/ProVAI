@@ -6,19 +6,21 @@ from langchain_community.vectorstores.chroma import Chroma
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from src.rag.application.protocols import IngestionServiceProtocol
+
 logger = logging.getLogger(__name__)
 
 
-class IngestionService:
+class IngestionService(IngestionServiceProtocol):
     """Orchestrates the document ingestion pipeline."""
 
-    def __init__(self, vector_store: Chroma):
+    def __init__(
+        self,
+        vector_store: Chroma,
+        text_splitter: RecursiveCharacterTextSplitter,
+    ):
         self.vector_store = vector_store
-        self.text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-            chunk_size=300,
-            chunk_overlap=0,
-            encoding_name="cl100k_base",
-        )
+        self.text_splitter = text_splitter
 
     def ingest_document(self, file_bytes: bytes, file_name: str, chat_id: int) -> None:
         """Processes a single PDF document and stores it in the vector store."""

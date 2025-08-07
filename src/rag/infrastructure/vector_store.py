@@ -1,6 +1,8 @@
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_core.embeddings import Embeddings
 
+from src.core.constants import PROJECT_ROOT
+
 
 def get_vector_store(embedding_model: Embeddings) -> Chroma:
     """
@@ -8,8 +10,9 @@ def get_vector_store(embedding_model: Embeddings) -> Chroma:
 
     This function sets up a persistent, file-based vector store.
     """
+    persist_dir_path = PROJECT_ROOT / "vector_store" / "provai.db"
     vector_store = Chroma(
-        persist_directory="./vector_store/provai.db",
+        persist_directory=str(persist_dir_path),
         embedding_function=embedding_model,
     )
     return vector_store

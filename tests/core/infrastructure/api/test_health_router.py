@@ -1,8 +1,11 @@
 from fastapi.testclient import TestClient
 
 
-def test_health(client: TestClient) -> None:
-    """Tests that the health endpoint is working and can connect to the test DB."""
+def test_health_check_succeeds(client: TestClient) -> None:
+    """
+    Tests that the /health endpoint is working correctly, returning a 200
+    status and a JSON response indicating both API and DB are 'ok'.
+    """
     response = client.get("/health")
     assert response.status_code == 200
 
