@@ -1,9 +1,8 @@
 from operator import itemgetter
 from typing import Any
 
-from langchain_community.vectorstores.chroma import Chroma
+from langchain_chroma import Chroma
 from langchain_core.documents import Document
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableParallel
 from llama_cpp import Llama
@@ -55,8 +54,10 @@ class RAGService(RAGServiceProtocol):
                 question=itemgetter("question"),
             )
             | self.prompt
+            | (lambda prompt_value: prompt_value.to_string())
             | self.llm
-            | StrOutputParser()
+            | itemgetter("choices")
+            | (lambda choices: choices[0]["text"])
         )
 
     def answer_query(self, query: str, chat_id: int) -> str:
@@ -64,4 +65,6 @@ class RAGService(RAGServiceProtocol):
         Takes a user query and chat_id, runs the full RAG pipeline with
         filtering, and returns the answer.
         """
-        return self.rag_chain.invoke({"query": query, "chat_id": chat_id})
+        answer: str = self.rag_chain.invoke({"query": query, "chat_id": chat_id})
+
+        return answer

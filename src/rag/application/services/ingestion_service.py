@@ -1,8 +1,8 @@
 import logging
 import tempfile
 
+from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores.chroma import Chroma
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -43,11 +43,15 @@ class IngestionService(IngestionServiceProtocol):
             temp_file.flush()  # Ensure all bytes are written to disk
 
             loader = PyPDFLoader(file_path=temp_file.name)
-            return loader.load()
+            documents: list[Document] = loader.load()
+
+            return documents
 
     def _split_documents(self, documents: list[Document]) -> list[Document]:
         """Splits loaded documents into smaller chunks."""
-        return self.text_splitter.split_documents(documents)
+        chunks: list[Document] = self.text_splitter.split_documents(documents)
+
+        return chunks
 
     def _store_chunks(self, chunks: list[Document]) -> None:
         """Stores the document chunks in the Chroma vector store."""
