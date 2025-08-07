@@ -30,7 +30,10 @@ htmlcov/
 *.db
 *.db-journal*
 vector_store/*
+<<<<<<< HEAD
 sample_data/*
+=======
+>>>>>>> main
 
 # Log & Temporary Files
 *.log
