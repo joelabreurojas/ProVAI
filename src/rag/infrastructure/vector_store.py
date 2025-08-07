@@ -1,4 +1,4 @@
-from langchain_community.vectorstores.chroma import Chroma
+from langchain_chroma import Chroma
 from langchain_core.embeddings import Embeddings
 
 from src.core.constants import PROJECT_ROOT
