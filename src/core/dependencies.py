@@ -8,6 +8,7 @@ the API endpoints and other services.
 """
 
 from fastapi import Depends
+from langchain_community.vectorstores.chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from llama_cpp import Llama
 from sqlalchemy.orm import Session
@@ -30,9 +31,11 @@ from src.auth.infrastructure.security.token_service import TokenService
 
 # --- Core Dependencies ---
 from src.core.infrastructure.database import get_db
+from src.rag.application.services.ingestion_service import IngestionService
 
 # --- RAG Concrete Implementations ---
 from src.rag.infrastructure.model_loader import get_embedding_model, get_llm
+from src.rag.infrastructure.vector_store import get_vector_store
 
 # --- Protocol Implementations (The "Wiring") ---
 
@@ -82,3 +85,17 @@ def get_rag_llm() -> Llama:
 def get_rag_embedding_model() -> HuggingFaceEmbeddings:
     """Provides the singleton instance of the embedding model."""
     return get_embedding_model()
+
+
+def get_rag_vector_store(
+    embedding_model: HuggingFaceEmbeddings = Depends(get_rag_embedding_model),
+) -> Chroma:
+    """Provides the singleton instance of the Chroma vector store."""
+    return get_vector_store(embedding_model)
+
+
+def get_ingestion_service(
+    vector_store: Chroma = Depends(get_rag_vector_store),
+) -> IngestionService:  # This should be a Protocol
+    """Constructs and provides the main IngestionService."""
+    return IngestionService(vector_store)
