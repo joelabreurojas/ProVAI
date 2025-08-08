@@ -11,7 +11,7 @@ of the dependency providers.
 
 from typing import Iterator
 
-from src.core.dependencies import get_rag_embedding_model, get_rag_llm
+from src.rag.dependencies import get_rag_embedding_model, get_rag_llm
 
 
 def main() -> None:

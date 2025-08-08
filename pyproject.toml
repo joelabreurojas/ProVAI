@@ -34,26 +34,24 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-
-[dependency-groups]
 ci = [
-  "tox-uv>=1.26.1",
   "tox>=4.27.0",
+  "tox-uv>=1.26.1",
 ]
 dev = [
-  { include-group = "ci" },
-  { include-group = "quality" },
-  { include-group = "test" },
+  "ProVAI[ci]",
+  "ProVAI[quality]",
+  "ProVAI[test]",
 ]
 quality = [
   "mypy>=1.16.1",
   "ruff>=0.12.2",
 ]
 test = [
-  "httpx>=0.28.1",
+  "pytest>=8.4.1",
   "pytest-cov>=6.2.1",
   "pytest-mock>=3.14.1",
-  "pytest>=8.4.1",
+  "httpx>=0.28.1",
 ]
 
 [tool.coverage.ini_options]
