@@ -1661,7 +1661,7 @@ dependencies = [
     { name = "uvloop" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 ci = [
     { name = "tox" },
     { name = "tox-uv" },
@@ -1692,6 +1692,7 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.16.2" },
     { name = "chromadb", specifier = ">=1.0.15" },
     { name = "fastapi", specifier = ">=0.116.0" },
+    { name = "httpx", marker = "extra == 'test'", specifier = ">=0.28.1" },
     { name = "langchain", specifier = ">=0.3.26" },
     { name = "langchain-chroma", specifier = ">=0.2.5" },
     { name = "langchain-community", specifier = ">=0.3.27" },
@@ -1700,46 +1701,31 @@ requires-dist = [
     { name = "langgraph", specifier = ">=0.5.1" },
     { name = "langsmith", specifier = ">=0.4.4" },
     { name = "llama-cpp-python", specifier = ">=0.3.12" },
+    { name = "mypy", marker = "extra == 'quality'", specifier = ">=1.16.1" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
+    { name = "provai", extras = ["ci"], marker = "extra == 'dev'" },
+    { name = "provai", extras = ["quality"], marker = "extra == 'dev'" },
+    { name = "provai", extras = ["test"], marker = "extra == 'dev'" },
     { name = "psutil", specifier = ">=7.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
     { name = "pypdf", specifier = ">=5.7.0" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.4.1" },
+    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=6.2.1" },
+    { name = "pytest-mock", marker = "extra == 'test'", specifier = ">=3.14.1" },
     { name = "python-jose", extras = ["cryptography"], specifier = ">=3.5.0" },
+    { name = "ruff", marker = "extra == 'quality'", specifier = ">=0.12.2" },
     { name = "sentence-transformers", specifier = ">=5.0.0" },
     { name = "slowapi", specifier = ">=0.1.9" },
     { name = "sqlalchemy", specifier = ">=2.0.41" },
     { name = "tavily-python", specifier = ">=0.7.9" },
     { name = "torch", specifier = ">=2.7.1", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "tox", marker = "extra == 'ci'", specifier = ">=4.27.0" },
+    { name = "tox-uv", marker = "extra == 'ci'", specifier = ">=1.26.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.35.0" },
     { name = "uvloop", specifier = ">=0.21.0" },
 ]
-
-[package.metadata.requires-dev]
-ci = [
-    { name = "tox", specifier = ">=4.27.0" },
-    { name = "tox-uv", specifier = ">=1.26.1" },
-]
-dev = [
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "mypy", specifier = ">=1.16.1" },
-    { name = "pytest", specifier = ">=8.4.1" },
-    { name = "pytest-cov", specifier = ">=6.2.1" },
-    { name = "pytest-mock", specifier = ">=3.14.1" },
-    { name = "ruff", specifier = ">=0.12.2" },
-    { name = "tox", specifier = ">=4.27.0" },
-    { name = "tox-uv", specifier = ">=1.26.1" },
-]
-quality = [
-    { name = "mypy", specifier = ">=1.16.1" },
-    { name = "ruff", specifier = ">=0.12.2" },
-]
-test = [
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "pytest", specifier = ">=8.4.1" },
-    { name = "pytest-cov", specifier = ">=6.2.1" },
-    { name = "pytest-mock", specifier = ">=3.14.1" },
-]
+provides-extras = ["ci", "dev", "quality", "test"]
 
 [[package]]
 name = "psutil"
