@@ -11,14 +11,14 @@ from pathlib import Path
 
 import psutil
 
-from src.core.dependencies import (
+from src.rag.application.services import IngestionService, RAGService
+from src.rag.dependencies import (
     get_rag_embedding_model,
     get_rag_llm,
     get_rag_prompt_template,
     get_rag_vector_store,
     get_text_splitter,
 )
-from src.rag.application.services import IngestionService, RAGService
 
 
 class PerformanceMetrics:
