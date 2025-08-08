@@ -1,66 +1,165 @@
-# ProVAI - Professor Virtual with AI
+<h1 align='center'>
+    ProVAI
+</h1>
 
-ProVAI is an intelligent learning assistant designed to enhance educational experiences through Retrieval-Augmented Generation (RAG).
+<p align='center'>
+    <em>An intelligent, RAG-powered AI tutor for education.</em>
+</p>
 
-## Overview
+<h6 align='center'>
+    <a href="/LICENSE">
+        <img alt='Apache 2.0 License' src='https://img.shields.io/static/v1.svg?label=License&message=Apache%202.0&logoColor=d9e0ee&colorA=302d41&colorB=3094FF'/>
+    </a>
+    <a href="/docs/">
+      <img alt='See Documentation' src='https://img.shields.io/static/v1.svg?label=See&message=Documentation&logoColor=d9e0ee&colorA=302d41&colorB=3094FF'/>
+  </a>
+</h6>
 
-This project aims to build a scalable and intelligent tutor that provides personalized support to students by interacting with course materials.
+&nbsp;
 
-## Tech Stack (MVP)
+### ✨ Overview
 
-- **Architecture:** Onion Architecture
-- **Frontend:** Streamlit
-- **Backend:** FastAPI
-- **Relational DB:** SQLite
-- **Vector DB:** ChromaDB
-- **AI/ML Models & Tooling:**
-  - **LLM:** Phi-2
-  - **Embedding Model:** BGE-small-en-v1.5
-  - **Orchestration:** LangChain & llama-cpp
+ProVAI (Professor Virtual with AI) is an intelligent learning assistant designed to enhance educational experiences. It uses a Retrieval-Augmented Generation (RAG) engine to provide personalized support by interacting with teacher-provided course materials.
 
-## Getting Started
+**ProVAI helps:**
 
-### Prerequisites
+- **Students** to master their course material through:
+  - On-demand, context-aware answers grounded in their documents.
+  - Automated, non-graded quizzes for effective self-assessment.
 
-- Docker and Docker Compose
-- Python 3.13+
+- **Teachers** to provide scalable, personalized support with:
+  - An AI assistant that handles common student questions 24/7.
+  - Privacy-preserving analytics that identify classroom-wide learning gaps.
 
-### Setup
+- **Educational Institutions** to deploy a secure, self-hostable, and resource-efficient AI learning tool.
 
-1.  **Clone the repository:**
+&nbsp;
 
-    ```bash
+### 🚀 Getting Started
+
+> [!NOTE]
+> Before you start, make sure you have Docker installed and running.
+
+1.  Clone the repository:
+
+    ```fish
     git clone https://github.com/joelabreurojas/ProVAI.git
     cd ProVAI
     ```
 
-2.  **Create the environment file:**
-    Copy `.env.template` to `.env`. The defaults are configured for development.
+2.  Download assets:
 
-    ```bash
+    ```fish
+    chmod +x ./scripts/download_assets.sh
+    ./scripts/download_assets.sh
+    ```
+
+    > This will download the LLM and a sample document.
+
+3.  Configure your environment:
+
+    ```fish
     cp .env.template .env
     ```
 
-3.  **Build and run the application:**
+    > Open the `.env` file. The comments explain what should be set.
 
-    ```bash
-    docker compose up --build -d
+4.  Build and run:
+
+    ```fish
+    docker compose watch
+
     ```
 
-4.  **Run database migrations:**
+    > Embedding model will be downloaded in the first _run_.
 
-    ```bash
-    docker compose exec api alembic upgrade head
+5.  Run database migrations:
+    ```fish
+    docker compose exec api python -m alembic upgrade head
     ```
 
-The API will be available at `http://localhost:8000`. You can view the OpenAPI documentation at `http://localhost:8000/docs`.
+<br>
 
-## Architecture and Decisions
+> [!IMPORTANT]
+> The API will be available at `http://localhost:8000`.
+>
+> Check out the OpenAPI documentation at `http://localhost:8000/docs`.
 
-This project follows a Clean/Onion Architecture to ensure a separation of concerns and maintainability.
+&nbsp;
 
-Key technical decisions are formally documented using **Architecture Decision Records (ADRs)** located in the `/docs/adr` directory.
+### 🛠 Tech Stack
 
-## License
+ProVAI is built on a foundation of modern, high-performance technologies, guided by professional software engineering principles to ensure it is maintainable, testable, and scalable.
 
-This project is licensed under the Apache 2.0 License.
+<div align="center">
+
+|      Category       |              Tool              |        Notes         |
+| :-----------------: | :----------------------------: | :------------------: |
+|  Core Architecture  | Screaming + Onion Architecture |                      |
+|  Backend Framework  |            FastAPI             |                      |
+|      Frontend       |           Streamlit            |      _for MVP_       |
+| Relational Database |             SQLite             |      _for MVP_       |
+|   Vector Database   |            ChromaDB            | _file-based for MVP_ |
+|  AI Orchestration   |           LangChain            |                      |
+|     LLM Serving     |        llama-cpp-python        |                      |
+|      LLM Model      |             phi-2              |      _for MVP_       |
+|   Embedding Model   |       bge-small-en-v1.5        |                      |
+|   Dev Environment   |          Docker & uv           |                      |
+|  Quality Assurance  |    tox, pytest, ruff, mypy     |                      |
+
+</div>
+
+&nbsp;
+
+### 🗺 Roadmap
+
+This is a high-level overview of our development milestones, focusing on the path to our Minimum Viable Product (MVP).
+
+**Milestone 1: The Walking Skeleton (Completed)**
+
+- [x] Establish professional project structure, tooling, and CI/CD foundation.
+
+**Milestone 2: The Core Engine (In Progress)**
+
+- [x] Implement secure, headless User Authentication.
+- [x] Integrate local LLM and Embedding models.
+- [x] Build the Document Ingestion and core RAG services.
+- [ ] Implement the Chat History service for conversation persistence.
+
+**Milestone 3: The Minimum Viable Interface (Upcoming)**
+
+- [ ] Build the Streamlit UI for user interaction, login, and document upload.
+- [ ] Implement "Teacher" and "Student" role-based access control.
+- [ ] Deploy the complete MVP to a public platform (Hugging Face Spaces).
+
+<details>
+  <summary><strong>Post-MVP Vision (Milestone 4):</strong></summary>
+  <br>
+  <ul>
+      <li>Implement the Learning Support module (Quiz Generation, Roadmaps).</li>
+      <li>Build the Teacher Analytics Dashboard for classroom insights.</li>
+      <li>Explore advanced RAG techniques (Parent Document Retrieval, CRAG).</li>
+      <li>Refactor the core engine into a LangGraph state machine for agentic behavior.</li>
+      <li>...and much more!</li>
+  </ul>
+</details>
+
+&nbsp;
+
+### 📌 Disclaimer
+
+> [!WARNING]
+> This is an academic project under active development.
+
+- Always verify critical information against the source documents.
+- This tool is a study aid, not a substitute for professional instruction.
+- This project is provided as is, without any warranty. **Use at your own risk.**
+
+&nbsp;
+
+### 👐 Contribute
+
+> [!NOTE]
+> Found a bug or have an idea? Feel free to open a new [issue](https://github.com/joelabreurojas/ProVAI/issues/new)!
+
+Please, read our [Contribution Guidelines](/CONTRIBUTING.md) to take part in the project.

@@ -6,10 +6,10 @@ concrete implementations.
 
 from fastapi import Depends
 from langchain_chroma import Chroma
+from langchain_community.llms.llamacpp import LlamaCpp
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from llama_cpp import Llama
 from sqlalchemy.orm import Session
 
 # Auth
@@ -59,7 +59,7 @@ def get_token_service() -> TokenServiceProtocol:
     return TokenService()
 
 
-def get_rag_llm() -> Llama:
+def get_rag_llm() -> LlamaCpp:
     return get_llm()
 
 
@@ -108,7 +108,7 @@ def get_ingestion_service(
 
 
 def get_rag_service(
-    llm: Llama = Depends(get_rag_llm),
+    llm: LlamaCpp = Depends(get_rag_llm),
     vector_store: Chroma = Depends(get_rag_vector_store),
     prompt: ChatPromptTemplate = Depends(get_rag_prompt_template),
 ) -> RAGServiceProtocol:

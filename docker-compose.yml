@@ -1,18 +1,35 @@
 services:
-  api:
+  backend:
     build:
       context: .
+      dockerfile: ./docker/backend.Dockerfile
       target: development
     ports:
       - "8000:8000"
-    volumes:
-      - ./src:/app/src
-      - ./tests:/app/tests
-      - ./pyproject.toml:/app/pyproject.toml
-      - ./uv.lock:/app/uv.lock
-      - ./tox.ini:/app/tox.ini
-      - ./alembic:/app/alembic
-      - ./alembic.ini:/app/alembic.ini
-      - ./databases:/app/databases
     env_file:
       - .env
+    volumes:
+      # Data persistence
+      - ./models:/app/models:ro
+      - ./sample_data:/app/sample_data:ro
+      - ./databases:/app/databases
+      - ./vector_store:/app/vector_store
+    develop:
+      watch:
+        # Sync all our source code changes instantly
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: sync
+          path: ./tests
+          target: /app/tests
+        - action: sync
+          path: ./scripts
+          target: /app/scripts
+
+        # Rebuild the image automatically if dependencies change
+        - action: rebuild
+          path: ./pyproject.toml
+        - action: rebuild
+          path: ./uv.lock
+    restart: unless-stopped

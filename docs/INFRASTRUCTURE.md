@@ -1,10 +1,10 @@
-# ProVAI Infrastructure & Workflow Overview
+# ProVAI Infrastructure Overview
 
 This document provides a detailed overview of the ProVAI system's infrastructure, developer workflow, and deployment pipeline. It serves as the master blueprint for how the application is built, tested, and delivered.
 
 ---
 
-## 1. System & Workflow Architecture Diagram
+## 1. System Architecture Diagram
 
 This diagram visualizes the complete end-to-end lifecycle of the ProVAI project, from local development to automated quality assurance and final deployment.
 

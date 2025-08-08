@@ -28,31 +28,32 @@ dependencies = [
   "slowapi>=0.1.9",
   "sqlalchemy>=2.0.41",
   "tavily-python>=0.7.9",
+  "torch>=2.7.1",
   "uvicorn[standard]>=0.35.0",
   "uvloop>=0.21.0",
 ]
 
 [project.optional-dependencies]
+
+[dependency-groups]
 ci = [
-  "tox>=4.27.0",
   "tox-uv>=1.26.1",
+  "tox>=4.27.0",
+]
+dev = [
+  { include-group = "ci" },
+  { include-group = "quality" },
+  { include-group = "test" },
 ]
 quality = [
   "mypy>=1.16.1",
   "ruff>=0.12.2",
 ]
 test = [
-  "pytest>=8.4.1",
+  "httpx>=0.28.1",
   "pytest-cov>=6.2.1",
   "pytest-mock>=3.14.1",
-  "httpx>=0.28.1",
-]
-
-[dependency-groups]
-dev = [
-  "ProVAI[ci]",
-  "ProVAI[quality]",
-  "ProVAI[test]",
+  "pytest>=8.4.1",
 ]
 
 [tool.coverage.ini_options]
@@ -108,3 +109,17 @@ ignore = ["B008"]
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu" },
+]
+torchvision = [
+  { index = "pytorch-cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+

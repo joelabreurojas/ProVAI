@@ -1,7 +1,7 @@
 """
 A headless script to run a full, end-to-end test of the ProVAI RAG engine.
 
-python -m scripts.demo_rag --doc_path "/path/to/doc" --query "What's the topic?"
+python -m scripts.demo_rag --doc-path "sample_data/doc" --query ""
 
 This script is an invaluable tool for debugging and demonstration before the UI
 is fully implemented. It simulates the core workflow of ingestion and querying.

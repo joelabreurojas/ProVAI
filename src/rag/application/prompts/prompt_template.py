@@ -1,26 +1,25 @@
 from langchain_core.prompts import ChatPromptTemplate
 
-# This template is the instruction set for the LLM.
-# 1. It sets the persona ("You are an expert assistant...").
-# 2. It gives a clear instruction ("Use the following retrieved context...").
-# 3. It provides a crucial guardrail ("If you don't know the answer...").
-# 4. It defines placeholders for the dynamic content ({context}, {question}).
 RAG_PROMPT_TEMPLATE = """
-You are an expert assistant for answering questions based on provided context.
-Your goal is to provide accurate and concise answers.
+Instruct: Your role is a helpful and brilliant AI tutor.
+- Your goal is to provide a clear, natural language answer to the user's question.
+- Your answer must be based *only* on the context provided.
+- You must not generate code unless you are explicitly asked to.
+- If the context does not contain the answer, you must state that you don't know.
+- Be concise and do not make up information.
+- Provide only the answer to the question, do not add any other information.
+- **Your final answer must be a complete thought and end with proper punctuation.**
 
-Use the following retrieved context to answer the user's question.
-If you don't know the answer from the context, just say that you don't know.
-Do not make up an answer or provide information not present in the context.
-Provide only the answer to the question, do not add any other information.
-
+Here is the context:
 <context>
 {context}
 </context>
 
+Based on that context, please answer the following question:
+
 Question: {question}
 
-Answer: """
+Output:"""
 
 
 def get_rag_prompt() -> ChatPromptTemplate:

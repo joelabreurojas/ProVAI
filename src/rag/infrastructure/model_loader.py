@@ -2,8 +2,8 @@ import logging
 from functools import lru_cache
 
 import psutil
+from langchain_community.llms.llamacpp import LlamaCpp
 from langchain_huggingface import HuggingFaceEmbeddings
-from llama_cpp import Llama
 
 from src.core.constants import PROJECT_ROOT
 
@@ -18,9 +18,9 @@ def _log_memory_usage() -> None:
 
 
 @lru_cache(maxsize=1)
-def get_llm() -> Llama:
+def get_llm() -> LlamaCpp:
     """
-    Loads and returns the Llama C++ model.
+    Loads the Llama C++ model and wraps it in a LangChain-compliant class.
     Uses lru_cache to ensure the model is loaded only once (singleton).
     """
     logger.info("Starting to load the LLM...")
@@ -28,12 +28,12 @@ def get_llm() -> Llama:
 
     model_file_path = PROJECT_ROOT / "models" / "phi-2.Q4_K_M.gguf"
 
-    llm = Llama(
+    llm = LlamaCpp(
         model_path=str(model_file_path),
         n_ctx=2048,  # The maximum context size
         n_gpu_layers=0,  # Explicitly run on CPU
         verbose=False,
-        max_tokens=256,
+        max_tokens=1024,
         stop=[" Question:", " Human:", " Assistant:", "User:"],
     )
 
