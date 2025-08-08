@@ -7,7 +7,7 @@ from langchain_community.llms.llamacpp import LlamaCpp
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnableParallel
+from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough
 
 from src.rag.application.protocols import RAGServiceProtocol
 
@@ -61,19 +61,22 @@ class RAGService(RAGServiceProtocol):
                 search_kwargs={"k": 4, "filter": {"chat_id": chat_id}}
             )
 
+        context_chain = (
+            RunnablePassthrough()
+            # Add a retriever to the dictionary, scoped to the chat_id.
+            .assign(retriever=RunnableLambda(create_filtered_retriever))
+            # Use the retriever to fetch docs and add them to the dictionary.
+            .assign(docs=lambda x: x["retriever"].invoke(x["query"]))
+            # Format the docs and assign the final string to 'context'.
+            .assign(context=lambda x: _format_docs(x["docs"]))
+        )
+
         self.rag_chain: Runnable[dict[str, Any], str] = (
-            RunnableParallel(
-                question=itemgetter("query"),
-                chat_id=itemgetter("chat_id"),
-            )
+            context_chain
             | {
-                "context": lambda x: create_filtered_retriever(x).invoke(x["question"]),
-                "question": itemgetter("question"),
+                "context": itemgetter("context"),
+                "query": itemgetter("query"),
             }
-            | RunnableParallel(
-                context=(lambda x: _format_docs(x["context"])),
-                question=itemgetter("question"),
-            )
             | self.prompt
             | self.llm
             | StrOutputParser()
