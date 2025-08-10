@@ -10,10 +10,12 @@ def test_answer_query_invokes_rag_chain_with_correct_parameters(
     Verify that the `answer_query` method correctly orchestrates the call to its
     internal, pre-configured LCEL `rag_chain`.
     """
+    # Mock dependencies
     mock_llm = mocker.MagicMock()
     mock_vector_store = mocker.MagicMock()
     mock_prompt = mocker.MagicMock()
 
+    # Mock retriever and its | operator
     mock_retriever = mocker.MagicMock()
     mock_vector_store.as_retriever.return_value = mock_retriever
 

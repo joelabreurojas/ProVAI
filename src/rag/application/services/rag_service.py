@@ -5,7 +5,8 @@ from langchain_community.llms.llamacpp import LlamaCpp
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnablePassthrough
+from langchain_core.runnables import Runnable, RunnableParallel, RunnablePassthrough
+from langchain_core.vectorstores import VectorStoreRetriever
 from langsmith import traceable
 
 from src.rag.application.protocols import RAGServiceProtocol
@@ -46,11 +47,13 @@ class RAGService(RAGServiceProtocol):
         answer: str = rag_chain.invoke(query)
         return answer
 
-    def _build_rag_chain(self, retriever) -> Runnable:
+    def _build_rag_chain(self, retriever: VectorStoreRetriever) -> Runnable[str, str]:
         """Builds the RAG chain. Extracted for testability."""
-        return (
-            {"context": retriever | _format_docs, "query": RunnablePassthrough()}
-            | self.prompt
-            | self.llm
-            | StrOutputParser()
+
+        header = RunnableParallel(
+            context=retriever | _format_docs,
+            query=RunnablePassthrough(),
         )
+
+        chain: Runnable[str, str] = header | self.prompt | self.llm | StrOutputParser()
+        return chain
