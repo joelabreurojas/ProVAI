@@ -99,6 +99,7 @@ init_typed = true
 warn_required_dynamic_aliases = true
 
 [tool.ruff]
+exclude = ["src/rag/application/prompts/*"]
 line-length = 88
 target-version = "py313"
 
