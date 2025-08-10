@@ -11,6 +11,7 @@ import argparse
 import logging
 from pathlib import Path
 
+from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.chat.application.services import HistoryService
@@ -26,9 +27,11 @@ from src.rag.infrastructure.vector_store import get_vector_store
 
 def main(doc_path: Path, query: str) -> None:
     """Runs a full, end-to-end test of the headless RAG pipeline."""
+
     # See output from services.
     logging.basicConfig(level=logging.INFO)
 
+    load_dotenv()
     import_models()
 
     print("--- ProVAI Headless Demo ---")
