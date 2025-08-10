@@ -35,6 +35,7 @@ def get_llm() -> LlamaCpp:
         verbose=False,
         max_tokens=1024,
         stop=[" Question:", " Human:", " Assistant:", "User:"],
+        temperature=0.7,
     )
 
     logger.info("LLM loaded successfully.")
