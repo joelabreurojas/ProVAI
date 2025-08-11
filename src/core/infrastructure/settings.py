@@ -9,7 +9,6 @@ class _EnvironmentSettings(BaseSettings):
     SECRET_KEY: str = ""
     ENV_STATE: str = ""
     DB_URL: str = ""
-    LANGCHAIN_API_KEY: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -27,9 +26,6 @@ def _validate_settings(env: _EnvironmentSettings) -> None:
     if not env.SECRET_KEY:
         raise ValueError("SECRET_KEY is a required environment variable.")
 
-    if env.ENV_STATE == "dev" and not env.LANGCHAIN_API_KEY:
-        raise ValueError("LANGCHAIN_API_KEY must be set in the 'dev' environment.")
-
     if env.ENV_STATE == "prod" and not env.DB_URL:
         raise ValueError("DB_URL must be set in the 'prod' environment.")
 
@@ -41,10 +37,7 @@ def _load_settings() -> DevConfig | TestConfig | ProdConfig:
     _validate_settings(env)
 
     if env.ENV_STATE == "dev":
-        return DevConfig(
-            SECRET_KEY=env.SECRET_KEY,
-            LANGCHAIN_API_KEY=env.LANGCHAIN_API_KEY,
-        )
+        return DevConfig(SECRET_KEY=env.SECRET_KEY)
 
     if env.ENV_STATE == "test":
         return TestConfig(SECRET_KEY=env.SECRET_KEY)

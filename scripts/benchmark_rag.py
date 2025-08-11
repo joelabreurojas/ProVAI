@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 import psutil
+from dotenv import load_dotenv
 
 from src.rag.application.services import IngestionService, RAGService
 from src.rag.dependencies import (
@@ -53,6 +54,8 @@ def main(doc_path: Path, query: str) -> None:
     """
     # Configure logging to print to the console
     logging.basicConfig(level=logging.INFO)
+
+    load_dotenv()
 
     metrics = PerformanceMetrics()
     print("Initializing services...")
