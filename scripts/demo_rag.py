@@ -11,6 +11,7 @@ import argparse
 import logging
 from pathlib import Path
 
+from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.chat.application.services import HistoryService
@@ -26,9 +27,11 @@ from src.rag.infrastructure.vector_store import get_vector_store
 
 def main(doc_path: Path, query: str) -> None:
     """Runs a full, end-to-end test of the headless RAG pipeline."""
+
     # See output from services.
     logging.basicConfig(level=logging.INFO)
 
+    load_dotenv()
     import_models()
 
     print("--- ProVAI Headless Demo ---")
@@ -71,7 +74,7 @@ def main(doc_path: Path, query: str) -> None:
         print("\n--- Querying RAG Engine ---")
         print(f"Query: '{query}'")
         answer = rag_service.answer_query(query, chat_id=DUMMY_CHAT_ID)
-        print(f"\nAnswer: {answer}")
+        print(f"\nAnswer: {answer.strip()}")
 
         print("\n--- Logging interaction to history ---")
         history_service.log_interaction(
@@ -88,7 +91,7 @@ def main(doc_path: Path, query: str) -> None:
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         # Re-raise for debugging purposes if needed
-        # raise
+        raise e
     finally:
         db.close()
         print("\n--- Demo Complete ---")

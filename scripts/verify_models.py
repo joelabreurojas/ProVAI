@@ -11,11 +11,15 @@ of the dependency providers.
 
 from typing import Iterator
 
+from dotenv import load_dotenv
+
 from src.rag.dependencies import get_rag_embedding_model, get_rag_llm
 
 
 def main() -> None:
     """Verifies model loading and basic functionality."""
+    load_dotenv()
+
     print("--- Verifying LLM ---")
     llm = get_rag_llm()
     prompt = "What is the capital of France?"

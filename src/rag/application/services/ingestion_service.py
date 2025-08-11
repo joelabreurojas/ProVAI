@@ -5,6 +5,7 @@ from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langsmith import traceable
 
 from src.rag.application.protocols import IngestionServiceProtocol
 
@@ -22,6 +23,7 @@ class IngestionService(IngestionServiceProtocol):
         self.vector_store = vector_store
         self.text_splitter = text_splitter
 
+    @traceable(name="Ingest Pipeline")
     def ingest_document(self, file_bytes: bytes, file_name: str, chat_id: int) -> None:
         """Processes a single PDF document and stores it in the vector store."""
         documents = self._load_pdf_from_bytes(file_bytes)
@@ -36,6 +38,7 @@ class IngestionService(IngestionServiceProtocol):
             f"Ingested '{file_name}' into {len(chunks)} chunks for chat_id {chat_id}."
         )
 
+    @traceable
     def _load_pdf_from_bytes(self, file_bytes: bytes) -> list[Document]:
         """Loads a PDF from in-memory bytes by writing to a temporary file."""
         with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as temp_file:
@@ -47,12 +50,14 @@ class IngestionService(IngestionServiceProtocol):
 
             return documents
 
+    @traceable
     def _split_documents(self, documents: list[Document]) -> list[Document]:
         """Splits loaded documents into smaller chunks."""
         chunks: list[Document] = self.text_splitter.split_documents(documents)
 
         return chunks
 
+    @traceable
     def _store_chunks(self, chunks: list[Document]) -> None:
         """Stores the document chunks in the Chroma vector store."""
         self.vector_store.add_documents(chunks)

@@ -24,7 +24,6 @@ class _BaseConfig(BaseModel):
     # Environment variables
     SECRET_KEY: str
     DB_URL: str
-    LANGCHAIN_API_KEY: str | None = None
 
     # Security settings
     ALGORITHM: str = "HS256"
@@ -35,10 +34,6 @@ class DevConfig(_BaseConfig):
     """Development-specific settings."""
 
     DB_URL: str = "sqlite:///./databases/provai_dev.db"
-
-    LANGCHAIN_TRACING_V2: bool = True
-    LANGCHAIN_ENDPOINT: str = "https://api.langchain.plus"
-    LANGCHAIN_PROJECT: str = "ProVAI"
 
 
 class TestConfig(_BaseConfig):
