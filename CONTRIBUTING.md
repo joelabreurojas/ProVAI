@@ -2,6 +2,8 @@
 
 Welcome to the ProVAI project! We're excited to have you on the team. To ensure our project remains high-quality, maintainable, and easy to work on, we adhere to a simple set of development guidelines.
 
+If you have a question or a feature idea, before writing code, please [start a new discussion](https://github.com/joelabreurojas/ProVAI/discussions) first.
+
 ## Guiding Philosophy
 
 Our primary philosophy is **"Keep It Simple."** This applies to our code, architecture, and processes. We favor clarity and simplicity over unnecessary complexity.

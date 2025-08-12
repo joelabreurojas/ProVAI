@@ -1,7 +1,7 @@
 ---
 name: "🛠️ Chore / Task"
 title: "[CHORE]: "
-description: "A task for maintenance, refactoring, documentation, or DevOps."
+about: "A task for maintenance, refactoring, documentation, or DevOps."
 labels: ["type:chore"]
 ---
 

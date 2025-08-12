@@ -1,7 +1,7 @@
 ---
 name: "🐞 Bug Report"
 title: "[BUG]: "
-description: "Report a bug to help us improve the project."
+about: "Report a bug to help us improve the project."
 labels: ["type:bug"]
 ---
 

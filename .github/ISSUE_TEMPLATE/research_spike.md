@@ -1,7 +1,7 @@
 ---
 name: "🔬 Research Spike"
 title: "[RESEARCH]: "
-description: "A time-boxed investigation into a new technology or approach."
+about: "A time-boxed investigation into a new technology or approach."
 labels: ["type:research"]
 ---
 

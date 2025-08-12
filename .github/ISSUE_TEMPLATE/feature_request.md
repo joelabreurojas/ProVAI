@@ -1,7 +1,7 @@
 ---
 name: "🚀 Feature Request"
 title: "[FEAT]: "
-description: "Propose a new feature or user-facing functionality."
+about: "Propose a new feature or user-facing functionality."
 labels: ["type:feature"]
 ---
 

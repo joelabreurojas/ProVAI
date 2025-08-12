@@ -159,7 +159,7 @@ This is a high-level overview of our development milestones, focusing on the pat
 
 ### 👐 Contribute
 
-> [!NOTE]
-> Found a bug or have an idea? Feel free to open a new [issue](https://github.com/joelabreurojas/ProVAI/issues/new)!
+- Found a bug? Feel free to open a new [issue](https://github.com/joelabreurojas/ProVAI/issues/new)!
+- Have a question or an idea? Join our [community](https://github.com/joelabreurojas/ProVAI/discussions).
 
 Please, read our [Contribution Guidelines](/CONTRIBUTING.md) to take part in the project.
