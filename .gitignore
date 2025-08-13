@@ -38,6 +38,7 @@ sample_data/*
 *.bak
 *.tmp
 !*/.gitkeep
+.cache
 
 # AI Models
 models/*

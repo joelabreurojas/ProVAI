@@ -1,56 +1,81 @@
-from fastapi import Depends
 from langchain_chroma import Chroma
 from langchain_community.llms.llamacpp import LlamaCpp
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from src.core.dependencies import get_asset_manager_service
 from src.rag.application.prompts import get_rag_prompt
-from src.rag.application.protocols.service_protocol import (
+from src.rag.application.protocols import (
+    EmbeddingServiceProtocol,
     IngestionServiceProtocol,
     RAGServiceProtocol,
 )
 from src.rag.application.services import IngestionService, RAGService
-from src.rag.infrastructure.model_loader import get_embedding_model, get_llm
+from src.rag.infrastructure.embedding import FastEmbedService
+from src.rag.infrastructure.model_loader import get_llm
 from src.rag.infrastructure.vector_store import get_vector_store
 
+# --- Builder Functions (No FastAPI) ---
 
-# --- Protocol Implementations for RAG ---
-def get_rag_llm() -> LlamaCpp:
+
+def build_rag_llm() -> LlamaCpp:
+    """Builds and returns the LLM."""
     return get_llm()
 
 
-def get_rag_embedding_model() -> HuggingFaceEmbeddings:
-    return get_embedding_model()
+def build_embedding_service() -> EmbeddingServiceProtocol:
+    """Builds and returns the MVP embedding service (FastEmbedService)."""
+    asset_manager = get_asset_manager_service()
+    return FastEmbedService(asset_manager)
 
 
-def get_rag_vector_store(
-    embedding_model: HuggingFaceEmbeddings = Depends(get_rag_embedding_model),
+def build_rag_vector_store(
+    embedding_service: EmbeddingServiceProtocol,
 ) -> Chroma:
-    return get_vector_store(embedding_model)
+    """Builds and returns the vector store, requiring an embedding service."""
+    return get_vector_store(embedding_function=embedding_service)
 
 
-def get_rag_prompt_template() -> ChatPromptTemplate:
+def build_rag_prompt_template() -> ChatPromptTemplate:
+    """Builds and returns the MVP prompt template (context-grounded, simple)."""
     return get_rag_prompt()
 
 
-def get_text_splitter() -> RecursiveCharacterTextSplitter:
+def build_text_splitter() -> RecursiveCharacterTextSplitter:
+    """Builds and returns the MVP chunk splitter (1000 chars, no overlap)."""
     return RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-        chunk_size=300, chunk_overlap=0, encoding_name="cl100k_base"
+        chunk_size=1000, chunk_overlap=0, encoding_name="cl100k_base"
     )
 
 
-# --- Service Assemblers for RAG ---
-def get_ingestion_service(
-    vector_store: Chroma = Depends(get_rag_vector_store),
-    text_splitter: RecursiveCharacterTextSplitter = Depends(get_text_splitter),
-) -> IngestionServiceProtocol:
+# --- Service Builders ---
+
+
+def build_ingestion_service() -> IngestionServiceProtocol:
+    """Constructs the IngestionService with all its real dependencies."""
+    embedding_service = build_embedding_service()
+    vector_store = build_rag_vector_store(embedding_service)
+    text_splitter = build_text_splitter()
     return IngestionService(vector_store=vector_store, text_splitter=text_splitter)
 
 
-def get_rag_service(
-    llm: LlamaCpp = Depends(get_rag_llm),
-    vector_store: Chroma = Depends(get_rag_vector_store),
-    prompt: ChatPromptTemplate = Depends(get_rag_prompt_template),
-) -> RAGServiceProtocol:
+def build_rag_service() -> RAGServiceProtocol:
+    """Constructs the RAGService with all its real dependencies."""
+    llm = build_rag_llm()
+    embedding_service = build_embedding_service()
+    vector_store = build_rag_vector_store(embedding_service)
+    prompt = build_rag_prompt_template()
     return RAGService(llm=llm, vector_store=vector_store, prompt=prompt)
+
+
+# --- FastAPI Dependency Providers ---
+
+
+def get_ingestion_service() -> IngestionServiceProtocol:
+    """FastAPI dependency provider for the IngestionService."""
+    return build_ingestion_service()
+
+
+def get_rag_service() -> RAGServiceProtocol:
+    """FastAPI dependency provider for the RAGService."""
+    return build_rag_service()

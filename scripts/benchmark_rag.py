@@ -1,7 +1,13 @@
 """
-A simple script to measure the performance of the RAG pipeline.
+A dedicated script for benchmarking the performance of the ProVAI RAG engine.
 
-python -m scripts.benchmark_rag --doc_path "/path/to/doc" --query "What's the topic?"
+This script runs the full ingestion and querying pipeline and measures key
+performance indicators: latency, memory usage, and throughput.
+
+Example:
+    python -m scripts.benchmark_rag \\
+        --doc-path "sample_data/scipy-lectures.pdf" \\
+        --query "What is NumPy?"
 """
 
 import argparse
@@ -12,110 +18,104 @@ from pathlib import Path
 import psutil
 from dotenv import load_dotenv
 
-from src.rag.application.services import IngestionService, RAGService
-from src.rag.dependencies import (
-    get_rag_embedding_model,
-    get_rag_llm,
-    get_rag_prompt_template,
-    get_rag_vector_store,
-    get_text_splitter,
-)
+from src.core.modules import import_models
+from src.rag.dependencies import build_ingestion_service, build_rag_service
 
 
 class PerformanceMetrics:
-    """A simple data class to hold our benchmark results."""
+    """A simple data class to hold benchmark results."""
 
-    def __init__(self) -> None:
-        self.ingestion_time_seconds: float = 0.0
-        self.query_latency_seconds: float = 0.0
-        self.peak_ram_usage_mb: float = 0.0
-
-    def __str__(self) -> str:
-        return (
-            f"\n--- Performance Benchmark Results ---\n"
-            f"Document Ingestion Time: {self.ingestion_time_seconds:.2f} seconds\n"
-            f"RAG Query Latency:       {self.query_latency_seconds:.2f} seconds\n"
-            f"Peak RAM Usage:          {self.peak_ram_usage_mb:.2f} MB\n"
-            f"-------------------------------------\n"
-        )
+    ingestion_time_s: float = 0.0
+    peak_ram_ingestion_mb: float = 0.0
+    query_latency_s: float = 0.0
+    peak_ram_query_mb: float = 0.0
+    tokens_per_second: float = 0.0
+    final_answer: str = ""
 
 
 def get_ram_usage_mb() -> float:
-    """Returns the current RAM usage of the process in MB."""
+    """Returns the current process's RAM usage in MB."""
     process = psutil.Process()
-    memory_info: float = process.memory_info().rss / 1024**2
-
-    return memory_info
+    return process.memory_info().rss / 1024**2
 
 
-def main(doc_path: Path, query: str) -> None:
-    """
-    Runs the full ingestion and RAG pipeline and measures performance.
-    """
-    # Configure logging to print to the console
-    logging.basicConfig(level=logging.INFO)
-
-    load_dotenv()
-
+def run_benchmark(doc_path: Path, query: str) -> PerformanceMetrics:
+    """Runs the full pipeline and returns the performance metrics."""
     metrics = PerformanceMetrics()
-    print("Initializing services...")
 
-    embedding_model = get_rag_embedding_model()
-    llm = get_rag_llm()
-    prompt = get_rag_prompt_template()
-    text_splitter = get_text_splitter()
-    vector_store = get_rag_vector_store(embedding_model)
-
-    ingestion_service = IngestionService(vector_store, text_splitter)
-    rag_service = RAGService(llm, vector_store, prompt)
-    print("Services initialized.")
-
-    print("\n--- Running Warm-up Query (to load models) ---")
-
-    # The first call will be slow as models are loaded into memory.
-    _ = rag_service.answer_query("Warm-up query", chat_id=0)
-    print("Models are now loaded into memory.")
-
-    print(f"\n--- Benchmarking Ingestion for '{doc_path.name}' ---")
-    try:
-        pdf_bytes = doc_path.read_bytes()
-    except FileNotFoundError:
-        print(f"Error: The document at '{doc_path}' was not found.")
-        return
-
-    start_time = time.time()
+    # Ingestion
+    start_ram = get_ram_usage_mb()
+    start_time = time.monotonic()
+    ingestion_service = build_ingestion_service()
+    pdf_bytes = doc_path.read_bytes()
     ingestion_service.ingest_document(
         file_bytes=pdf_bytes, file_name=doc_path.name, chat_id=1
     )
-    metrics.ingestion_time_seconds = time.time() - start_time
-    print("Ingestion complete.")
 
-    print("\n--- Benchmarking RAG Query ---")
-    print(f"Query: '{query}'")
+    metrics.ingestion_time_s = time.monotonic() - start_time
+    end_ram_ingest = get_ram_usage_mb()
+    metrics.peak_ram_ingestion_mb = end_ram_ingest - start_ram
 
-    start_time = time.time()
-    answer = rag_service.answer_query(query, chat_id=1)
-    metrics.query_latency_seconds = time.time() - start_time
-    print(f"Answer: {answer}")
+    # Querying
+    print("\n--- Initializing RAG Service ---")
+    start_ram = get_ram_usage_mb()
+    rag_service = build_rag_service()
 
-    metrics.peak_ram_usage_mb = get_ram_usage_mb()
-    print(metrics)
+    # This loads the model and builds the initial KV cache.
+    _ = rag_service.answer_query("Warm-up query.", chat_id=1)
+    print("Warm-up complete")
+
+    # Now, we time the second query, which will be much faster.
+    print("\n--- Running Timed Benchmark Query ---")
+    start_time = time.monotonic()
+    metrics.final_answer = rag_service.answer_query(query, chat_id=1)
+    metrics.query_latency_s = time.monotonic() - start_time
+
+    end_ram_query = get_ram_usage_mb()
+    metrics.peak_ram_query_mb = end_ram_query - start_ram
+
+    # Use the LangChain wrapper's built-in method to count tokens reliably.
+    generated_tokens = rag_service.llm.get_num_tokens(metrics.final_answer)
+
+    if metrics.query_latency_s > 0:
+        metrics.tokens_per_second = generated_tokens / metrics.query_latency_s
+
+    return metrics
+
+
+def main(doc_path: Path, query: str) -> None:
+    """Main function to run the benchmark and print results."""
+    load_dotenv()
+    logging.basicConfig(level=logging.INFO)
+    import_models()
+    print("--- ProVAI Performance Benchmark ---")
+
+    try:
+        metrics = run_benchmark(doc_path, query)
+
+        print("\n--- Generated Answer ---")
+        print(metrics.final_answer)
+
+        print("\n--- Benchmark Results ---")
+        print(f"{'Metric':<25} | {'Result':<15}")
+        print(f"{'-' * 25} | {'-' * 15}")
+        print(f"{'Ingestion Time (s)':<25} | {metrics.ingestion_time_s:<15.2f}")
+        print(
+            f"{'Peak RAM (Ingestion, MB)':<25} | {metrics.peak_ram_ingestion_mb:<15.2f}"
+        )
+        print(f"{'Query Latency (s)':<25} | {metrics.query_latency_s:<15.2f}")
+        print(f"{'Peak RAM (Query, MB)':<25} | {metrics.peak_ram_query_mb:<15.2f}")
+        print(f"{'Tokens per Second':<25} | {metrics.tokens_per_second:<15.2f}")
+        print("-" * 43)
+
+    except Exception as e:
+        print(f"\n❌ An error occurred during benchmark: {e}")
+        raise e
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Benchmark the ProVAI RAG pipeline.")
-    parser.add_argument(
-        "--doc-path",
-        type=Path,
-        required=True,
-        help="Path to the PDF document to ingest.",
-    )
-    parser.add_argument(
-        "--query",
-        type=str,
-        required=True,
-        help="The query to ask the RAG pipeline.",
-    )
+    parser = argparse.ArgumentParser(description="Benchmark the ProVAI RAG engine.")
+    parser.add_argument("--doc-path", type=Path, required=True)
+    parser.add_argument("--query", type=str, required=True)
     args = parser.parse_args()
-
     main(args.doc_path, args.query)
