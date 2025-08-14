@@ -58,10 +58,15 @@ def main(doc_path: Path, query: str) -> None:
     history_service = HistoryService(history_repo=history_repo)
     print("Services initialized.")
 
-    # In a real app, this would come from the authenticated user and their chat.
+    # In a real app, you would look up an existing session or create one.
+    # For the demo, we'll create a new one every time.
     DUMMY_CHAT_ID = 1
     DUMMY_USER_ID = 1
-    print(f"Using dummy context: chat_id={DUMMY_CHAT_ID}, user_id={DUMMY_USER_ID}")
+    print("Creating a new session for this demo...")
+    session = history_service.get_or_create_session(
+        chat_id=DUMMY_CHAT_ID, user_id=DUMMY_USER_ID
+    )
+    print(f"Using Session ID: {session.id}")
 
     try:
         print(f"\n--- Ingesting Document: '{doc_path.name}' ---")
@@ -78,10 +83,9 @@ def main(doc_path: Path, query: str) -> None:
 
         print("\n--- Logging interaction to history ---")
         history_service.log_interaction(
-            chat_id=DUMMY_CHAT_ID,
-            user_id=DUMMY_USER_ID,
-            query=query,
-            response=answer,
+            session_id=session.id,
+            user_query=query,
+            assistant_response=answer,
         )
         print("Interaction logged successfully.")
 
