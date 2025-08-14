@@ -1,0 +1,12 @@
+# This file is the single source of truth for all supported Language Models.
+default: phi-2
+
+mistral_7b:
+  name: "Mistral-7B-Instruct-v0.2-GGUF"
+  repo_id: "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
+  filename: "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+
+phi-2:
+  name: "Phi-2-GGUF"
+  repo_id: "TheBloke/phi-2-GGUF"
+  filename: "phi-2.Q4_K_M.gguf"

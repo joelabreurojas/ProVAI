@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: uv pip install --system --requirements ./pyproject.toml --extra dev
 
-      - name: Run lint, type-check and tests with tox
+      - name: Run lint, type-check and tests in parallel
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        run: tox
+        run: tox -p

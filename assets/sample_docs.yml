@@ -1,0 +1,6 @@
+# This file is the single source of truth for all sample documents.
+default: scipy_lectures
+
+scipy_lectures:
+  name: "scipy-lectures.pdf"
+  url: "https://scipy-lectures.org/_downloads/ScipyLectures-simple.pdf"

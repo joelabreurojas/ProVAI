@@ -1,5 +1,6 @@
 import os
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -46,3 +47,19 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)
     del app.dependency_overrides[get_db]
+
+
+@pytest.fixture
+def dummy_model_path(tmp_path: Path) -> Generator[Path, None, None]:
+    """
+    Creates a dummy, empty model file in a temporary directory for tests
+    that need a model file to exist, but don't need to load it.
+    """
+    assets_dir = tmp_path / "assets"
+    assets_dir.mkdir()
+    models_dir = assets_dir / "models"
+    models_dir.mkdir()
+    dummy_file = models_dir / "dummy-model.gguf"
+    dummy_file.touch()
+
+    yield dummy_file
