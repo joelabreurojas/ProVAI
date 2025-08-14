@@ -5,8 +5,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from src.chat.dependencies import get_content_repository
 from src.rag.application.prompts import get_rag_prompt
-from src.rag.application.protocols.service_protocol import (
+from src.rag.application.protocols import (
+    ContentRepositoryProtocol,
     IngestionServiceProtocol,
     RAGServiceProtocol,
 )
@@ -44,8 +46,13 @@ def get_text_splitter() -> RecursiveCharacterTextSplitter:
 def get_ingestion_service(
     vector_store: Chroma = Depends(get_rag_vector_store),
     text_splitter: RecursiveCharacterTextSplitter = Depends(get_text_splitter),
+    content_repo: ContentRepositoryProtocol = Depends(get_content_repository),
 ) -> IngestionServiceProtocol:
-    return IngestionService(vector_store=vector_store, text_splitter=text_splitter)
+    return IngestionService(
+        vector_store=vector_store,
+        text_splitter=text_splitter,
+        content_repo=content_repo,
+    )
 
 
 def get_rag_service(
