@@ -1,46 +1,39 @@
 # ADR-007: Establish MVP RAG Performance Baseline
 
 - **Status:** Accepted
-- **Date:** 2025-07-30
-- **Authors:** Joel Abreu Rojas
+- **Date:** 2025-08-14
+- **Authors:** ProVAI Team
 
 ---
 
 ## Context and Problem Statement
 
-As we prepare to develop more advanced RAG features, it is critical to have a formal, quantitative baseline of the MVP's performance. Without this baseline, we cannot make data-driven decisions about whether future optimizations are a net benefit.
-
-This ADR formally records the initial performance of the "Crawl" phase RAG engine.
+With the "headless" RAG engine for the MVP now feature-complete and fully debugged, it is critical to establish a formal, quantitative performance baseline. This baseline will serve as the "control group" against which all future optimizations.
 
 ---
 
 ## Decision Outcome
 
-We have created a repeatable benchmarking script at `scripts/benchmark_rag.py`. We have executed this script on our target hardware (CPU-only, 8GB RAM) using a representative test document to establish the official MVP performance baseline.
+We have executed our repeatable benchmarking script (`scripts/benchmark_rag.py`) on our target hardware to establish the official MVP performance baseline.
 
-All future architectural changes to the RAG pipeline must be benchmarked using this script and compared against this baseline.
+The results clearly indicate significant performance bottlenecks in ingestion time, query latency, and memory usage. These metrics strongly justify prioritizing performance optimization tasks (such as model upgrades and pipeline improvements) in the next phase of development.
 
 ### Recorded MVP Baseline
 
-- **Test Document:** `clean_coder.pdf`
-- **Document Size:** 113 Chunks
-- **Hardware:** Ubuntu 22.04 (WSL2), 4-core, 6GB RAM limit
+-   **LLM:** `phi-2.Q4_K_M.gguf`
+-   **Embedding Model:** `bge-small-en-v1.5`
+-   **Test Document:** `scipy-lectures.pdf` (1255 chunks)
+-   **Hardware:** WSL2 Ubuntu on Windows 11, Intel i5-7500 (4 cores), 6GB RAM limit
 
-| Metric                  | Result         |
-| :---------------------- | :------------- |
-| Document Ingestion Time | 9.94 seconds   |
-| RAG Query Latency       | 30.85 seconds  |
-| Peak RAM Usage          | 3.90 GB        |
+| Metric                  | Result          |
+| :---------------------- | :-------------- |
+| Document Ingestion Time | 182.18 seconds  |
+| RAG Query Latency       | 104.14 seconds  |
+| Peak RAM Usage          | 4376.99 MB      |
 
 ---
 
 ## Consequences
 
-### Positive Consequences
-
-- We now have a clear, objective benchmark to measure all future RAG improvements against.
-- This enforces engineering discipline and ensures that we evaluate the performance trade-offs of any new feature we add.
-
-### Negative Consequences
-
-- None. This is a purely additive process that improves our engineering rigor.
+-   We now have a clear, objective, and data-driven benchmark to measure all future RAG improvements against.
+-   The data provides a strong mandate to focus on reducing memory footprint and latency as the highest priority.
