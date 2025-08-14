@@ -1,4 +1,11 @@
-from .repository_protocol import HistoryRepositoryProtocol
+from .repository_protocol import (
+    ContentRepositoryProtocol,
+    HistoryRepositoryProtocol,
+)
 from .service_protocol import HistoryServiceProtocol
 
-__all__ = ["HistoryRepositoryProtocol", "HistoryServiceProtocol"]
+__all__ = [
+    "ContentRepositoryProtocol",
+    "HistoryRepositoryProtocol",
+    "HistoryServiceProtocol",
+]
