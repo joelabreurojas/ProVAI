@@ -1,15 +1,13 @@
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from src.chat.domain.models import SessionHistory
+    from src.chat.domain.models import Message, Session  # Use new models
 
 
 @runtime_checkable
 class HistoryServiceProtocol(Protocol):
-    """Defines the contract for the main chat history service."""
-
+    def get_or_create_session(self, chat_id: int, user_id: int) -> "Session": ...
     def log_interaction(
-        self, chat_id: int, user_id: int, query: str, response: str
+        self, session_id: int, user_query: str, assistant_response: str
     ) -> None: ...
-
-    def get_history(self, chat_id: int) -> list["SessionHistory"]: ...
+    def get_history(self, session_id: int) -> list["Message"]: ...
