@@ -4,11 +4,14 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.chat.domain.models.links import chat_document_link
 from src.core.infrastructure.database import Base
 
 if TYPE_CHECKING:
-    from src.auth.domain.models import User
-    from src.chat.domain.models import ChatMember, Document, SessionHistory
+    from src.auth.domain.models.chat_member import ChatMember
+    from src.auth.domain.models.user import User
+    from src.chat.domain.models.document import Document
+    from src.chat.domain.models.session import Session
 
 
 class Chat(Base):
@@ -26,10 +29,10 @@ class Chat(Base):
         default=datetime.datetime.utcnow
     )
 
-    # SQLAlchemy will resolve the string "User" to the User class in the `auth` module.
     owner: Mapped["User"] = relationship(back_populates="chats")
 
-    # Relationships to other models within this `chat` domain.
-    documents: Mapped[list["Document"]] = relationship(back_populates="chat")
     members: Mapped[list["ChatMember"]] = relationship(back_populates="chat")
-    history: Mapped[list["SessionHistory"]] = relationship(back_populates="chat")
+    documents: Mapped[list["Document"]] = relationship(
+        secondary=chat_document_link, back_populates="chats"
+    )
+    sessions: Mapped[list["Session"]] = relationship(back_populates="chat")
