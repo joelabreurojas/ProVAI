@@ -1,10 +1,8 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from src.rag.application.exceptions.model_errors import (
-    ModelLoadError,
-    ModelNotFoundError,
-)
+from src.core.application.services.asset_service import AssetConfig
+from src.rag.application.exceptions import ModelLoadError, ModelNotFoundError
 from src.rag.infrastructure import model_loader
 
 
@@ -33,8 +31,17 @@ def test_get_llm_raises_model_load_error_on_library_failure(
     Tests that get_llm correctly wraps a generic exception from the LlamaCpp
     library into our custom ModelLoadError.
     """
+    mocker.patch("pathlib.Path.exists", return_value=True)
+
     mock_llamacpp = mocker.patch("src.rag.infrastructure.model_loader.LlamaCpp")
-    mock_llamacpp.side_effect = Exception("Mocked LlamaCpp loading error")
+    mock_llamacpp.side_effect = Exception("Mocked LlamaCpp hardware failure")
+
+    mock_asset_manager = mocker.patch(
+        "src.rag.infrastructure.model_loader.get_asset_manager_service"
+    )
+    mock_asset_manager.return_value.get_llm_config.return_value = AssetConfig(
+        name="dummy", filename="dummy.gguf"
+    )
 
     model_loader.get_llm.cache_clear()
 
