@@ -1,63 +1,81 @@
+import hashlib
 import logging
 import tempfile
 
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_core.documents import Document
+from langchain_core.documents import Document as LangChainDocument
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langsmith import traceable
 
+from src.chat.application.protocols import ContentRepositoryProtocol
 from src.rag.application.protocols import IngestionServiceProtocol
 
 logger = logging.getLogger(__name__)
 
 
 class IngestionService(IngestionServiceProtocol):
-    """Orchestrates the document ingestion pipeline."""
-
     def __init__(
         self,
         vector_store: Chroma,
         text_splitter: RecursiveCharacterTextSplitter,
+        content_repo: ContentRepositoryProtocol,
     ):
         self.vector_store = vector_store
         self.text_splitter = text_splitter
+        self.content_repo = content_repo
 
-    @traceable(name="Ingest Pipeline")
     def ingest_document(self, file_bytes: bytes, file_name: str, chat_id: int) -> None:
-        """Processes a single PDF document and stores it in the vector store."""
-        documents = self._load_pdf_from_bytes(file_bytes)
-        chunks = self._split_documents(documents)
-
-        for chunk in chunks:
-            chunk.metadata["chat_id"] = chat_id
-            chunk.metadata["source"] = file_name
-
-        self._store_chunks(chunks)
-        logger.info(
-            f"Ingested '{file_name}' into {len(chunks)} chunks for chat_id {chat_id}."
+        """
+        Processes a PDF, creating relational records for documents and chunks,
+        and storing embeddings in the vector store. This process is idempotent.
+        """
+        db_document = self.content_repo.create_document(
+            file_name=file_name, chat_id=chat_id
         )
 
-    @traceable
-    def _load_pdf_from_bytes(self, file_bytes: bytes) -> list[Document]:
-        """Loads a PDF from in-memory bytes by writing to a temporary file."""
-        with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as temp_file:
+        langchain_docs = self._load_pdf_from_bytes(file_bytes)
+        chunks = self._split_documents(langchain_docs)
+
+        chunks_to_add_to_vector_store = []
+        chunk_ids_for_vector_store = []
+
+        for chunk_doc in chunks:
+            chunk_content = chunk_doc.page_content
+            content_hash = hashlib.sha256(chunk_content.encode("utf-8")).hexdigest()
+
+            db_chunk = self.content_repo.get_chunk_by_hash(content_hash)
+
+            if not db_chunk:
+                db_chunk = self.content_repo.create_chunk(content_hash=content_hash)
+                chunks_to_add_to_vector_store.append(chunk_content)
+                chunk_ids_for_vector_store.append(content_hash)
+
+            self.content_repo.link_chunk_to_document(db_document, db_chunk)
+
+        if chunks_to_add_to_vector_store:
+            self.vector_store.add_texts(
+                texts=chunks_to_add_to_vector_store, ids=chunk_ids_for_vector_store
+            )
+
+        logger.info(
+            f"Successfully ingested '{file_name}' for chat_id {chat_id}. "
+            f"Added {len(chunks_to_add_to_vector_store)} new unique chunks "
+            "to the vector store."
+        )
+
+    def _load_pdf_from_bytes(self, file_bytes: bytes) -> list[LangChainDocument]:
+        """Loads a PDF from raw bytes and extracts its text."""
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
             temp_file.write(file_bytes)
-            temp_file.flush()  # Ensure all bytes are written to disk
+            temp_file_path = temp_file.name
 
-            loader = PyPDFLoader(file_path=temp_file.name)
-            documents: list[Document] = loader.load()
+        loader = PyPDFLoader(temp_file_path)
+        documents = loader.load()
 
-            return documents
+        return documents
 
-    @traceable
-    def _split_documents(self, documents: list[Document]) -> list[Document]:
-        """Splits loaded documents into smaller chunks."""
-        chunks: list[Document] = self.text_splitter.split_documents(documents)
-
-        return chunks
-
-    @traceable
-    def _store_chunks(self, chunks: list[Document]) -> None:
-        """Stores the document chunks in the Chroma vector store."""
-        self.vector_store.add_documents(chunks)
+    def _split_documents(
+        self, documents: list[LangChainDocument]
+    ) -> list[LangChainDocument]:
+        """Splits a list of LangChain Documents into smaller chunks."""
+        return self.text_splitter.split_documents(documents)

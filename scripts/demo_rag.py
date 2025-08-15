@@ -1,7 +1,7 @@
 """
 A headless script to run a full, end-to-end test of the ProVAI RAG engine.
 
-python -m scripts.demo_rag --doc-path "sample_data/doc" --query ""
+python -m scripts.demo_rag --doc-path "sample_data/[doc]" --query ""
 
 This script is an invaluable tool for debugging and demonstration before the UI
 is fully implemented. It simulates the core workflow of ingestion and querying.
@@ -15,7 +15,10 @@ from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.chat.application.services import HistoryService
-from src.chat.infrastructure.repositories import SQLAlchemyHistoryRepository
+from src.chat.infrastructure.repositories import (
+    SQLAlchemyContentRepository,
+    SQLAlchemyHistoryRepository,
+)
 from src.core.infrastructure.database import SessionLocal
 from src.core.modules import import_models
 from src.rag.application.prompts import get_rag_prompt
@@ -39,7 +42,7 @@ def main(doc_path: Path, query: str) -> None:
     print("Initializing services...")
     db = SessionLocal()
 
-    # Build low-level components by calling their providers or constructors.
+    # Build low-level components
     embedding_model = get_embedding_model()
     llm = get_llm()
     prompt = get_rag_prompt()
@@ -48,11 +51,15 @@ def main(doc_path: Path, query: str) -> None:
         chunk_size=300, chunk_overlap=0, encoding_name="cl100k_base"
     )
 
+    # Build high-level components
+    content_repo = SQLAlchemyContentRepository(db)
     history_repo = SQLAlchemyHistoryRepository(db)
 
-    # Manually construct the high-level application services with their dependencies.
+    # Manually construct the high-level application services
     ingestion_service = IngestionService(
-        vector_store=vector_store, text_splitter=text_splitter
+        vector_store=vector_store,
+        text_splitter=text_splitter,
+        content_repo=content_repo,
     )
     rag_service = RAGService(llm=llm, vector_store=vector_store, prompt=prompt)
     history_service = HistoryService(history_repo=history_repo)

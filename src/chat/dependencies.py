@@ -2,11 +2,15 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from src.chat.application.protocols import (
+    ContentRepositoryProtocol,
     HistoryRepositoryProtocol,
     HistoryServiceProtocol,
 )
 from src.chat.application.services import HistoryService
-from src.chat.infrastructure.repositories import SQLAlchemyHistoryRepository
+from src.chat.infrastructure.repositories import (
+    SQLAlchemyContentRepository,
+    SQLAlchemyHistoryRepository,
+)
 from src.core.infrastructure.database import get_db
 
 
@@ -16,6 +20,10 @@ def get_history_repository(db: Session = Depends(get_db)) -> HistoryRepositoryPr
 
 
 # --- Service Assembler for Chat ---
+def get_content_repository(db: Session = Depends(get_db)) -> ContentRepositoryProtocol:
+    return SQLAlchemyContentRepository(db)
+
+
 def get_history_service(
     history_repo: HistoryRepositoryProtocol = Depends(get_history_repository),
 ) -> HistoryServiceProtocol:
