@@ -27,8 +27,8 @@ class SQLAlchemyContentRepository(ContentRepositoryProtocol):
     def get_chunk_by_hash(self, content_hash: str) -> Chunk | None:
         return self.db.query(Chunk).filter_by(content_hash=content_hash).first()
 
-    def create_chunk(self, content_hash: str, content: str) -> Chunk:
-        db_chunk = Chunk(content_hash=content_hash, content=content)
+    def create_chunk(self, content_hash: str) -> Chunk:
+        db_chunk = Chunk(content_hash=content_hash)
         self.db.add(db_chunk)
         # We can commit here or do it in a batch later
         self.db.commit()
