@@ -46,9 +46,7 @@ class IngestionService(IngestionServiceProtocol):
             db_chunk = self.content_repo.get_chunk_by_hash(content_hash)
 
             if not db_chunk:
-                db_chunk = self.content_repo.create_chunk(
-                    content_hash=content_hash, content=chunk_content
-                )
+                db_chunk = self.content_repo.create_chunk(content_hash=content_hash)
                 chunks_to_add_to_vector_store.append(chunk_content)
                 chunk_ids_for_vector_store.append(content_hash)
 

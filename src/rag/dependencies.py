@@ -5,10 +5,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from src.chat.application.protocols import ContentRepositoryProtocol
 from src.chat.dependencies import get_content_repository
 from src.rag.application.prompts import get_rag_prompt
 from src.rag.application.protocols import (
-    ContentRepositoryProtocol,
     IngestionServiceProtocol,
     RAGServiceProtocol,
 )
