@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as SQLAlchemySession
 
 from src.auth.application.protocols import (
     AuthServiceProtocol,
@@ -7,17 +7,16 @@ from src.auth.application.protocols import (
     TokenServiceProtocol,
     UserRepositoryProtocol,
 )
-from src.auth.application.services.auth_service import AuthService
-from src.auth.infrastructure.repositories.user_repository import (
-    SQLAlchemyUserRepository,
-)
-from src.auth.infrastructure.security.password_service import PasswordService
-from src.auth.infrastructure.security.token_service import TokenService
+from src.auth.application.services import AuthService
+from src.auth.infrastructure.repositories import SQLAlchemyUserRepository
+from src.auth.infrastructure.security import PasswordService, TokenService
 from src.core.infrastructure.database import get_db
 
 
-# --- Protocol Implementations for Auth ---
-def get_user_repository(db: Session = Depends(get_db)) -> UserRepositoryProtocol:
+# --- Protocol Implementations ---
+def get_user_repository(
+    db: SQLAlchemySession = Depends(get_db),
+) -> UserRepositoryProtocol:
     return SQLAlchemyUserRepository(db)
 
 
@@ -29,7 +28,7 @@ def get_token_service() -> TokenServiceProtocol:
     return TokenService()
 
 
-# --- Service Assembler for Auth ---
+# --- Service Assembler ---
 def get_auth_service(
     user_repo: UserRepositoryProtocol = Depends(get_user_repository),
     password_svc: PasswordServiceProtocol = Depends(get_password_service),
