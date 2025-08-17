@@ -9,6 +9,7 @@ from langchain_core.runnables import Runnable, RunnableParallel, RunnablePassthr
 from langchain_core.vectorstores import VectorStoreRetriever
 from langsmith import traceable
 
+from src.chat.application.protocols import ChatRepositoryProtocol
 from src.rag.application.protocols import RAGServiceProtocol
 
 logger = logging.getLogger(__name__)
@@ -29,10 +30,12 @@ class RAGService(RAGServiceProtocol):
         llm: LlamaCpp,
         vector_store: Chroma,
         prompt: ChatPromptTemplate,
+        chat_repo: ChatRepositoryProtocol,
     ):
         self.llm = llm
         self.vector_store = vector_store
         self.prompt = prompt
+        self.chat_repo = chat_repo
 
     @traceable(name="Answer Pipeline")
     def answer_query(self, query: str, chat_id: int) -> str:
@@ -40,11 +43,20 @@ class RAGService(RAGServiceProtocol):
         Takes a user query and chat_id, runs the full RAG pipeline with
         filtering, and returns the answer.
         """
+        valid_chunk_hashes = self.chat_repo.get_chunk_hashes_for_chat(chat_id)
+        if not valid_chunk_hashes:
+            return "No documents in this chat. Please upload a document."
+
         retriever = self.vector_store.as_retriever(
-            search_kwargs={"k": 4, "filter": {"chat_id": chat_id}}
+            search_kwargs={
+                "k": 4,
+                "filter": {"content_hash": {"$in": valid_chunk_hashes}},
+            }
         )
+
         rag_chain = self._build_rag_chain(retriever)
         answer: str = rag_chain.invoke(query)
+
         return answer
 
     def _build_rag_chain(self, retriever: VectorStoreRetriever) -> Runnable[str, str]:
