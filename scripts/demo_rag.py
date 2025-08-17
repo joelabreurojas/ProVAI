@@ -1,10 +1,11 @@
 """
 A headless script to run a full, end-to-end test of the ProVAI RAG engine.
 
-python -m scripts.demo_rag --doc-path "sample_data/[doc]" --query ""
+This is an invaluable tool for debugging and demonstration before the UI is
+fully implemented. It simulates the core workflow of ingestion and querying.
 
-This script is an invaluable tool for debugging and demonstration before the UI
-is fully implemented. It simulates the core workflow of ingestion and querying.
+Example:
+python -m scripts.demo_rag --doc-path "" --query ""
 """
 
 import argparse
@@ -14,10 +15,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from src.chat.application.services import HistoryService
+from src.chat.application.services import SessionService
 from src.chat.infrastructure.repositories import (
-    SQLAlchemyContentRepository,
-    SQLAlchemyHistoryRepository,
+    SQLAlchemyChatRepository,
+    SQLAlchemySessionRepository,
 )
 from src.core.infrastructure.database import SessionLocal
 from src.core.modules import import_models
@@ -25,57 +26,64 @@ from src.rag.application.prompts import get_rag_prompt
 from src.rag.application.services.ingestion_service import IngestionService
 from src.rag.application.services.rag_service import RAGService
 from src.rag.infrastructure.model_loader import get_embedding_model, get_llm
+from src.rag.infrastructure.repositories import (
+    SQLAlchemyChunkRepository,
+    SQLAlchemyDocumentRepository,
+)
 from src.rag.infrastructure.vector_store import get_vector_store
 
 
 def main(doc_path: Path, query: str) -> None:
     """Runs a full, end-to-end test of the headless RAG pipeline."""
-
-    # See output from services.
-    logging.basicConfig(level=logging.INFO)
-
     load_dotenv()
+    logging.basicConfig(level=logging.INFO)
     import_models()
-
     print("--- ProVAI Headless Demo ---")
 
     print("Initializing services...")
     db = SessionLocal()
 
-    # Build low-level components
-    embedding_model = get_embedding_model()
-    llm = get_llm()
-    prompt = get_rag_prompt()
-    vector_store = get_vector_store(embedding_model)
-    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-        chunk_size=300, chunk_overlap=0, encoding_name="cl100k_base"
-    )
-
-    # Build high-level components
-    content_repo = SQLAlchemyContentRepository(db)
-    history_repo = SQLAlchemyHistoryRepository(db)
-
-    # Manually construct the high-level application services
-    ingestion_service = IngestionService(
-        vector_store=vector_store,
-        text_splitter=text_splitter,
-        content_repo=content_repo,
-    )
-    rag_service = RAGService(llm=llm, vector_store=vector_store, prompt=prompt)
-    history_service = HistoryService(history_repo=history_repo)
-    print("Services initialized.")
-
-    # In a real app, you would look up an existing session or create one.
-    # For the demo, we'll create a new one every time.
-    DUMMY_CHAT_ID = 1
-    DUMMY_USER_ID = 1
-    print("Creating a new session for this demo...")
-    session = history_service.get_or_create_session(
-        chat_id=DUMMY_CHAT_ID, user_id=DUMMY_USER_ID
-    )
-    print(f"Using Session ID: {session.id}")
-
     try:
+        embedding_model = get_embedding_model()
+        llm = get_llm()
+        prompt = get_rag_prompt()
+        vector_store = get_vector_store(embedding_model)
+        text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+            chunk_size=300, chunk_overlap=0, encoding_name="cl100k_base"
+        )
+
+        doc_repo = SQLAlchemyDocumentRepository(db)
+        chunk_repo = SQLAlchemyChunkRepository(db)
+        chat_repo = SQLAlchemyChatRepository(db)
+        session_repo = SQLAlchemySessionRepository(db)
+
+        session_service = SessionService(session_repo)
+        ingestion_service = IngestionService(
+            db=db,
+            vector_store=vector_store,
+            text_splitter=text_splitter,
+            doc_repo=doc_repo,
+            chunk_repo=chunk_repo,
+            chat_repo=chat_repo,
+        )
+        rag_service = RAGService(
+            llm=llm,
+            vector_store=vector_store,
+            prompt=prompt,
+            chat_repo=chat_repo,
+        )
+        print("Services initialized.")
+
+        # In a real app, this would come from the authenticated user.
+        DUMMY_CHAT_ID = 1
+        DUMMY_USER_ID = 1
+
+        print("Creating a new session for this demo...")
+        session = session_service.get_or_create_session(
+            chat_id=DUMMY_CHAT_ID, user_id=DUMMY_USER_ID
+        )
+        print(f"Using Session ID: {session.id}")
+
         print(f"\n--- Ingesting Document: '{doc_path.name}' ---")
         pdf_bytes = doc_path.read_bytes()
         ingestion_service.ingest_document(
@@ -86,10 +94,10 @@ def main(doc_path: Path, query: str) -> None:
         print("\n--- Querying RAG Engine ---")
         print(f"Query: '{query}'")
         answer = rag_service.answer_query(query, chat_id=DUMMY_CHAT_ID)
-        print(f"\nAnswer: {answer.strip()}")
+        print(f"\nAnswer: {answer}")
 
         print("\n--- Logging interaction to history ---")
-        history_service.log_interaction(
+        session_service.log_interaction(
             session_id=session.id,
             user_query=query,
             assistant_response=answer,
@@ -98,10 +106,8 @@ def main(doc_path: Path, query: str) -> None:
 
     except FileNotFoundError:
         print(f"Error: The document at '{doc_path}' was not found.")
-
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-        # Re-raise for debugging purposes if needed
         raise e
     finally:
         db.close()
