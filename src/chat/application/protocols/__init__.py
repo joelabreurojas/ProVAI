@@ -1,11 +1,9 @@
-from .repository_protocol import (
-    ContentRepositoryProtocol,
-    HistoryRepositoryProtocol,
-)
-from .service_protocol import HistoryServiceProtocol
+from .chat_repository_protocol import ChatRepositoryProtocol
+from .session_repository_protocol import SessionRepositoryProtocol
+from .session_service_protocol import SessionServiceProtocol
 
 __all__ = [
-    "ContentRepositoryProtocol",
-    "HistoryRepositoryProtocol",
-    "HistoryServiceProtocol",
+    "ChatRepositoryProtocol",
+    "SessionRepositoryProtocol",
+    "SessionServiceProtocol",
 ]
