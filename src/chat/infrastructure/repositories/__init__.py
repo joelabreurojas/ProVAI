@@ -1,4 +1,7 @@
-from .content_repository import SQLAlchemyContentRepository
-from .history_repository import SQLAlchemyHistoryRepository
+from .chat_repository import SQLAlchemyChatRepository
+from .session_repository import SQLAlchemySessionRepository
 
-__all__ = ["SQLAlchemyContentRepository", "SQLAlchemyHistoryRepository"]
+__all__ = [
+    "SQLAlchemyChatRepository",
+    "SQLAlchemySessionRepository",
+]
