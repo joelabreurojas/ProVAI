@@ -1,30 +1,34 @@
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as SQLAlchemySession
 
 from src.chat.application.protocols import (
-    ContentRepositoryProtocol,
-    HistoryRepositoryProtocol,
-    HistoryServiceProtocol,
+    ChatRepositoryProtocol,
+    SessionRepositoryProtocol,
+    SessionServiceProtocol,
 )
-from src.chat.application.services import HistoryService
+from src.chat.application.services import SessionService
 from src.chat.infrastructure.repositories import (
-    SQLAlchemyContentRepository,
-    SQLAlchemyHistoryRepository,
+    SQLAlchemyChatRepository,
+    SQLAlchemySessionRepository,
 )
 from src.core.infrastructure.database import get_db
 
 
-# --- Protocol Implementations for Chat ---
-def get_history_repository(db: Session = Depends(get_db)) -> HistoryRepositoryProtocol:
-    return SQLAlchemyHistoryRepository(db)
+# --- Protocol Implementations ---
+def get_chat_repository(
+    db: SQLAlchemySession = Depends(get_db),
+) -> ChatRepositoryProtocol:
+    return SQLAlchemyChatRepository(db)
 
 
-# --- Service Assembler for Chat ---
-def get_content_repository(db: Session = Depends(get_db)) -> ContentRepositoryProtocol:
-    return SQLAlchemyContentRepository(db)
+def get_session_repository(
+    db: SQLAlchemySession = Depends(get_db),
+) -> SessionRepositoryProtocol:
+    return SQLAlchemySessionRepository(db)
 
 
-def get_history_service(
-    history_repo: HistoryRepositoryProtocol = Depends(get_history_repository),
-) -> HistoryServiceProtocol:
-    return HistoryService(history_repo=history_repo)
+# --- Service Assemblers ---
+def get_session_service(
+    session_repo: SessionRepositoryProtocol = Depends(get_session_repository),
+) -> SessionServiceProtocol:
+    return SessionService(session_repo=session_repo)
