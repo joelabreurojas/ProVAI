@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.chat.domain.models.links import chat_document_link
 from src.core.infrastructure.database import Base
+from src.rag.domain.models.links import chat_document_link
 
 if TYPE_CHECKING:
     from src.auth.domain.models.chat_member import ChatMember
