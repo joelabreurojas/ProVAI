@@ -5,7 +5,8 @@ This is an invaluable tool for debugging and demonstration before the UI is
 fully implemented. It simulates the core workflow of ingestion and querying.
 
 Example:
-python -m scripts.demo_rag --doc-path "" --query ""
+python -m scripts.demo_rag --doc-path "sample_data/attention_is_all_you_need.pdf" \
+--query "What is a multi-head self-attention mechanism?"
 """
 
 import argparse
@@ -15,7 +16,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from src.ai.application.services import EmbeddingService, LLMService
+from src.auth.domain.models import User
 from src.chat.application.services import SessionService
+from src.chat.domain.models import Chat
 from src.chat.infrastructure.repositories import (
     SQLAlchemyChatRepository,
     SQLAlchemySessionRepository,
@@ -23,9 +27,7 @@ from src.chat.infrastructure.repositories import (
 from src.core.infrastructure.database import SessionLocal
 from src.core.modules import import_models
 from src.rag.application.prompts import get_rag_prompt
-from src.rag.application.services.ingestion_service import IngestionService
-from src.rag.application.services.rag_service import RAGService
-from src.rag.infrastructure.model_loader import get_embedding_model, get_llm
+from src.rag.application.services import IngestionService, RAGService
 from src.rag.infrastructure.repositories import (
     SQLAlchemyChunkRepository,
     SQLAlchemyDocumentRepository,
@@ -38,16 +40,46 @@ def main(doc_path: Path, query: str) -> None:
     load_dotenv()
     logging.basicConfig(level=logging.INFO)
     import_models()
+
     print("--- ProVAI Headless Demo ---")
 
-    print("Initializing services...")
     db = SessionLocal()
 
     try:
-        embedding_model = get_embedding_model()
-        llm = get_llm()
-        prompt = get_rag_prompt()
+        print("--- Seeding database with a dummy Teacher and Chat ---")
+        DUMMY_USER_ID = 1
+        DUMMY_CHAT_ID = 1
+
+        # Check if user already exists to make the script re-runnable
+        teacher_user = db.query(User).filter(User.id == DUMMY_USER_ID).first()
+        if not teacher_user:
+            teacher_user = User(
+                id=DUMMY_USER_ID,
+                name="Demo Teacher",
+                email="teacher@demo.com",
+                hashed_password="fake",
+                role="teacher",
+            )
+            db.add(teacher_user)
+
+        # Check if chat already exists
+        demo_chat = db.query(Chat).filter(Chat.id == DUMMY_CHAT_ID).first()
+        if not demo_chat:
+            demo_chat = Chat(id=DUMMY_CHAT_ID, name="Demo Chat", owner_id=DUMMY_USER_ID)
+            db.add(demo_chat)
+
+        db.commit()
+        print("Seeding complete.")
+
+        print("Initializing services...")
+        llm_service = LLMService()
+        embedding_service = EmbeddingService()
+
+        llm = llm_service.get_llm()
+        embedding_model = embedding_service.get_embedding_model()
+
         vector_store = get_vector_store(embedding_model)
+        prompt = get_rag_prompt()
         text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
             chunk_size=300, chunk_overlap=0, encoding_name="cl100k_base"
         )
@@ -57,7 +89,7 @@ def main(doc_path: Path, query: str) -> None:
         chat_repo = SQLAlchemyChatRepository(db)
         session_repo = SQLAlchemySessionRepository(db)
 
-        session_service = SessionService(session_repo)
+        session_service = SessionService(session_repo=session_repo)
         ingestion_service = IngestionService(
             db=db,
             vector_store=vector_store,
@@ -74,11 +106,7 @@ def main(doc_path: Path, query: str) -> None:
         )
         print("Services initialized.")
 
-        # In a real app, this would come from the authenticated user.
-        DUMMY_CHAT_ID = 1
-        DUMMY_USER_ID = 1
-
-        print("Creating a new session for this demo...")
+        print("\nCreating a new session for this demo...")
         session = session_service.get_or_create_session(
             chat_id=DUMMY_CHAT_ID, user_id=DUMMY_USER_ID
         )
@@ -94,7 +122,7 @@ def main(doc_path: Path, query: str) -> None:
         print("\n--- Querying RAG Engine ---")
         print(f"Query: '{query}'")
         answer = rag_service.answer_query(query, chat_id=DUMMY_CHAT_ID)
-        print(f"\nAnswer: {answer}")
+        print(f"\nAnswer:\n{answer}")
 
         print("\n--- Logging interaction to history ---")
         session_service.log_interaction(

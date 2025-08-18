@@ -1,8 +1,8 @@
 """
 A simple script to measure the performance of the RAG pipeline.
 
-This script seeds the database with necessary records, runs a warm-up query to
-load AI models into memory, then benchmarks the ingestion and query processes.
+This script seeds the database, runs a warm-up query to load AI models,
+and then benchmarks the ingestion and query processes.
 
 Example:
 python -m scripts.benchmark_rag --doc-path "sample_data/attention_is_all_you_need.pdf" \
@@ -16,24 +16,23 @@ from pathlib import Path
 
 import psutil
 from dotenv import load_dotenv
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from src.ai.application.services import EmbeddingService, LLMService
 from src.auth.domain.models import User
 from src.chat.domain.models import Chat
-from src.chat.infrastructure.repositories import SQLAlchemyChatRepository
+from src.chat.infrastructure.repositories import (
+    SQLAlchemyChatRepository,
+)
 from src.core.infrastructure.database import SessionLocal
 from src.core.modules import import_models
+from src.rag.application.prompts import get_rag_prompt
 from src.rag.application.services import IngestionService, RAGService
-from src.rag.dependencies import (
-    get_rag_embedding_model,
-    get_rag_llm,
-    get_rag_prompt_template,
-    get_rag_vector_store,
-    get_text_splitter,
-)
 from src.rag.infrastructure.repositories import (
     SQLAlchemyChunkRepository,
     SQLAlchemyDocumentRepository,
 )
+from src.rag.infrastructure.vector_store import get_vector_store
 
 
 class PerformanceMetrics:
@@ -101,11 +100,17 @@ def main(doc_path: Path, query: str) -> None:
         print("Seeding complete.")
 
         print("\n--- Initializing services ---")
-        embedding_model = get_rag_embedding_model()
-        llm = get_rag_llm()
-        prompt = get_rag_prompt_template()
-        text_splitter = get_text_splitter()
-        vector_store = get_rag_vector_store(embedding_model)
+        llm_service = LLMService()
+        embedding_service = EmbeddingService()
+
+        llm = llm_service.get_llm()
+        embedding_model = embedding_service.get_embedding_model()
+
+        vector_store = get_vector_store(embedding_model)
+        prompt = get_rag_prompt()
+        text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+            chunk_size=300, chunk_overlap=0, encoding_name="cl100k_base"
+        )
 
         doc_repo = SQLAlchemyDocumentRepository(db)
         chunk_repo = SQLAlchemyChunkRepository(db)
@@ -119,29 +124,28 @@ def main(doc_path: Path, query: str) -> None:
             chunk_repo=chunk_repo,
             chat_repo=chat_repo,
         )
-        rag_service = RAGService(llm, vector_store, prompt, chat_repo)
+        rag_service = RAGService(
+            llm=llm, vector_store=vector_store, prompt=prompt, chat_repo=chat_repo
+        )
         print("Services initialized.")
 
         print("\n--- Running Warm-up Query (to load models) ---")
-        # The first call will be slow as models are loaded into memory.
         _ = rag_service.answer_query("Warm-up query", chat_id=0)
         print("Models are now loaded into memory.")
 
         print(f"\n--- Benchmarking Ingestion for '{doc_path.name}' ---")
         pdf_bytes = doc_path.read_bytes()
-
         start_time = time.time()
         ingestion_service.ingest_document(
-            file_bytes=pdf_bytes, file_name=doc_path.name, chat_id=DUMMY_CHAT_ID
+            file_bytes=pdf_bytes, file_name=doc_path.name, chat_id=1
         )
         metrics.ingestion_time_seconds = time.time() - start_time
         print("Ingestion complete.")
 
         print("\n--- Benchmarking RAG Query ---")
         print(f"Query: '{query}'")
-
         start_time = time.time()
-        answer = rag_service.answer_query(query, chat_id=DUMMY_CHAT_ID)
+        answer = rag_service.answer_query(query, chat_id=1)
         metrics.query_latency_seconds = time.time() - start_time
         print(f"Answer: {answer}")
 
