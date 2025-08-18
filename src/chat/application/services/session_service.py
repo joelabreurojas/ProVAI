@@ -1,3 +1,4 @@
+from src.chat.application.exceptions import SessionNotFoundError
 from src.chat.application.protocols import (
     SessionRepositoryProtocol,
     SessionServiceProtocol,
@@ -15,8 +16,13 @@ class SessionService(SessionServiceProtocol):
         self.session_repo = session_repo
 
     def get_or_create_session(self, chat_id: int, user_id: int) -> Session:
-        # This is a placeholder for real logic. In a real app, we
-        # first try to find an active session before creating a new one.
+        latest_session = self.session_repo.get_latest_session(
+            chat_id=chat_id, user_id=user_id
+        )
+
+        if latest_session:
+            return latest_session
+
         return self.session_repo.create_session(chat_id=chat_id, user_id=user_id)
 
     def log_interaction(
@@ -31,6 +37,7 @@ class SessionService(SessionServiceProtocol):
 
     def get_history(self, session_id: int) -> list[Message]:
         session = self.session_repo.get_session_by_id(session_id=session_id)
-        if session:
-            return sorted(session.messages, key=lambda msg: msg.timestamp)
-        return []
+        if not session:
+            raise SessionNotFoundError(session_id=session_id)
+
+        return sorted(session.messages, key=lambda msg: msg.timestamp)
