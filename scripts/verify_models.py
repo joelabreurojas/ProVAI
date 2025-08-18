@@ -13,17 +13,25 @@ from typing import Iterator
 
 from dotenv import load_dotenv
 
-from src.rag.dependencies import get_rag_embedding_model, get_rag_llm
+from src.ai.dependencies import get_embedding_service, get_llm_service
 
 
 def main() -> None:
     """Verifies model loading and basic functionality."""
     load_dotenv()
-
     print("--- Verifying LLM ---")
-    llm = get_rag_llm()
-    prompt = "What is the capital of France?"
 
+    print("Loading LLM...")
+    llm_service = get_llm_service()
+    llm = llm_service.get_llm()
+    print("LLM loaded successfully.")
+
+    print("\nLoading Embedding Model...")
+    embedding_service = get_embedding_service()
+    embedding_model = embedding_service.get_embedding_model()
+    print("Embedding Model loaded successfully.")
+
+    prompt = "What is the capital of France?"
     print(f"Prompt: {prompt}")
 
     # LlamaCpp may log directly
@@ -39,7 +47,6 @@ def main() -> None:
     print("-" * 20)
 
     print("\n--- Verifying Embedding Model ---")
-    embedding_model = get_rag_embedding_model()
     text = "This is a test sentence."
     embedding = embedding_model.embed_query(text)
 

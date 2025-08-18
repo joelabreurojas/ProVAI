@@ -1,11 +1,14 @@
 from fastapi import Depends
 from langchain_chroma import Chroma
-from langchain_community.llms.llamacpp import LlamaCpp
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy.orm import Session as SQLAlchemySession
 
+from src.ai.application.protocols import (
+    EmbeddingServiceProtocol,
+    LLMServiceProtocol,
+)
+from src.ai.dependencies import get_embedding_service, get_llm_service
 from src.chat.application.protocols import ChatRepositoryProtocol
 from src.chat.dependencies import get_chat_repository
 from src.core.infrastructure.database import get_db
@@ -18,7 +21,6 @@ from src.rag.application.protocols import (
     RAGServiceProtocol,
 )
 from src.rag.application.services import DocumentService, IngestionService, RAGService
-from src.rag.infrastructure.model_loader import get_embedding_model, get_llm
 from src.rag.infrastructure.repositories import (
     SQLAlchemyChunkRepository,
     SQLAlchemyDocumentRepository,
@@ -41,17 +43,10 @@ def get_document_repository(
     return doc_repo
 
 
-def get_rag_llm() -> LlamaCpp:
-    return get_llm()
-
-
-def get_rag_embedding_model() -> HuggingFaceEmbeddings:
-    return get_embedding_model()
-
-
 def get_rag_vector_store(
-    embedding_model: HuggingFaceEmbeddings = Depends(get_rag_embedding_model),
+    embedding_service: EmbeddingServiceProtocol = Depends(get_embedding_service),
 ) -> Chroma:
+    embedding_model = embedding_service.get_embedding_model()
     return get_vector_store(embedding_model)
 
 
@@ -99,11 +94,12 @@ def get_ingestion_service(
 
 
 def get_rag_service(
-    llm: LlamaCpp = Depends(get_rag_llm),
+    llm_service: LLMServiceProtocol = Depends(get_llm_service),
     vector_store: Chroma = Depends(get_rag_vector_store),
     prompt: ChatPromptTemplate = Depends(get_rag_prompt_template),
     chat_repo: ChatRepositoryProtocol = Depends(get_chat_repository),
 ) -> RAGServiceProtocol:
+    llm = llm_service.get_llm()
     return RAGService(
         llm=llm, vector_store=vector_store, prompt=prompt, chat_repo=chat_repo
     )

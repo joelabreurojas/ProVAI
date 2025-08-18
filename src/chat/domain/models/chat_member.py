@@ -7,7 +7,7 @@ from src.core.infrastructure.database import Base
 
 if TYPE_CHECKING:
     from src.auth.domain.models import User
-    from src.chat.domain.models.chat import Chat
+    from src.chat.domain.models import Chat
 
 
 class ChatMember(Base):

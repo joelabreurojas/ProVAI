@@ -1,5 +1,9 @@
 # This file is the single source of truth for all sample documents.
-default: scipy_lectures
+default: attention_is_all_you_need
+
+attention_is_all_you_need:
+  name: "attention_is_all_you_need.pdf"
+  url: "https://arxiv.org/pdf/1706.03762"
 
 scipy_lectures:
   name: "scipy-lectures.pdf"

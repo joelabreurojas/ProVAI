@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.infrastructure.database import Base
 
 if TYPE_CHECKING:
-    from src.chat.domain.models.session import Session
+    from src.chat.domain.models import Session
 
 
 class Message(Base):

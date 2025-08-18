@@ -5,13 +5,12 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.core.infrastructure.database import Base
-from src.rag.domain.models.links import chat_document_link
+from src.rag.domain.models import chat_document_link
 
 if TYPE_CHECKING:
-    from src.auth.domain.models.chat_member import ChatMember
-    from src.auth.domain.models.user import User
-    from src.chat.domain.models.session import Session
-    from src.rag.domain.models.document import Document
+    from src.auth.domain.models import User
+    from src.chat.domain.models import ChatMember, Session
+    from src.rag.domain.models import Document
 
 
 class Chat(Base):

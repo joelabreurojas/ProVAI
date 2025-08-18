@@ -1,3 +1,9 @@
-from .model_errors import ModelConfigurationError, ModelLoadError, ModelNotFoundError
+from .document_not_found_error import DocumentNotFoundError
+from .ingestion_error import IngestionError
+from .pdf_parsing_error import PDFParsingError
 
-__all__ = ["ModelLoadError", "ModelNotFoundError", "ModelConfigurationError"]
+__all__ = [
+    "DocumentNotFoundError",
+    "IngestionError",
+    "PDFParsingError",
+]

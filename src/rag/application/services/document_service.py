@@ -2,7 +2,9 @@ import logging
 
 from langchain_chroma import Chroma
 
+from src.chat.application.exceptions import ChatNotFoundError
 from src.chat.application.protocols import ChatRepositoryProtocol
+from src.rag.application.exceptions import DocumentNotFoundError
 from src.rag.application.protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
@@ -30,14 +32,13 @@ class DocumentService(DocumentServiceProtocol):
         Deletes a document's link to a chat and performs garbage collection
         on any chunks that are no longer referenced by any documents.
         """
-        # In a real app, we'd get this from a ChatRepository
         chat = self.chat_repo.get_chat_by_id(chat_id)
         document = self.doc_repo.get_document_by_id(document_id)
 
-        if not document or not chat:
-            # Or raise a specific DocumentNotFoundError
-            logger.warning("Document or Chat not found for deletion.")
-            return
+        if not chat:
+            raise ChatNotFoundError(chat_id=chat_id)
+        if not document:
+            raise DocumentNotFoundError(document_id=document_id)
 
         self.chat_repo.remove_document_from_chat(chat, document)
 
