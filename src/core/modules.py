@@ -13,7 +13,24 @@ from typing import Iterator, NamedTuple
 
 from fastapi import APIRouter, FastAPI
 
-APPLICATION_MODULES = ["core", "auth", "chat"]
+from src.core.constants import PROJECT_ROOT
+
+
+def _discover_app_modules() -> list[str]:
+    """
+    Discovers all valid feature modules in the `src` directory.
+    A directory is considered a module if it's a Python package.
+    """
+    src_path = PROJECT_ROOT / "src"
+
+    return [
+        d.name
+        for d in src_path.iterdir()
+        if d.is_dir() and (d / "__init__.py").exists()
+    ]
+
+
+APPLICATION_MODULES = _discover_app_modules()
 
 
 class _DiscoveredRouter(NamedTuple):
