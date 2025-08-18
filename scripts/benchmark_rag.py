@@ -5,8 +5,8 @@ This script seeds the database with necessary records, runs a warm-up query to
 load AI models into memory, then benchmarks the ingestion and query processes.
 
 Example:
-python -m scripts.benchmark_rag --doc-path "sample_data/scipy-lectures.pdf" \
---query "What is the main difference between a NumPy array and a standard Python list?"
+python -m scripts.benchmark_rag --doc-path "sample_data/attention_is_all_you_need.pdf" \
+--query "What is a multi-head self-attention mechanism?"
 """
 
 import argparse
