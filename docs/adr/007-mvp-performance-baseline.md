@@ -27,8 +27,8 @@ The results demonstrate that the engine is functional and produces high-quality 
 
 | Metric                  | Average Result  | Notes                                        |
 | :---------------------- | :-------------- | :------------------------------------------- |
-| Document Ingestion Time | ~8 seconds      | Excellent for a small, focused document.     |
-| RAG Query Latency       | ~22 seconds     | Good, but a clear target for optimization.   |
+| Document Ingestion Time | ~9 seconds      | Excellent for a small, focused document.     |
+| RAG Query Latency       | ~30 seconds     | Good, but a clear target for optimization.   |
 | Peak RAM Usage          | ~3.9 GB         | High, making a model upgrade a top priority. |
 
 
