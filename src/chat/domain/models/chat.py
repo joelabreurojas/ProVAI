@@ -10,8 +10,8 @@ from src.rag.domain.models.links import chat_document_link
 if TYPE_CHECKING:
     from src.auth.domain.models.chat_member import ChatMember
     from src.auth.domain.models.user import User
-    from src.chat.domain.models.document import Document
     from src.chat.domain.models.session import Session
+    from src.rag.domain.models.document import Document
 
 
 class Chat(Base):

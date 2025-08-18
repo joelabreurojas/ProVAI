@@ -25,7 +25,7 @@ class SQLAlchemyChunkRepository(ChunkRepositoryProtocol):
         )
         return {h[0] for h in existing}
 
-    def create_chunk(self, content_hash: str, content: str) -> Chunk:
+    def create_chunk(self, content_hash: str) -> Chunk:
         """
         Creates and adds a new Chunk to the session, but does NOT commit.
         The service layer is responsible for the transaction boundary.

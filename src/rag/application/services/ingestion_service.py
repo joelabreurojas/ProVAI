@@ -74,9 +74,7 @@ class IngestionService(IngestionServiceProtocol):
                 db_chunk: Chunk | None = None
 
                 if content_hash not in existing_hashes:
-                    db_chunk = self.chunk_repo.create_chunk(
-                        content_hash=content_hash, content=chunk_doc.page_content
-                    )
+                    db_chunk = self.chunk_repo.create_chunk(content_hash=content_hash)
 
                     chunks_to_add_to_vector_store.append(chunk_doc.page_content)
                     chunk_ids_for_vector_store.append(content_hash)
