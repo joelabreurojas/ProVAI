@@ -1,8 +1,11 @@
 """
 A simple script to measure the performance of the RAG pipeline.
 
+This script seeds the database with necessary records, runs a warm-up query to
+load AI models into memory, then benchmarks the ingestion and query processes.
+
 Example:
-python -m scripts.benchmark_rag --doc-path "sample_data/scipy-lectures.pdf" \\
+python -m scripts.benchmark_rag --doc-path "sample_data/scipy-lectures.pdf" \
 --query "What is the main difference between a NumPy array and a standard Python list?"
 """
 
@@ -15,8 +18,8 @@ import psutil
 from dotenv import load_dotenv
 
 from src.auth.domain.models import User
-from src.chat.dependencies import get_content_repository
 from src.chat.domain.models import Chat
+from src.chat.infrastructure.repositories import SQLAlchemyChatRepository
 from src.core.infrastructure.database import SessionLocal
 from src.core.modules import import_models
 from src.rag.application.services import IngestionService, RAGService
@@ -26,6 +29,10 @@ from src.rag.dependencies import (
     get_rag_prompt_template,
     get_rag_vector_store,
     get_text_splitter,
+)
+from src.rag.infrastructure.repositories import (
+    SQLAlchemyChunkRepository,
+    SQLAlchemyDocumentRepository,
 )
 
 
@@ -50,8 +57,8 @@ class PerformanceMetrics:
 def get_ram_usage_mb() -> float:
     """Returns the current RAM usage of the process in MB."""
     process = psutil.Process()
-    memory_info: float = process.memory_info().rss / 1024**2
-    return memory_info
+    memory_used: float = process.memory_info().rss / 1024**2
+    return memory_used
 
 
 def main(doc_path: Path, query: str) -> None:
@@ -94,18 +101,29 @@ def main(doc_path: Path, query: str) -> None:
         print("Seeding complete.")
 
         print("\n--- Initializing services ---")
-        content_repo = get_content_repository(db)
         embedding_model = get_rag_embedding_model()
         llm = get_rag_llm()
         prompt = get_rag_prompt_template()
         text_splitter = get_text_splitter()
         vector_store = get_rag_vector_store(embedding_model)
 
-        ingestion_service = IngestionService(vector_store, text_splitter, content_repo)
-        rag_service = RAGService(llm, vector_store, prompt)
+        doc_repo = SQLAlchemyDocumentRepository(db)
+        chunk_repo = SQLAlchemyChunkRepository(db)
+        chat_repo = SQLAlchemyChatRepository(db)
+
+        ingestion_service = IngestionService(
+            db=db,
+            vector_store=vector_store,
+            text_splitter=text_splitter,
+            doc_repo=doc_repo,
+            chunk_repo=chunk_repo,
+            chat_repo=chat_repo,
+        )
+        rag_service = RAGService(llm, vector_store, prompt, chat_repo)
         print("Services initialized.")
 
         print("\n--- Running Warm-up Query (to load models) ---")
+        # The first call will be slow as models are loaded into memory.
         _ = rag_service.answer_query("Warm-up query", chat_id=0)
         print("Models are now loaded into memory.")
 

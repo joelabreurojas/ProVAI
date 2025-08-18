@@ -1,10 +1,12 @@
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.chat.application.protocols import HistoryRepositoryProtocol
+from src.chat.application.protocols import SessionRepositoryProtocol
 from src.chat.domain.models import Message, Session
 
 
-class SQLAlchemyHistoryRepository(HistoryRepositoryProtocol):
+class SQLAlchemySessionRepository(SessionRepositoryProtocol):
+    """Concrete implementation of the Session repository using SQLAlchemy."""
+
     def __init__(self, db: SQLAlchemySession) -> None:
         self.db = db
 

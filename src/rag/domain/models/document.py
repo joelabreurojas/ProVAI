@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.chat.domain.models.links import chat_document_link, document_chunk_link
 from src.core.infrastructure.database import Base
+from src.rag.domain.models.links import chat_document_link, document_chunk_link
 
 if TYPE_CHECKING:
     from src.chat.domain.models.chat import Chat
-    from src.chat.domain.models.chunk import Chunk
+    from src.rag.domain.models.chunk import Chunk
 
 
 class Document(Base):

@@ -1,3 +1,3 @@
-from .history_service import HistoryService
+from .session_service import SessionService
 
-__all__ = ["HistoryService"]
+__all__ = ["SessionService"]
