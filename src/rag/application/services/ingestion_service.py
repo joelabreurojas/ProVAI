@@ -8,7 +8,12 @@ from langchain_core.documents import Document as LangChainDocument
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy.orm import Session as SQLAlchemySession
 
+from src.chat.application.exceptions import ChatNotFoundError
 from src.chat.application.protocols import ChatRepositoryProtocol
+from src.rag.application.exceptions import (
+    IngestionError,
+    PDFParsingError,
+)
 from src.rag.application.protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
@@ -47,27 +52,32 @@ class IngestionService(IngestionServiceProtocol):
         Processes a PDF, creating relational records for documents and chunks,
         and storing embeddings in the vector store. This process is idempotent.
         """
+        chat = self.chat_repo.get_chat_by_id(chat_id)
+        if not chat:
+            raise ChatNotFoundError(chat_id=chat_id)
+
+        db_document = self.doc_repo.create_document(file_name=file_name)
+        self.chat_repo.link_document_to_chat(chat, db_document)
+
         try:
-            chat = self.chat_repo.get_chat_by_id(chat_id)
-            if not chat:
-                raise ValueError(f"Chat with id {chat_id} not found.")
-
-            db_document = self.doc_repo.create_document(file_name=file_name)
-            self.chat_repo.link_document_to_chat(chat, db_document)
-
             langchain_docs = self._load_pdf_from_bytes(file_bytes)
-            chunks = self._split_documents(langchain_docs)
+        except Exception as e:
+            logger.error(f"PDF parsing failed for document {file_name}: {e}")
+            raise PDFParsingError() from e
 
-            all_hashes = [
-                hashlib.sha256(chunk.page_content.encode("utf-8")).hexdigest()
-                for chunk in chunks
-            ]
+        chunks = self._split_documents(langchain_docs)
 
-            existing_hashes = self.chunk_repo.get_existing_chunks_by_hashes(all_hashes)
+        all_hashes = [
+            hashlib.sha256(chunk.page_content.encode("utf-8")).hexdigest()
+            for chunk in chunks
+        ]
 
-            chunks_to_add_to_vector_store = []
-            chunk_ids_for_vector_store = []
+        existing_hashes = self.chunk_repo.get_existing_chunks_by_hashes(all_hashes)
 
+        chunks_to_add_to_vector_store = []
+        chunk_ids_for_vector_store = []
+
+        try:
             for i, chunk_doc in enumerate(chunks):
                 content_hash = all_hashes[i]
 
@@ -97,15 +107,16 @@ class IngestionService(IngestionServiceProtocol):
                     texts=chunks_to_add_to_vector_store, ids=chunk_ids_for_vector_store
                 )
 
-            logger.info(
-                f"Successfully ingested '{file_name}' for chat_id {chat_id}. "
-                f"Added {len(chunks_to_add_to_vector_store)} new unique chunks "
-                "to the vector store."
-            )
         except Exception as e:
-            logger.error(f"Ingestion failed, rolling back transaction: {e}")
+            logger.error(f"Ingestion failed for document {file_name}: {e}")
             self.db.rollback()
-            raise e
+            raise IngestionError() from e
+
+        logger.info(
+            f"Successfully ingested '{file_name}' for chat_id {chat_id}. "
+            f"Added {len(chunks_to_add_to_vector_store)} new unique chunks "
+            "to the vector store."
+        )
 
     def _load_pdf_from_bytes(self, file_bytes: bytes) -> list[LangChainDocument]:
         """Loads a PDF from in-memory bytes by writing to a temporary file."""
