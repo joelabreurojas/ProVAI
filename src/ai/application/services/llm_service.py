@@ -1,16 +1,15 @@
 import logging
 from functools import lru_cache
 
-import psutil
 from langchain_community.llms.llamacpp import LlamaCpp
 
-from src.core.application.utils.performance import log_memory_usage
 from src.ai.application.exceptions import (
     ModelConfigurationError,
     ModelLoadError,
     ModelNotFoundError,
 )
 from src.ai.application.protocols import LLMServiceProtocol
+from src.core.application.utils.performance import log_memory_usage
 from src.core.constants import PROJECT_ROOT
 from src.core.dependencies import get_asset_manager_service
 
