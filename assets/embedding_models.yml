@@ -1,5 +1,8 @@
 # This file is the single source of truth for all supported Embedding Models.
-default: bge_small
+default: all_minilm_l6_v2
+
+all_minilm_l6_v2:
+  name: "sentence-transformers/all-MiniLM-L6-v2"
 
 bge_small:
   name: "BAAI/bge-small-en-v1.5"
