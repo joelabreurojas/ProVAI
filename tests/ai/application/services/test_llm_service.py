@@ -40,6 +40,7 @@ def test_get_llm_loads_model_on_first_call_and_caches(
         n_gpu_layers=0,
         verbose=False,
         n_threads=4,
+        n_batch=512,
     )
     # Both calls should return the exact same cached instance.
     assert llm_instance_1 is llm_instance_2
