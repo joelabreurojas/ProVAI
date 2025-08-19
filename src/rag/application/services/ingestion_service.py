@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import tempfile
+import fitz
 
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
@@ -120,14 +121,16 @@ class IngestionService(IngestionServiceProtocol):
 
     def _load_pdf_from_bytes(self, file_bytes: bytes) -> list[LangChainDocument]:
         """Loads a PDF from in-memory bytes by writing to a temporary file."""
-        with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as temp_file:
-            temp_file.write(file_bytes)
-            temp_file.flush()
+        with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+            full_text = ""
+            for page in doc:
+                full_text += page.get_text("text")
 
-            loader = PyPDFLoader(file_path=temp_file.name)
-            documents: list[LangChainDocument] = loader.load()
+            if not full_text:
+                logger.warning("PDF parsing resulted in empty text.")
+                return []
 
-            return documents
+            return [LangChainDocument(page_content=full_text)]
 
     def _split_documents(
         self, documents: list[LangChainDocument]
