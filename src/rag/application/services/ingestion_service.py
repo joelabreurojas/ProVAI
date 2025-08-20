@@ -1,10 +1,8 @@
 import hashlib
 import logging
-import tempfile
-import fitz
 
+import fitz
 from langchain_chroma import Chroma
-from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document as LangChainDocument
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy.orm import Session as SQLAlchemySession
