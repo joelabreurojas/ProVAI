@@ -1,5 +1,5 @@
 # This file is the single source of truth for all supported Language Models.
-default: phi-2
+default: qwen_1.8b
 
 mistral_7b:
   name: "Mistral-7B-Instruct-v0.2-GGUF"
@@ -10,3 +10,8 @@ phi-2:
   name: "Phi-2-GGUF"
   repo_id: "TheBloke/phi-2-GGUF"
   filename: "phi-2.Q4_K_M.gguf"
+
+qwen_1.8b:
+  name: "Qwen1.5-1.8B-Chat-GGUF"
+  repo_id: "Qwen/Qwen1.5-1.8B-Chat-GGUF"
+  filename: "qwen1_5-1_8b-chat-q4_k_m.gguf"

@@ -1,7 +1,6 @@
 import logging
 from functools import lru_cache
 
-import psutil
 from langchain_community.llms.llamacpp import LlamaCpp
 
 from src.ai.application.exceptions import (
@@ -10,17 +9,11 @@ from src.ai.application.exceptions import (
     ModelNotFoundError,
 )
 from src.ai.application.protocols import LLMServiceProtocol
+from src.core.application.utils.performance import log_memory_usage
 from src.core.constants import PROJECT_ROOT
 from src.core.dependencies import get_asset_manager_service
 
 logger = logging.getLogger(__name__)
-
-
-def _log_memory_usage() -> None:
-    """Logs the current memory usage of the process."""
-    process = psutil.Process()
-    memory_info = process.memory_info()
-    logger.info(f"Current memory usage: {memory_info.rss / 1024**2:.2f} MB")
 
 
 @lru_cache(maxsize=1)
@@ -29,7 +22,7 @@ def _load_llm_singleton() -> LlamaCpp:
     Loads the Llama C++ model. This function is cached to ensure it runs only once.
     """
     logger.info("Starting to load the LLM...")
-    _log_memory_usage()
+    log_memory_usage(context="Before LLM Load")
 
     asset_manager = get_asset_manager_service()
     llm_config = asset_manager.get_llm_config()
@@ -48,13 +41,14 @@ def _load_llm_singleton() -> LlamaCpp:
             n_gpu_layers=0,
             verbose=False,
             n_threads=4,
+            n_batch=512,
         )
     except Exception as e:
         logger.error(f"Failed to load LLM from path {model_file_path}: {e}")
         raise ModelLoadError() from e
 
     logger.info(f"LLM '{llm_config.name}' loaded successfully.")
-    _log_memory_usage()
+    log_memory_usage(context="After LLM Load")
     return llm
 
 
