@@ -15,6 +15,7 @@ class Chat(Base):
     __tablename__ = "chats"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str]
     assistant_id: Mapped[int] = mapped_column(ForeignKey("assistants.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime.datetime] = mapped_column(
