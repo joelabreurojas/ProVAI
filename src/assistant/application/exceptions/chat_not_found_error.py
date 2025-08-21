@@ -10,5 +10,5 @@ class ChatNotFoundError(AppException):
     message = "The requested chat was not found."
 
     def __init__(self, chat_id: int):
-        self.message = f"Chat {chat_id} not found."
+        self.message = f"Chat with id {chat_id} not found."
         super().__init__(message=self.message)
