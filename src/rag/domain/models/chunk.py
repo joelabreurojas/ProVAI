@@ -6,7 +6,7 @@ from src.core.infrastructure.database import Base
 from src.rag.domain.models.links import document_chunk_link
 
 if TYPE_CHECKING:
-    from src.rag.domain.models.document import Document
+    from src.rag.domain.models import Document
 
 
 class Chunk(Base):
