@@ -16,13 +16,23 @@ class ChatService(ChatServiceProtocol):
         )
 
     def get_chat(self, chat_id: int) -> Chat:
-        chat = self.chat_repo.get_chat_by_id(chat_id)
+        chat = self.chat_repo.get_chat_by_id(chat_id=chat_id)
+
         if not chat:
             raise ChatNotFoundError(chat_id=chat_id)
         return chat
 
     def get_chats(self, assistant_id: int, user_id: int) -> list[Chat]:
-        return self.chat_repo.get_chats(assistant_id, user_id)
+        """
+        Gets all chats a specific user has participated in for a specific assistant.
+        """
+        all_user_chats = self.chat_repo.get_chats_for_user(user_id=user_id)
+
+        assistant_chats = [
+            chat for chat in all_user_chats if chat.assistant_id == assistant_id
+        ]
+
+        return assistant_chats
 
     def log_interaction(
         self, chat_id: int, user_query: str, assistant_response: str
@@ -33,5 +43,5 @@ class ChatService(ChatServiceProtocol):
         )
 
     def get_history(self, chat_id: int) -> list[Message]:
-        chat = self.get_chat(chat_id)
+        chat = self.get_chat(chat_id=chat_id)
         return sorted(chat.messages, key=lambda msg: msg.timestamp)

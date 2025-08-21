@@ -18,6 +18,7 @@ from src.rag.application.protocols import (
     DocumentRepositoryProtocol,
     IngestionServiceProtocol,
 )
+from src.rag.domain.models import Chunk
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +76,10 @@ class IngestionService(IngestionServiceProtocol):
             for i, chunk_doc in enumerate(chunks):
                 content_hash = all_hashes[i]
 
+                db_chunk: Chunk | None = None
+
                 if content_hash not in existing_hashes:
-                    db_chunk = self.chunk_repo.create_chunk(
-                        content_hash=content_hash, content=chunk_doc.page_content
-                    )
+                    db_chunk = self.chunk_repo.create_chunk(content_hash=content_hash)
                     new_chunks_for_vector_store.append(chunk_doc.page_content)
                     new_chunk_ids_for_vector_store.append(content_hash)
                 else:
@@ -86,6 +87,10 @@ class IngestionService(IngestionServiceProtocol):
 
                 if db_chunk:
                     self.doc_repo.link_chunk_to_document(db_document, db_chunk)
+                else:
+                    logger.warning(
+                        f"Failed to create chunk for content hash {content_hash}"
+                    )
 
             self.db.commit()
 

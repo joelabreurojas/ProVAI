@@ -23,10 +23,10 @@ class SQLAlchemyChatRepository(ChatRepositoryProtocol):
     def get_chat_by_id(self, chat_id: int) -> Chat | None:
         return self.db.query(Chat).filter(Chat.id == chat_id).first()
 
-    def get_chats(self, assistant_id: int, user_id: int) -> list[Chat]:
+    def get_chats_for_user(self, user_id: int) -> list[Chat]:
         return (
             self.db.query(Chat)
-            .filter_by(assistant_id=assistant_id, user_id=user_id)
+            .filter_by(user_id=user_id)
             .order_by(desc(Chat.created_at))
             .all()
         )
