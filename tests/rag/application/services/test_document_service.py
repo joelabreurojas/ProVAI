@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 from pytest_mock import MockerFixture
 
-from src.chat.application.protocols import ChatRepositoryProtocol
+from src.assistant.application.protocols import AssistantRepositoryProtocol
 from src.rag.application.protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
@@ -17,22 +17,22 @@ def test_delete_document_garbage_collects_orphans(mocker: MockerFixture) -> None
     """
     mock_doc_repo = mocker.MagicMock(spec=DocumentRepositoryProtocol)
     mock_chunk_repo = mocker.MagicMock(spec=ChunkRepositoryProtocol)
-    mock_chat_repo = mocker.MagicMock(spec=ChatRepositoryProtocol)
+    mock_assistant_repo = mocker.MagicMock(spec=AssistantRepositoryProtocol)
     mock_vector_store = mocker.MagicMock()
 
-    mock_chat = mocker.MagicMock()
-    mock_chat_repo.get_chat_by_id.return_value = mock_chat
+    mock_assistant = mocker.MagicMock()
+    mock_assistant_repo.get_assistant_by_id.return_value = mock_assistant
 
     mock_document = mocker.MagicMock()
-    # Use configure_mock to set attributes on the mock after creation
-    mock_document.configure_mock(chats=[])  # This will be updated by the side effect
+    mock_document.configure_mock(assistants=[])  # Will be updated by side effect
     mock_doc_repo.get_document_by_id.return_value = mock_document
 
-    # This side effect simulates the behavior of SQLAlchemy removing the link
-    def remove_link_side_effect(chat: MagicMock, doc: MagicMock) -> None:
-        doc.chats = []
+    def remove_link_side_effect(assistant: MagicMock, doc: MagicMock) -> None:
+        doc.assistants = []  # Simulate the document is now unlinked
 
-    mock_chat_repo.remove_document_from_chat.side_effect = remove_link_side_effect
+    mock_assistant_repo.remove_document_from_assistant.side_effect = (
+        remove_link_side_effect
+    )
 
     mock_orphan_chunk = mocker.MagicMock(content_hash="unique_hash_123")
     mock_chunk_repo.get_orphaned_chunks.return_value = [mock_orphan_chunk]
@@ -40,14 +40,14 @@ def test_delete_document_garbage_collects_orphans(mocker: MockerFixture) -> None
     service = DocumentService(
         doc_repo=mock_doc_repo,
         chunk_repo=mock_chunk_repo,
-        chat_repo=mock_chat_repo,
+        assistant_repo=mock_assistant_repo,
         vector_store=mock_vector_store,
     )
 
-    service.delete_document_from_chat(document_id=1, chat_id=1)
+    service.delete_document_from_assistant(document_id=1, assistant_id=1)
 
-    mock_chat_repo.remove_document_from_chat.assert_called_once_with(
-        mock_chat, mock_document
+    mock_assistant_repo.remove_document_from_assistant.assert_called_once_with(
+        mock_assistant, mock_document
     )
     mock_chunk_repo.get_orphaned_chunks.assert_called_once_with(mock_document)
     mock_doc_repo.delete_document.assert_called_once_with(mock_document)
@@ -57,35 +57,33 @@ def test_delete_document_garbage_collects_orphans(mocker: MockerFixture) -> None
 
 def test_delete_shared_document_does_not_garbage_collect(mocker: MockerFixture) -> None:
     """
-    Tests that when a document is removed from one chat but is still linked
+    Tests that when a document is removed from one assistant but is still linked
     to another, no garbage collection is performed.
     """
     mock_doc_repo = mocker.MagicMock(spec=DocumentRepositoryProtocol)
     mock_chunk_repo = mocker.MagicMock(spec=ChunkRepositoryProtocol)
-    mock_chat_repo = mocker.MagicMock(spec=ChatRepositoryProtocol)
+    mock_assistant_repo = mocker.MagicMock(spec=AssistantRepositoryProtocol)
     mock_vector_store = mocker.MagicMock()
 
-    mock_chat = mocker.MagicMock()
-    mock_chat_repo.get_chat_by_id.return_value = mock_chat
+    mock_assistant = mocker.MagicMock()
+    mock_assistant_repo.get_assistant_by_id.return_value = mock_assistant
 
-    # Simulate that the document is still linked to another chat
-    mock_document = mocker.MagicMock(chats=[mocker.MagicMock()])
+    # Simulate that the document is still linked to another assistant
+    mock_document = mocker.MagicMock(assistants=[mocker.MagicMock()])
     mock_doc_repo.get_document_by_id.return_value = mock_document
 
     service = DocumentService(
         doc_repo=mock_doc_repo,
         chunk_repo=mock_chunk_repo,
-        chat_repo=mock_chat_repo,
+        assistant_repo=mock_assistant_repo,
         vector_store=mock_vector_store,
     )
 
-    service.delete_document_from_chat(document_id=1, chat_id=1)
+    service.delete_document_from_assistant(document_id=1, assistant_id=1)
 
-    # The link should have been removed
-    mock_chat_repo.remove_document_from_chat.assert_called_once()
+    mock_assistant_repo.remove_document_from_assistant.assert_called_once()
 
-    # But because the document was still linked to other chats,
-    # NONE of the deletion/garbage collection methods should have been called.
+    # Because the document was still linked, NONE of the deletion methods should fire.
     mock_chunk_repo.get_orphaned_chunks.assert_not_called()
     mock_doc_repo.delete_document.assert_not_called()
     mock_chunk_repo.delete_chunks.assert_not_called()

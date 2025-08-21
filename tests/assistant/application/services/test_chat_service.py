@@ -71,7 +71,7 @@ def test_get_chats_for_user_calls_repository(mocker: MockerFixture) -> None:
 
     service.get_chats(assistant_id=assistant_id, user_id=user_id)
 
-    mock_chat_repo.get_chats.assert_called_once_with(assistant_id, user_id)
+    mock_chat_repo.get_chats_for_user.assert_called_once_with(user_id=user_id)
 
 
 def test_log_interaction_adds_two_messages(mocker: MockerFixture) -> None:
