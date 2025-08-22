@@ -1,6 +1,6 @@
 # **ADR-005: Adopt "Crawl, Walk, Run" for RAG Development**
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-014](./014-adapt-development-approach-for-solo-workflow.md)
 - **Date:** 2025-07-06
 - **Authors:** Joel Abreu Rojas
 
