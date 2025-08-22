@@ -39,6 +39,10 @@ class RAGService(RAGServiceProtocol):
 
     @traceable(name="Answer Pipeline")
     def answer_query(self, query: str, assistant_id: int) -> str:
+        """
+        Takes a user query and assistant_id, runs the full RAG pipeline with
+        filtering, and returns the answer.
+        """
         valid_chunk_hashes = self.assistant_repo.get_chunk_hashes_for_assistant(
             assistant_id
         )

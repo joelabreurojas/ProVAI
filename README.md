@@ -119,18 +119,16 @@ This is a high-level overview of our development milestones, focusing on the pat
 
 - [x] Establish professional project structure, tooling, and CI/CD foundation.
 
-**Milestone 2: The Core Engine (In Progress)**
-
+**Milestone 2: The Core Engine (Completed)**
 - [x] Implement secure, headless User Authentication.
 - [x] Integrate local LLM and Embedding models.
 - [x] Build the Document Ingestion and core RAG services.
-- [ ] Implement the Chat History service for conversation persistence.
+- [x] Implement the **Chat** and **Message** service for conversation persistence.
 
-**Milestone 3: The Minimum Viable Interface (Upcoming)**
-
+**Milestone 3: The Minimum Viable Interface (In Progress)**
 - [ ] Build the Streamlit UI for user interaction, login, and document upload.
-- [ ] Implement "Teacher" and "Student" role-based access control.
-- [ ] Deploy the complete MVP to a public platform (Hugging Face Spaces).
+- [ ] Implement "Teacher" and "Student" role-based access control via **Enrollments**.
+- [ ] Deploy the complete MVP to a public platform.
 
 <details>
   <summary><strong>Post-MVP Vision (Milestone 4):</strong></summary>

@@ -7,6 +7,11 @@ from src.assistant.domain.models import Chat, Message
 
 
 class ChatService(ChatServiceProtocol):
+    """
+    Orchestrates the business logic for managing Chats and Messages
+    within a specific Assistant.
+    """
+
     def __init__(self, chat_repo: ChatRepositoryProtocol):
         self.chat_repo = chat_repo
 

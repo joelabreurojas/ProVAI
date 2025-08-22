@@ -22,9 +22,9 @@ The following rules are the formal rules for merging code into the `main` branch
 - For every new issue, create a descriptively named branch from `main`.
 - **Branch Naming Convention:** `[type]/[milestone]-[issue-number]-[short-description]`
   - **Examples:**
-    - `feat/m1-8-branch-policy`
-    - `fix/m3-31-update-login-button`
-    - `docs/m2-15-add-benchmarks`
+    - `feat/m3-102-build-assistant-api`
+    - `fix/m4-115-fix-enrollment-bug`
+    - `docs/m2-99-update-adr`
 
 **2. All Merges Must Go Through a Pull Request**
 
