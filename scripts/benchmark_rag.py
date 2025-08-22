@@ -19,11 +19,9 @@ from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.ai.application.services import EmbeddingService, LLMService
+from src.assistant.domain.models import Assistant
+from src.assistant.infrastructure.repositories import SQLAlchemyAssistantRepository
 from src.auth.domain.models import User
-from src.chat.domain.models import Chat
-from src.chat.infrastructure.repositories import (
-    SQLAlchemyChatRepository,
-)
 from src.core.infrastructure.database import SessionLocal
 from src.core.modules import import_models
 from src.rag.application.prompts import get_rag_prompt
@@ -72,29 +70,33 @@ def main(doc_path: Path, query: str) -> None:
     db = SessionLocal()
 
     try:
-        print("--- Seeding database with a dummy Teacher and Chat ---")
+        print("--- Seeding database with a dummy Teacher and Assistant ---")
         DUMMY_USER_ID = 1
-        DUMMY_CHAT_ID = 1
+        DUMMY_ASSISTANT_ID = 1
 
-        # Check if user already exists to make the script re-runnable
         teacher_user = db.query(User).filter(User.id == DUMMY_USER_ID).first()
         if not teacher_user:
-            teacher_user = User(
-                id=DUMMY_USER_ID,
-                name="Benchmark Teacher",
-                email="teacher@test.com",
-                hashed_password="fake",
-                role="teacher",
+            db.add(
+                User(
+                    id=DUMMY_USER_ID,
+                    name="Benchmark Teacher",
+                    email="teacher@benchmark.com",
+                    hashed_password="fake",
+                    role="teacher",
+                )
             )
-            db.add(teacher_user)
 
-        # Check if chat already exists
-        benchmark_chat = db.query(Chat).filter(Chat.id == DUMMY_CHAT_ID).first()
-        if not benchmark_chat:
-            benchmark_chat = Chat(
-                id=DUMMY_CHAT_ID, name="Benchmark Chat", owner_id=DUMMY_USER_ID
+        benchmark_assistant = (
+            db.query(Assistant).filter(Assistant.id == DUMMY_ASSISTANT_ID).first()
+        )
+        if not benchmark_assistant:
+            db.add(
+                Assistant(
+                    id=DUMMY_ASSISTANT_ID,
+                    name="Benchmark Assistant",
+                    teacher_id=DUMMY_USER_ID,
+                )
             )
-            db.add(benchmark_chat)
 
         db.commit()
         print("Seeding complete.")
@@ -102,19 +104,16 @@ def main(doc_path: Path, query: str) -> None:
         print("\n--- Initializing services ---")
         llm_service = LLMService()
         embedding_service = EmbeddingService()
-
         llm = llm_service.get_llm()
         embedding_model = embedding_service.get_embedding_model()
-
         vector_store = get_vector_store(embedding_model)
         prompt = get_rag_prompt()
         text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
             chunk_size=300, chunk_overlap=0, encoding_name="cl100k_base"
         )
-
         doc_repo = SQLAlchemyDocumentRepository(db)
         chunk_repo = SQLAlchemyChunkRepository(db)
-        chat_repo = SQLAlchemyChatRepository(db)
+        assistant_repo = SQLAlchemyAssistantRepository(db)
 
         ingestion_service = IngestionService(
             db=db,
@@ -122,22 +121,27 @@ def main(doc_path: Path, query: str) -> None:
             text_splitter=text_splitter,
             doc_repo=doc_repo,
             chunk_repo=chunk_repo,
-            chat_repo=chat_repo,
+            assistant_repo=assistant_repo,
         )
         rag_service = RAGService(
-            llm=llm, vector_store=vector_store, prompt=prompt, chat_repo=chat_repo
+            llm=llm,
+            vector_store=vector_store,
+            prompt=prompt,
+            assistant_repo=assistant_repo,
         )
         print("Services initialized.")
 
         print("\n--- Running Warm-up Query (to load models) ---")
-        _ = rag_service.answer_query("Warm-up query", chat_id=0)
+        _ = rag_service.answer_query("Warm-up query", assistant_id=0)
         print("Models are now loaded into memory.")
 
         print(f"\n--- Benchmarking Ingestion for '{doc_path.name}' ---")
         pdf_bytes = doc_path.read_bytes()
         start_time = time.time()
         ingestion_service.ingest_document(
-            file_bytes=pdf_bytes, file_name=doc_path.name, chat_id=1
+            file_bytes=pdf_bytes,
+            file_name=doc_path.name,
+            assistant_id=DUMMY_ASSISTANT_ID,
         )
         metrics.ingestion_time_seconds = time.time() - start_time
         print("Ingestion complete.")
@@ -145,9 +149,9 @@ def main(doc_path: Path, query: str) -> None:
         print("\n--- Benchmarking RAG Query ---")
         print(f"Query: '{query}'")
         start_time = time.time()
-        answer = rag_service.answer_query(query, chat_id=1)
+        answer = rag_service.answer_query(query, assistant_id=DUMMY_ASSISTANT_ID)
         metrics.query_latency_seconds = time.time() - start_time
-        print(f"Answer: {answer}")
+        print(f"Answer:\n{answer}")
 
         metrics.peak_ram_usage_mb = get_ram_usage_mb()
         print(metrics)

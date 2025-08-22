@@ -1,8 +1,8 @@
 """
 A headless script to run a full, end-to-end test of the ProVAI RAG engine.
 
-This is an invaluable tool for debugging and demonstration before the UI is
-fully implemented. It simulates the core workflow of ingestion and querying.
+It simulates the core workflow of creating an assistant, ingesting a document,
+starting a chat, and asking a question.
 
 Example:
 python -m scripts.demo_rag --doc-path "sample_data/attention_is_all_you_need.pdf" \
@@ -17,13 +17,13 @@ from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.ai.application.services import EmbeddingService, LLMService
-from src.auth.domain.models import User
-from src.chat.application.services import SessionService
-from src.chat.domain.models import Chat
-from src.chat.infrastructure.repositories import (
+from src.assistant.application.services import ChatService
+from src.assistant.domain.models import Assistant
+from src.assistant.infrastructure.repositories import (
+    SQLAlchemyAssistantRepository,
     SQLAlchemyChatRepository,
-    SQLAlchemySessionRepository,
 )
+from src.auth.domain.models import User
 from src.core.infrastructure.database import SessionLocal
 from src.core.modules import import_models
 from src.rag.application.prompts import get_rag_prompt
@@ -46,11 +46,10 @@ def main(doc_path: Path, query: str) -> None:
     db = SessionLocal()
 
     try:
-        print("--- Seeding database with a dummy Teacher and Chat ---")
+        print("--- Seeding database with a dummy Teacher and Assistant ---")
         DUMMY_USER_ID = 1
-        DUMMY_CHAT_ID = 1
+        DUMMY_ASSISTANT_ID = 1
 
-        # Check if user already exists to make the script re-runnable
         teacher_user = db.query(User).filter(User.id == DUMMY_USER_ID).first()
         if not teacher_user:
             teacher_user = User(
@@ -62,11 +61,14 @@ def main(doc_path: Path, query: str) -> None:
             )
             db.add(teacher_user)
 
-        # Check if chat already exists
-        demo_chat = db.query(Chat).filter(Chat.id == DUMMY_CHAT_ID).first()
-        if not demo_chat:
-            demo_chat = Chat(id=DUMMY_CHAT_ID, name="Demo Chat", owner_id=DUMMY_USER_ID)
-            db.add(demo_chat)
+        demo_assistant = (
+            db.query(Assistant).filter(Assistant.id == DUMMY_ASSISTANT_ID).first()
+        )
+        if not demo_assistant:
+            demo_assistant = Assistant(
+                id=DUMMY_ASSISTANT_ID, name="Demo Assistant", teacher_id=DUMMY_USER_ID
+            )
+            db.add(demo_assistant)
 
         db.commit()
         print("Seeding complete.")
@@ -86,47 +88,51 @@ def main(doc_path: Path, query: str) -> None:
 
         doc_repo = SQLAlchemyDocumentRepository(db)
         chunk_repo = SQLAlchemyChunkRepository(db)
+        assistant_repo = SQLAlchemyAssistantRepository(db)
         chat_repo = SQLAlchemyChatRepository(db)
-        session_repo = SQLAlchemySessionRepository(db)
 
-        session_service = SessionService(session_repo=session_repo)
+        chat_service = ChatService(chat_repo=chat_repo)
         ingestion_service = IngestionService(
             db=db,
             vector_store=vector_store,
             text_splitter=text_splitter,
             doc_repo=doc_repo,
             chunk_repo=chunk_repo,
-            chat_repo=chat_repo,
+            assistant_repo=assistant_repo,
         )
         rag_service = RAGService(
             llm=llm,
             vector_store=vector_store,
             prompt=prompt,
-            chat_repo=chat_repo,
+            assistant_repo=assistant_repo,
         )
         print("Services initialized.")
-
-        print("\nCreating a new session for this demo...")
-        session = session_service.get_or_create_session(
-            chat_id=DUMMY_CHAT_ID, user_id=DUMMY_USER_ID
-        )
-        print(f"Using Session ID: {session.id}")
 
         print(f"\n--- Ingesting Document: '{doc_path.name}' ---")
         pdf_bytes = doc_path.read_bytes()
         ingestion_service.ingest_document(
-            file_bytes=pdf_bytes, file_name=doc_path.name, chat_id=DUMMY_CHAT_ID
+            file_bytes=pdf_bytes,
+            file_name=doc_path.name,
+            assistant_id=DUMMY_ASSISTANT_ID,
         )
         print("Ingestion complete.")
 
+        print("\nCreating a new chat for this demo...")
+        chat = chat_service.create_new_chat(
+            assistant_id=DUMMY_ASSISTANT_ID,
+            user_id=DUMMY_USER_ID,
+            title=f"Chat about {doc_path.name}",
+        )
+        print(f"Using Chat ID: {chat.id}")
+
         print("\n--- Querying RAG Engine ---")
         print(f"Query: '{query}'")
-        answer = rag_service.answer_query(query, chat_id=DUMMY_CHAT_ID)
+        answer = rag_service.answer_query(query, assistant_id=DUMMY_ASSISTANT_ID)
         print(f"\nAnswer:\n{answer}")
 
         print("\n--- Logging interaction to history ---")
-        session_service.log_interaction(
-            session_id=session.id,
+        chat_service.log_interaction(
+            chat_id=chat.id,
             user_query=query,
             assistant_response=answer,
         )

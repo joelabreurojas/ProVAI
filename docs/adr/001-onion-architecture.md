@@ -1,6 +1,6 @@
 # ADR-001: Adopt Onion Architecture
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-006](./006-adopt-screaming-architecture.md)
 - **Date:** 2025-07-06
 - **Authors:** Joel Abreu Rojas
 

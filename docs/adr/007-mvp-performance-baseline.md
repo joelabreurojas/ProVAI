@@ -1,6 +1,6 @@
 # ADR-007: MVP RAG Performance Baseline
 
-- **Status:** Superseded by ADR-009
+- **Status:** Superseded by [ADR-009](./009-performance-optimization-strategy.md)
 - **Date:** 2025-08-18
 - **Authors:** @joelabreurojas
 
@@ -8,13 +8,13 @@
 
 ## Context and Problem Statement
 
-With the initial "headless" RAG engine for the MVP feature-complete and debugged, it was critical to establish a formal, quantitative performance baseline. This baseline served as the "control group" against which the performance optimization epic (documented in ADR-009) was measured.
+With the initial "headless" RAG engine for the MVP feature-complete and debugged, it was critical to establish a formal, quantitative performance baseline. This baseline served as the "control group" against which the performance optimization epic was measured.
 
 ---
 
 ## Decision Outcome
 
-We executed our repeatable benchmarking script (`scripts/benchmark_rag.py`) on our target hardware to establish the official initial performance baseline. The results highlighted significant performance bottlenecks, providing the data-driven justification to proceed with the upgrades documented in ADR-009.
+We executed our repeatable benchmarking script (`scripts/benchmark_rag.py`) on our target hardware to establish the official initial performance baseline. The results highlighted significant performance bottlenecks, providing the data-driven justification to proceed with the upgrades documented in [ADR-009](./009-performance-optimization-strategy.md).
 
 ### Recorded Historical Baseline (`phi-2`)
 

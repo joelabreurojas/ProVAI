@@ -20,12 +20,12 @@ class SQLAlchemyDocumentRepository(DocumentRepositoryProtocol):
     def get_document_by_id(self, document_id: int) -> Document | None:
         return self.db.query(Document).filter(Document.id == document_id).first()
 
-    def delete_document(self, document: Document) -> None:
-        self.db.delete(document)
-        self.db.commit()
-
     def link_chunk_to_document(self, db_document: Document, db_chunk: Chunk) -> None:
         """Creates the many-to-many link between a document and a chunk."""
         if db_chunk not in db_document.chunks:
             db_document.chunks.append(db_chunk)
             self.db.commit()
+
+    def delete_document(self, document: Document) -> None:
+        self.db.delete(document)
+        self.db.commit()

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.infrastructure.database import Base
 
 if TYPE_CHECKING:
-    from src.chat.domain.models import Chat, ChatMember, Session
+    from src.chat.domain.models import Assistant, Chat, Enrollment
 
 
 class User(Base):
@@ -19,6 +19,8 @@ class User(Base):
     role: Mapped[str] = mapped_column(default="student", nullable=False)
     profile: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
-    chats: Mapped[list["Chat"]] = relationship(back_populates="owner")
-    chat_memberships: Mapped[list["ChatMember"]] = relationship(back_populates="user")
-    sessions: Mapped[list["Session"]] = relationship(back_populates="user")
+    created_assistants: Mapped[list["Assistant"]] = relationship(
+        back_populates="teacher"
+    )
+    enrollments: Mapped[list["Enrollment"]] = relationship(back_populates="user")
+    chats: Mapped[list["Chat"]] = relationship(back_populates="user")

@@ -1,6 +1,6 @@
 # ADR-008: RAG Pipeline Design for MVP
 
-- **Status:** Superseded by ADR-009
+- **Status:** Superseded by [ADR-009](./009-performance-optimization-strategy.md)
 - **Date:** 2025-08-19
 - **Authors:** @joelabreurojas
 

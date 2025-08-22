@@ -8,7 +8,7 @@
 
 ## Context and Problem Statement
 
-The MVP performance baseline (ADR-007) revealed critical performance bottlenecks that made the application unsuitable for an interactive user experience. With a query latency of ~22 seconds, an ingestion time of ~8 seconds, and a peak RAM usage of ~3.9GB, the system was too slow and resource-intensive for our target hardware. This ADR documents the successful execution of a multi-faceted performance optimization epic.
+The MVP performance baseline ([ADR-007](./007-mvp-performance-baseline.md)) revealed critical performance bottlenecks that made the application unsuitable for an interactive user experience. With a query latency of ~22 seconds, an ingestion time of ~8 seconds, and a peak RAM usage of ~3.9GB, the system was too slow and resource-intensive for our target hardware. This ADR documents the successful execution of a multi-faceted performance optimization epic.
 
 ---
 
