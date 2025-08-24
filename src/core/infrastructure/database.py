@@ -1,7 +1,8 @@
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import Session as SQLAlchemySession
 
 from src.core.infrastructure.settings import settings
 
@@ -18,7 +19,7 @@ class Base(DeclarativeBase):
     pass
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_db() -> Generator[SQLAlchemySession, None, None]:
     """Get a database session to use in endpoints."""
     db = SessionLocal()
 

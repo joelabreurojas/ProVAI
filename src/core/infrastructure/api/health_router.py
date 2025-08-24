@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as SQLAlchemySession
 
 from src.core.infrastructure.database import get_db
 
@@ -10,7 +10,7 @@ router = APIRouter(tags=[TAG["name"]])
 
 
 @router.get("/health")
-async def health_check(db: Session = Depends(get_db)) -> dict[str, str]:
+async def health_check(db: SQLAlchemySession = Depends(get_db)) -> dict[str, str]:
     """Checks if the API is running and can connect to the database."""
     try:
         db.execute(text("SELECT 1"))
