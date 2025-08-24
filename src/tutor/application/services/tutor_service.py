@@ -5,7 +5,7 @@ from src.auth.application.exceptions import (
     TokenInvalidScopeError,
     TokenMissingDataError,
 )
-from src.auth.application.protocols import TokenServiceProtocol, UserRepositoryProtocol
+from src.auth.application.protocols import TokenServiceProtocol
 from src.auth.domain.models import User
 from src.tutor.application.exceptions import (
     InvitationEmailMismatchError,
@@ -32,11 +32,9 @@ class TutorService(TutorServiceProtocol):
     def __init__(
         self,
         tutor_repo: TutorRepositoryProtocol,
-        user_repo: UserRepositoryProtocol,
         token_service: TokenServiceProtocol,
     ):
         self.tutor_repo = tutor_repo
-        self.user_repo = user_repo
         self.token_service = token_service
 
     def create_tutor(self, tutor_create: TutorCreate, teacher: User) -> Tutor:
@@ -61,23 +59,10 @@ class TutorService(TutorServiceProtocol):
         Authorizes the teacher and creates invitation tokens for a list of emails,
         returning a detailed status for each.
         """
-        tutor = self.get_tutor(tutor_id)
         self.verify_user_is_tutor_owner(tutor_id, requesting_user)
 
         responses = []
         for email in set(student_emails):  # De-duplicate emails
-            user_to_enroll = self.user_repo.get_by_email(email)
-
-            if user_to_enroll and any(
-                s.id == user_to_enroll.id for s in tutor.students
-            ):
-                responses.append(
-                    TutorInvitationResponse(
-                        email=email, status="user_already_enrolled", token=None
-                    )
-                )
-                continue
-
             expires_delta = timedelta(days=7)
             token_data = {
                 "tutor_id": tutor_id,
@@ -124,6 +109,7 @@ class TutorService(TutorServiceProtocol):
         """Verifies that the user is the teacher who owns the specified tutor."""
         if user.role != "teacher":
             raise InsufficientPermissionsError()
+
         tutor = self.get_tutor(tutor_id)
         if tutor.teacher_id != user.id:
             raise TutorOwnershipError()

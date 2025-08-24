@@ -1,8 +1,8 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.auth.application.protocols import TokenServiceProtocol, UserRepositoryProtocol
-from src.auth.dependencies import get_token_service, get_user_repository
+from src.auth.application.protocols import TokenServiceProtocol
+from src.auth.dependencies import get_token_service
 from src.chat.application.protocols import (
     ChatRepositoryProtocol,
     ChatServiceProtocol,
@@ -34,12 +34,9 @@ def get_chat_repository(
 # --- Service Assemblers ---
 def get_tutor_service(
     tutor_repo: TutorRepositoryProtocol = Depends(get_tutor_repository),
-    user_repo: UserRepositoryProtocol = Depends(get_user_repository),
     token_service: TokenServiceProtocol = Depends(get_token_service),
 ) -> TutorServiceProtocol:
-    return TutorService(
-        tutor_repo=tutor_repo, user_repo=user_repo, token_service=token_service
-    )
+    return TutorService(tutor_repo=tutor_repo, token_service=token_service)
 
 
 def get_chat_service(

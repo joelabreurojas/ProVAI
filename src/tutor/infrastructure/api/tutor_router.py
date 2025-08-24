@@ -1,12 +1,7 @@
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, status
 
 from src.auth.dependencies import get_current_user
 from src.auth.domain.models import User
-from src.rag.application.protocols import (
-    IngestionServiceProtocol,
-    RAGServiceProtocol,
-)
-from src.rag.dependencies import get_ingestion_service, get_rag_service
 from src.tutor.application.protocols import TutorServiceProtocol
 from src.tutor.dependencies import get_tutor_service
 from src.tutor.domain.schemas import (
@@ -19,7 +14,7 @@ from src.tutor.domain.schemas import (
 
 TAG = {
     "name": "Tutor",
-    "description": "Create, manage, and interact with AI Tutors.",
+    "description": "Create, manage, and enroll in AI Tutors.",
 }
 router = APIRouter(prefix="/tutors", tags=[TAG["name"]])
 
@@ -75,38 +70,3 @@ async def enroll_student(
         token=enrollment_data.invitation_token, student_user=current_user
     )
     return {"message": "Successfully enrolled in the tutor."}
-
-
-@router.post(
-    "/{tutor_id}/upload",
-    status_code=status.HTTP_201_CREATED,
-    summary="Upload a document to a tutor",
-)
-async def upload_document_to_tutor(
-    tutor_id: int,
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
-    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
-    ingestion_service: IngestionServiceProtocol = Depends(get_ingestion_service),
-) -> dict[str, str]:
-    tutor_service.verify_user_is_tutor_owner(tutor_id=tutor_id, user=current_user)
-    file_bytes = await file.read()
-    ingestion_service.ingest_document(
-        file_bytes=file_bytes,
-        file_name=file.filename or "unknown.pdf",
-        tutor_id=tutor_id,
-    )
-    return {"message": f"Successfully ingested '{file.filename}'."}
-
-
-@router.post("/{tutor_id}/query", summary="Query a tutor")
-async def query_tutor(
-    tutor_id: int,
-    query: str,
-    current_user: User = Depends(get_current_user),
-    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
-    rag_service: RAGServiceProtocol = Depends(get_rag_service),
-) -> dict[str, str]:
-    tutor_service.verify_user_can_access_tutor(tutor_id=tutor_id, user=current_user)
-    answer = rag_service.answer_query(query=query, tutor_id=tutor_id)
-    return {"answer": answer}
