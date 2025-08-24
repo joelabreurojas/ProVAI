@@ -1,5 +1,6 @@
 from src.auth.application.exceptions import (
     InvalidCredentialsError,
+    InvalidTokenError,
     UserAlreadyExistsError,
 )
 from src.auth.application.protocols import (
@@ -49,3 +50,26 @@ class AuthService(AuthServiceProtocol):
         access_token = self.token_svc.create_access_token(data=token_data)
 
         return user, access_token
+
+    def get_user_from_token(self, token: str) -> User:
+        """
+        Validates a JWT, decodes it, and retrieves the user.
+        Raises InvalidTokenError if any step fails.
+        """
+        try:
+            payload = self.token_svc.decode_access_token(token)
+            if payload is None:
+                raise InvalidTokenError()
+
+            email: str | None = payload.get("sub")
+            if email is None:
+                raise InvalidTokenError()
+
+            user = self.user_repo.get_by_email(email)
+            if user is None:
+                raise InvalidTokenError()
+
+            return user
+        except Exception as e:
+            # We will want to log the original error `e`
+            raise InvalidTokenError() from e
