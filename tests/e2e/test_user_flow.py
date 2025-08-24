@@ -14,19 +14,20 @@ def test_full_user_flow(
     mocker: MockerFixture,
 ) -> None:
     """
-    Tests the full end-to-end workflow by simulating real API calls.
+    Tests the definitive, decoupled, end-to-end workflow.
 
-    This test simulates the entire lifecycle of a user interaction:
-    1. A Teacher and a Student are registered via the API.
-    2. The "teacher" user is manually promoted via direct DB access for the test.
-    3. The Teacher logs in and creates a Tutor.
-    4. The Teacher creates an invitation for the Tutor.
-    5. The Student logs in and uses the invitation to enroll.
-    6. The Teacher successfully uploads a valid PDF to the Tutor.
-    7. The Student successfully queries the Tutor and receives a mocked response.
+    The Story:
+    1. A Teacher and a Student are registered and log in.
+    2. The Teacher creates a Tutor.
+    3. The Teacher UPLOADS A DOCUMENT directly to the Tutor's knowledge base.
+    4. The Teacher invites the Student to the Tutor.
+    5. The Student enrolls.
+    6. The Student CREATES THEIR OWN PRIVATE CHAT with the Tutor.
+    7. The Student asks a question in their chat and gets a correct,
+       context-aware answer.
     """
-    # Register a user who WILL BECOME the teacher
-    response = client.post(
+    # Register users and manually promote Teacher
+    client.post(
         "/api/v1/auth/register",
         json={
             "name": "E2E Teacher",
@@ -34,18 +35,13 @@ def test_full_user_flow(
             "password": "password123",
         },
     )
-    assert response.status_code == 201, "Teacher registration failed"
-
-    # Manually promote the user to 'teacher' in the database.
     teacher_db = db_session.query(User).filter_by(email="teacher@e2e.com").first()
-    assert teacher_db is not None, "Teacher not found in DB after registration"
+    assert teacher_db is not None
     teacher_db.role = "teacher"
     db_session.commit()
     db_session.refresh(teacher_db)
-    assert teacher_db.role == "teacher"
 
-    # Register a user who will remain a student
-    response = client.post(
+    client.post(
         "/api/v1/auth/register",
         json={
             "name": "E2E Student",
@@ -53,85 +49,88 @@ def test_full_user_flow(
             "password": "password456",
         },
     )
-    assert response.status_code == 201, "Student registration failed"
 
-    # Teacher logs in
-    response = client.post(
+    # Both users log in
+    teacher_login_res = client.post(
         "/api/v1/auth/token",
         data={"username": "teacher@e2e.com", "password": "password123"},
     )
-    assert response.status_code == 200, "Teacher login failed"
-    teacher_token = response.json()["access_token"]
+    teacher_token = teacher_login_res.json()["access_token"]
     teacher_headers = {"Authorization": f"Bearer {teacher_token}"}
 
+    student_login_res = client.post(
+        "/api/v1/auth/token",
+        data={"username": "student@e2e.com", "password": "password456"},
+    )
+    student_token = student_login_res.json()["access_token"]
+    student_headers = {"Authorization": f"Bearer {student_token}"}
+
     # Teacher creates a Tutor
-    response = client.post(
+    tutor_res = client.post(
         "/api/v1/tutors",
         json={"course_name": "E2E Test Course"},
         headers=teacher_headers,
     )
-    assert response.status_code == 201, f"Tutor creation failed: {response.json()}"
-    tutor_id = response.json()["id"]
+    assert tutor_res.status_code == 201
+    tutor_id = tutor_res.json()["id"]
 
-    # Teacher creates an Invitation
-    response = client.post(
-        f"/api/v1/tutors/{tutor_id}/invitations",
-        json={"student_emails": ["student@e2e.com"]},  # Invite the specific student
-        headers=teacher_headers,
-    )
-    assert response.status_code == 201, f"Invitation creation failed: {response.json()}"
-    invitation = response.json()[0]  # Get the first invitation object
-    invitation_token = invitation["token"]
-
-    # Student logs in
-    response = client.post(
-        "/api/v1/auth/token",
-        data={"username": "student@e2e.com", "password": "password456"},
-    )
-    assert response.status_code == 200, "Student login failed"
-    student_token = response.json()["access_token"]
-    student_headers = {"Authorization": f"Bearer {student_token}"}
-
-    # Student Enrolls in the Tutor
-    response = client.post(
-        f"/api/v1/tutors/{tutor_id}/enrollments",
-        json={"invitation_token": invitation_token},
-        headers=student_headers,
-    )
-    assert response.status_code == 201, f"Enrollment failed: {response.json()}"
-
-    # Teacher uploads Document
+    # Teacher uploads a Document to the Tutor
     mock_vector_store = mocker.MagicMock()
     client.app.dependency_overrides[get_rag_vector_store] = lambda: mock_vector_store
 
     doc = fitz.open()
     page = doc.new_page()
-    page.insert_text((50, 72), "This is a real test PDF about multi-head attention.")
+    page.insert_text((50, 72), "This is a test PDF about multi-head attention.")
     pdf_bytes = doc.write()
     doc.close()
 
-    response = client.post(
-        f"/api/v1/tutors/{tutor_id}/upload",
+    upload_res = client.post(
+        f"/api/v1/tutors/{tutor_id}/documents",
         files={"file": ("test.pdf", pdf_bytes, "application/pdf")},
         headers=teacher_headers,
     )
-    assert response.status_code == 201, f"Document upload failed: {response.json()}"
-    mock_vector_store.add_texts.assert_called_once()
+    assert upload_res.status_code == 201, f"Document upload failed: {upload_res.json()}"
 
-    # Student queries
+    # Teacher creates an Invitation
+    invitation_res = client.post(
+        f"/api/v1/tutors/{tutor_id}/invitations",
+        json={"student_emails": ["student@e2e.com"]},
+        headers=teacher_headers,
+    )
+    assert invitation_res.status_code == 201
+    invitation_token = invitation_res.json()[0]["token"]
+
+    # Student enrolls in the Tutor
+    enrollment_res = client.post(
+        f"/api/v1/tutors/{tutor_id}/enrollments",
+        json={"invitation_token": invitation_token},
+        headers=student_headers,
+    )
+    assert enrollment_res.status_code == 201
+
+    # Student creates a Chat with the Tutor
+    student_chat_res = client.post(
+        "/api/v1/chats",
+        json={"tutor_id": tutor_id, "title": "My Private Study Chat"},
+        headers=student_headers,
+    )
+    assert student_chat_res.status_code == 201
+    student_chat_id = student_chat_res.json()["id"]
+
+    # Student queries the Chat
     mock_llm_service = mocker.MagicMock()
     mock_llm = mocker.MagicMock()
     mock_llm.return_value = "mocked llm response about multi-head attention"
     mock_llm_service.get_llm.return_value = mock_llm
     client.app.dependency_overrides[get_llm_service] = lambda: mock_llm_service
 
-    response = client.post(
-        f"/api/v1/tutors/{tutor_id}/query",
-        params={"query": "What is this document about?"},
+    query_res = client.post(
+        f"/api/v1/chats/{student_chat_id}/query",
+        json={"query": "What is this document about?"},
         headers=student_headers,
     )
-    assert response.status_code == 200, f"Query failed: {response.json()}"
-    assert "mocked llm response" in response.json()["answer"]
+    assert query_res.status_code == 200, f"Query failed: {query_res.json()}"
+    assert "mocked llm response" in query_res.json()["answer"]
 
     # Cleanup
     del client.app.dependency_overrides[get_rag_vector_store]

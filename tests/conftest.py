@@ -58,9 +58,8 @@ def embedding_service() -> EmbeddingService:
 @pytest.fixture(scope="function")
 def test_vector_store(embedding_service: EmbeddingService) -> Chroma:
     """
-        The definitive fixture for a test vector store. It creates a ChromaDB
-        instance in a temporary directory that is automatically cleaned up by
-    g    pytest after the test runs.
+    It creates a ChromaDB instance in a temporary directory that is automatically
+    cleaned up by pytest after the test runs.
     """
     tmp_dir = Path(f"/tmp/pytest-of-{os.getuid()}/pytest-current")
     test_store_path = tmp_dir / "test_vector_store"
