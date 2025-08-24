@@ -1,5 +1,5 @@
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as SQLAlchemySession
 
 from src.chat.application.protocols import (
     ChatRepositoryProtocol,
@@ -20,7 +20,9 @@ from src.tutor.application.protocols import (
 from src.tutor.dependencies import get_tutor_repository, get_tutor_service
 
 
-def get_chat_repository(db: Session = Depends(get_db)) -> ChatRepositoryProtocol:
+def get_chat_repository(
+    db: SQLAlchemySession = Depends(get_db),
+) -> ChatRepositoryProtocol:
     return SQLAlchemyChatRepository(db)
 
 
@@ -31,6 +33,10 @@ def get_chat_service(
     ingestion_service: IngestionServiceProtocol = Depends(get_ingestion_service),
     tutor_repo: TutorRepositoryProtocol = Depends(get_tutor_repository),
 ) -> ChatServiceProtocol:
+    """
+    Assembles the master ChatService orchestrator with all its required
+    dependencies from other feature modules.
+    """
     return ChatService(
         chat_repo=chat_repo,
         tutor_service=tutor_service,

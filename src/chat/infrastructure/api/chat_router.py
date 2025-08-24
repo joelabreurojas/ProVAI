@@ -31,6 +31,22 @@ async def create_new_chat(
     return ChatResponse.model_validate(new_chat)
 
 
+@router.get("", response_model=list[ChatResponse])
+async def get_user_chats_for_tutor(
+    tutor_id: int,
+    current_user: User = Depends(get_current_user),
+    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+) -> list[ChatResponse]:
+    """
+    Retrieves all chat sessions for the current user associated with a
+    specific tutor.
+    """
+    chats = chat_service.get_chats_for_user_and_tutor(
+        tutor_id=tutor_id, user=current_user
+    )
+    return [ChatResponse.model_validate(chat) for chat in chats]
+
+
 @router.post("/{chat_id}/query", response_model=QueryResponse)
 async def post_message_to_chat(
     chat_id: int,

@@ -48,6 +48,18 @@ class ChatService(ChatServiceProtocol):
         self.tutor_service.verify_user_can_access_tutor(chat.tutor_id, user)
         return chat
 
+    def get_chats_for_user_and_tutor(self, tutor_id: int, user: User) -> list[Chat]:
+        """
+        Gets all chats a specific user has participated in for a specific tutor.
+        First, it authorizes that the user has access to the parent tutor.
+        """
+        self.tutor_service.verify_user_can_access_tutor(tutor_id, user)
+        all_user_chats = self.chat_repo.get_chats_for_user(user_id=user.id)
+        tutor_specific_chats = [
+            chat for chat in all_user_chats if chat.tutor_id == tutor_id
+        ]
+        return tutor_specific_chats
+
     def get_history(self, chat_id: int, user: User) -> list[Message]:
         chat = self.get_chat(chat_id, user)  # Authorization happens here
         return sorted(chat.messages, key=lambda msg: msg.timestamp)
