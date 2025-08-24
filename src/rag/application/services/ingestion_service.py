@@ -5,10 +5,10 @@ import fitz
 from langchain_chroma import Chroma
 from langchain_core.documents import Document as LangChainDocument
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.assistant.application.exceptions import AssistantNotFoundError
-from src.assistant.application.protocols import AssistantRepositoryProtocol
+from src.core.application.exceptions import DatabaseError
 from src.rag.application.exceptions import (
     IngestionError,
     PDFParsingError,
@@ -97,31 +97,36 @@ class IngestionService(IngestionServiceProtocol):
                         f"Failed to create chunk for content hash {content_hash}"
                     )
 
-            self.db.commit()
-
             if new_chunks_for_vector_store:
                 self.vector_store.add_texts(
                     texts=new_chunks_for_vector_store,
                     ids=new_chunk_ids_for_vector_store,
                 )
 
-        except fitz.errors.FitzError as e:
-            logger.error(f"PDF parsing failed for document {file_name}: {e}")
+            self.db.commit()
+
+            logger.info(
+                f"Successfully ingested '{file_name}' for tutor_id {tutor_id}. "
+                f"Added {len(new_chunks_for_vector_store)} new unique chunks \
+                to the vector store."
+            )
+
+        except RuntimeError as e:
+            logger.error(f"PDF parsing failed for {file_name}: {e}")
             self.db.rollback()
             raise PDFParsingError() from e
+
+        except SQLAlchemyError as e:
+            logger.error(f"Database error during ingestion for {file_name}: {e}")
+            self.db.rollback()
+            raise DatabaseError() from e
+
         except Exception as e:
             logger.error(
-                f"Ingestion failed for document {file_name}, \
-                rolling back transaction: {e}"
+                f"An unexpected error occurred during ingestion for {file_name}: {e}"
             )
             self.db.rollback()
             raise IngestionError() from e
-
-        logger.info(
-            f"Successfully ingested '{file_name}' for assistant_id {assistant_id}. "
-            f"Added {len(new_chunks_for_vector_store)} new unique chunks \
-            to the vector store."
-        )
 
     def _load_pdf_from_bytes(self, file_bytes: bytes) -> list[LangChainDocument]:
         """Loads a PDF from in-memory bytes using PyMuPDF."""
