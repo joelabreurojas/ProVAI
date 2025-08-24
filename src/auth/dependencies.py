@@ -46,8 +46,6 @@ def get_auth_service(
 
 
 # --- Endpoint Dependency ---
-
-
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     auth_service: AuthServiceProtocol = Depends(get_auth_service),
