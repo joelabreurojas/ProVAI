@@ -5,7 +5,7 @@ This script simulates the most critical user actions and measures their performa
 including a warm-up phase to ensure AI models are pre-loaded.
 
 Example:
-python -m scripts/benchmark_rag.py \
+python -m scripts.benchmark_rag \
 --doc-path "sample_data/attention_is_all_you_need.pdf" \
 --query "What is a multi-head self-attention mechanism?"
 """
@@ -166,6 +166,21 @@ def main(doc_path: Path, query: str) -> None:
             TutorCreate(course_name="Benchmark Course"),
             teacher=teacher,
         )
+
+        invitations = container.tutor_service.create_invitations(
+            tutor_id=tutor.id,
+            requesting_user=teacher,
+            student_emails=[student.email],
+        )
+
+        invitation_token = invitations[0].token
+        if not invitation_token:
+            raise ValueError("Failed to create invitation token for benchmark.")
+
+        container.tutor_service.enroll_student(
+            token=invitation_token, student_user=student
+        )
+
         student_chat = container.chat_service.create_new_chat(
             tutor.id, user=student, title="Benchmark Chat"
         )
