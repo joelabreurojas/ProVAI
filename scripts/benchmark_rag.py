@@ -1,36 +1,48 @@
 """
-A simple script to measure the performance of the RAG pipeline.
+A script to measure the performance of the core, orchestrator-driven RAG pipeline.
 
-This script seeds the database, runs a warm-up query to load AI models,
-and then benchmarks the ingestion and query processes.
+This script simulates the most critical user actions and measures their performance,
+including a warm-up phase to ensure AI models are pre-loaded.
 
 Example:
-python -m scripts.benchmark_rag --doc-path "sample_data/attention_is_all_you_need.pdf" \
+python -m scripts/benchmark_rag.py \
+--doc-path "sample_data/attention_is_all_you_need.pdf" \
 --query "What is a multi-head self-attention mechanism?"
 """
 
 import argparse
 import logging
+import sys
 import time
 from pathlib import Path
 
 import psutil
 from dotenv import load_dotenv
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.ai.application.services import EmbeddingService, LLMService
-from src.auth.domain.models import User
-from src.core.infrastructure.database import SessionLocal
-from src.core.modules import import_models
-from src.rag.application.prompts import get_rag_prompt
-from src.rag.application.services import IngestionService, RAGService
-from src.rag.infrastructure.repositories import (
-    SQLAlchemyChunkRepository,
-    SQLAlchemyDocumentRepository,
+from src.ai.dependencies import get_embedding_service, get_llm_service
+from src.auth.dependencies import (
+    get_auth_service,
+    get_password_service,
+    get_token_service,
+    get_user_repository,
 )
-from src.rag.infrastructure.vector_store import get_vector_store
-from src.tutor.domain.models import Tutor
-from src.tutor.infrastructure.repositories import SQLAlchemyTutorRepository
+from src.auth.domain.schemas import UserCreate
+from src.chat.dependencies import get_chat_repository, get_chat_service
+from src.core.infrastructure.database import SessionLocal
+from src.core.infrastructure.settings import settings
+from src.core.modules import import_models
+from src.rag.dependencies import (
+    get_chunk_repository,
+    get_document_repository,
+    get_ingestion_service,
+    get_rag_prompt_template,
+    get_rag_service,
+    get_rag_vector_store,
+    get_text_splitter,
+)
+from src.tutor.dependencies import get_tutor_repository, get_tutor_service
+from src.tutor.domain.schemas import TutorCreate
 
 
 class PerformanceMetrics:
@@ -55,99 +67,136 @@ def get_ram_usage_mb() -> float:
     """Returns the current RAM usage of the process in MB."""
     process = psutil.Process()
     memory_used: float = process.memory_info().rss / 1024**2
+
     return memory_used
 
 
+class AppContainer:
+    """A container to manually assemble and hold our application services."""
+
+    def __init__(self, db_session: SQLAlchemySession) -> None:
+        # Repositories
+        self.user_repo = get_user_repository(db_session)
+        self.tutor_repo = get_tutor_repository(db_session)
+        self.chat_repo = get_chat_repository(db_session)
+
+        # AI Services
+        self.llm_service = get_llm_service()
+        self.embedding_service = get_embedding_service()
+
+        # Core Services
+        self.auth_service = get_auth_service(
+            user_repo=self.user_repo,
+            password_svc=get_password_service(),
+            token_svc=get_token_service(),
+        )
+        self.tutor_service = get_tutor_service(
+            tutor_repo=self.tutor_repo,
+            token_service=get_token_service(),
+        )
+        self.ingestion_service = get_ingestion_service(
+            db=db_session,
+            vector_store=get_rag_vector_store(self.embedding_service),
+            text_splitter=get_text_splitter(),
+            doc_repo=get_document_repository(db_session),
+            chunk_repo=get_chunk_repository(db_session),
+        )
+        self.rag_service = get_rag_service(
+            llm_service=self.llm_service,
+            vector_store=get_rag_vector_store(self.embedding_service),
+            prompt=get_rag_prompt_template(),
+        )
+
+        # Orchestrator
+        self.chat_service = get_chat_service(
+            chat_repo=self.chat_repo,
+            tutor_service=self.tutor_service,
+            rag_service=self.rag_service,
+            ingestion_service=self.ingestion_service,
+            tutor_repo=self.tutor_repo,
+        )
+
+
 def main(doc_path: Path, query: str) -> None:
-    """
-    Runs the full ingestion and RAG pipeline and measures performance.
-    """
-    logging.basicConfig(level=logging.INFO)
+    """Runs the full pipeline and measures performance."""
+
     load_dotenv()
+    logging.basicConfig(level=logging.INFO)
     import_models()
 
+    if settings.ENV_STATE != "dev":
+        print(
+            "\n❌ ERROR: This script is destructive and is designed to run "
+            "only in a 'dev' environment."
+        )
+        print(
+            f"Current ENV_STATE is '{settings.ENV_STATE}'. "
+            "Aborting to prevent data loss."
+        )
+        sys.exit(1)
+
+    print(f"--- Using development database: {settings.DB_URL} ---")
     metrics = PerformanceMetrics()
     db = SessionLocal()
 
     try:
-        print("--- Seeding database with a dummy Teacher and Tutor ---")
-        DUMMY_USER_ID = 1
-        DUMMY_TUTOR_ID = 1
+        # Assemble dependencies
+        container = AppContainer(db)
 
-        teacher_user = db.query(User).filter(User.id == DUMMY_USER_ID).first()
-        if not teacher_user:
-            db.add(
-                User(
-                    id=DUMMY_USER_ID,
-                    name="Benchmark Teacher",
-                    email="teacher@benchmark.com",
-                    hashed_password="fake",
-                    role="teacher",
-                )
+        # Seed the database
+        teacher = container.auth_service.register_user(
+            UserCreate(
+                name="Benchmark Teacher",
+                email="teacher@benchmark.com",
+                password="password123",
             )
-
-        benchmark_tutor = db.query(Tutor).filter(Tutor.id == DUMMY_TUTOR_ID).first()
-        if not benchmark_tutor:
-            db.add(
-                Tutor(
-                    id=DUMMY_TUTOR_ID,
-                    name="Benchmark Tutor",
-                    teacher_id=DUMMY_USER_ID,
-                )
+        )
+        teacher.role = "teacher"
+        student = container.auth_service.register_user(
+            UserCreate(
+                name="Benchmark Student",
+                email="student@benchmark.com",
+                password="password456",
             )
-
+        )
         db.commit()
-        print("Seeding complete.")
+        db.refresh(teacher)
 
-        print("\n--- Initializing services ---")
-        llm_service = LLMService()
-        embedding_service = EmbeddingService()
-        llm = llm_service.get_llm()
-        embedding_model = embedding_service.get_embedding_model()
-        vector_store = get_vector_store(embedding_model)
-        prompt = get_rag_prompt()
-        text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-            chunk_size=300, chunk_overlap=0, encoding_name="cl100k_base"
+        tutor = container.tutor_service.create_tutor(
+            TutorCreate(course_name="Benchmark Course"),
+            teacher=teacher,
         )
-        doc_repo = SQLAlchemyDocumentRepository(db)
-        chunk_repo = SQLAlchemyChunkRepository(db)
-        tutor_repo = SQLAlchemyTutorRepository(db)
+        student_chat = container.chat_service.create_new_chat(
+            tutor.id, user=student, title="Benchmark Chat"
+        )
 
-        ingestion_service = IngestionService(
-            db=db,
-            vector_store=vector_store,
-            text_splitter=text_splitter,
-            doc_repo=doc_repo,
-            chunk_repo=chunk_repo,
-            tutor_repo=tutor_repo,
-        )
-        rag_service = RAGService(
-            llm=llm,
-            vector_store=vector_store,
-            prompt=prompt,
-            tutor_repo=tutor_repo,
-        )
-        print("Services initialized.")
-
+        # Warm-up Phase
         print("\n--- Running Warm-up Query (to load models) ---")
-        _ = rag_service.answer_query("Warm-up query", tutor_id=0)
+        _ = container.chat_service.post_message(
+            chat_id=student_chat.id, query="Warm-up", current_user=student
+        )
         print("Models are now loaded into memory.")
 
+        # Benchmark Ingestion
         print(f"\n--- Benchmarking Ingestion for '{doc_path.name}' ---")
         pdf_bytes = doc_path.read_bytes()
         start_time = time.time()
-        ingestion_service.ingest_document(
+        container.chat_service.add_document_to_chat(
+            chat_id=student_chat.id,
             file_bytes=pdf_bytes,
             file_name=doc_path.name,
-            tutor_id=DUMMY_TUTOR_ID,
+            current_user=teacher,
         )
         metrics.ingestion_time_seconds = time.time() - start_time
         print("Ingestion complete.")
 
+        # Benchmark Query
         print("\n--- Benchmarking RAG Query ---")
         print(f"Query: '{query}'")
         start_time = time.time()
-        answer = rag_service.answer_query(query, tutor_id=DUMMY_TUTOR_ID)
+        answer = container.chat_service.post_message(
+            chat_id=student_chat.id, query=query, current_user=student
+        )
         metrics.query_latency_seconds = time.time() - start_time
         print(f"Answer:\n{answer}")
 
@@ -166,17 +215,10 @@ def main(doc_path: Path, query: str) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Benchmark the ProVAI RAG pipeline.")
     parser.add_argument(
-        "--doc-path",
-        type=Path,
-        required=True,
-        help="Path to the PDF document to ingest.",
+        "--doc-path", type=Path, required=True, help="Path to the PDF document."
     )
     parser.add_argument(
-        "--query",
-        type=str,
-        required=True,
-        help="The query to ask the RAG pipeline.",
+        "--query", type=str, required=True, help="The query to ask the RAG pipeline."
     )
     args = parser.parse_args()
-
     main(args.doc_path, args.query)
