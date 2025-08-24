@@ -1,21 +1,19 @@
-from passlib.context import CryptContext
+import bcrypt
 
 from src.auth.application.protocols import PasswordServiceProtocol
 
 
 class PasswordService(PasswordServiceProtocol):
-    """Concrete implementation for password hashing using passlib."""
-
-    _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    """Concrete implementation for password hashing using bcrypt directly."""
 
     def get_password_hash(self, password: str) -> str:
-        password_hash: str = self._pwd_context.hash(password)
+        password_bytes = password.encode("utf-8")
+        hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
 
-        return password_hash
+        return hashed_password.decode("utf-8")
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        verified_password: bool = self._pwd_context.verify(
-            plain_password, hashed_password
-        )
+        plain_password_bytes = plain_password.encode("utf-8")
+        hashed_password_bytes = hashed_password.encode("utf-8")
 
-        return verified_password
+        return bcrypt.checkpw(plain_password_bytes, hashed_password_bytes)

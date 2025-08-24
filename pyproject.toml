@@ -19,13 +19,14 @@ dependencies = [
   "langgraph>=0.5.1",
   "langsmith>=0.4.4",
   "llama-cpp-python>=0.3.12",
-  "passlib[bcrypt]>=1.7.4",
+  "bcrypt>=4.3.0",
   "psutil>=7.0.0",
   "pydantic-settings>=2.10.1",
   "pydantic[email]>=2.11.7",
   "pymupdf>=1.26.3",
   "python-dotenv>=1.1.1",
   "python-jose[cryptography]>=3.5.0",
+  "python-multipart>=0.0.20",
   "sentence-transformers>=5.0.0",
   "slowapi>=0.1.9",
   "sqlalchemy>=2.0.41",
@@ -102,6 +103,13 @@ ignore_missing_imports = true
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore:builtin type SwigPyPacked has no __module__ attribute:DeprecationWarning",
+  "ignore:builtin type SwigPyObject has no __module__ attribute:DeprecationWarning",
+  "ignore:builtin type swigvarlink has no __module__ attribute:DeprecationWarning",
+]
 
 [tool.ruff]
 exclude = ["src/rag/application/prompts/*"]
