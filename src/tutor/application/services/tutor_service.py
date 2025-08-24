@@ -7,6 +7,7 @@ from src.auth.application.exceptions import (
 )
 from src.auth.application.protocols import TokenServiceProtocol
 from src.auth.domain.models import User
+from src.rag.domain.models import Document
 from src.tutor.application.exceptions import (
     InvitationEmailMismatchError,
     SelfEnrollmentError,
@@ -51,6 +52,10 @@ class TutorService(TutorServiceProtocol):
         if not tutor:
             raise TutorNotFoundError(tutor_id=tutor_id)
         return tutor
+
+    def link_document_to_tutor(self, tutor: Tutor, document: Document) -> None:
+        """Links an existing Document object to a Tutor."""
+        self.tutor_repo.link_document_to_tutor(tutor, document)
 
     def create_invitations(
         self, tutor_id: int, requesting_user: User, student_emails: list[str]
@@ -105,8 +110,8 @@ class TutorService(TutorServiceProtocol):
 
         self.tutor_repo.add_student_to_tutor(tutor, student_user)
 
-    def verify_user_is_tutor_owner(self, tutor_id: int, user: User) -> None:
-        """Verifies that the user is the teacher who owns the specified tutor."""
+    def verify_user_is_tutor_owner(self, tutor_id: int, user: User) -> Tutor:
+        """Verifies ownership and returns the tutor object if successful."""
         if user.role != "teacher":
             raise InsufficientPermissionsError()
 
@@ -114,14 +119,15 @@ class TutorService(TutorServiceProtocol):
         if tutor.teacher_id != user.id:
             raise TutorOwnershipError()
 
-    def verify_user_can_access_tutor(self, tutor_id: int, user: User) -> None:
-        """
-        Verifies a user can access a tutor, either as its teacher or as an
-        enrolled student. Raises UserNotEnrolledError if not authorized.
-        """
+        return tutor
+
+    def verify_user_can_access_tutor(self, tutor_id: int, user: User) -> Tutor:
+        """Verifies access and returns the tutor object if successful."""
         tutor = self.get_tutor(tutor_id)
         is_teacher = tutor.teacher_id == user.id
         is_student = any(s.id == user.id for s in tutor.students)
 
         if not is_teacher and not is_student:
             raise UserNotEnrolledError()
+
+        return tutor
