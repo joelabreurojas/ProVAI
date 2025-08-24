@@ -18,9 +18,7 @@ from src.rag.application.protocols import (
     DocumentRepositoryProtocol,
     IngestionServiceProtocol,
 )
-from src.rag.domain.models import Chunk
-from src.tutor.application.exceptions import TutorNotFoundError
-from src.tutor.application.protocols import TutorRepositoryProtocol
+from src.rag.domain.models import Chunk, Document
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +26,7 @@ logger = logging.getLogger(__name__)
 class IngestionService(IngestionServiceProtocol):
     """
     Orchestrates the document ingestion pipeline. This service is responsible for
-    processing a document, ensuring its content is stored idempotently,
-    and linking it to the correct tutor in a single, atomic transaction.
+    processing a document, ensuring its content is stored idempotently.
     """
 
     def __init__(
@@ -39,24 +36,18 @@ class IngestionService(IngestionServiceProtocol):
         text_splitter: RecursiveCharacterTextSplitter,
         doc_repo: DocumentRepositoryProtocol,
         chunk_repo: ChunkRepositoryProtocol,
-        tutor_repo: TutorRepositoryProtocol,
     ):
         self.db = db
         self.vector_store = vector_store
         self.text_splitter = text_splitter
         self.doc_repo = doc_repo
         self.chunk_repo = chunk_repo
-        self.tutor_repo = tutor_repo
 
-    def ingest_document(self, file_bytes: bytes, file_name: str, tutor_id: int) -> None:
+    def ingest_document(self, file_bytes: bytes, file_name: str) -> Document:
         """
-        Processes a PDF, creating relational records for documents and chunks,
-        and storing embeddings in the vector store. This process is idempotent.
+        Processes a PDF, creating all necessary Document and Chunk records,
+        and returns the created Document object. It does not know about Tutors.
         """
-        tutor = self.tutor_repo.get_tutor_by_id(tutor_id)
-        if not tutor:
-            raise TutorNotFoundError(tutor_id=tutor_id)
-
         try:
             langchain_docs = self._load_pdf_from_bytes(file_bytes)
         except RuntimeError as e:
@@ -65,7 +56,6 @@ class IngestionService(IngestionServiceProtocol):
 
         try:
             db_document = self.doc_repo.create_document(file_name=file_name)
-            self.tutor_repo.link_document_to_tutor(tutor, db_document)
 
             chunks = self._split_documents(langchain_docs)
 
@@ -106,10 +96,11 @@ class IngestionService(IngestionServiceProtocol):
             self.db.commit()
 
             logger.info(
-                f"Successfully ingested '{file_name}' for tutor_id {tutor_id}. "
-                f"Added {len(new_chunks_for_vector_store)} new unique chunks \
-                to the vector store."
+                f"Successfully ingested '{file_name}'. "
+                f"Added {len(new_chunks_for_vector_store)} new unique chunks."
             )
+
+            return db_document
 
         except RuntimeError as e:
             logger.error(f"PDF parsing failed for {file_name}: {e}")

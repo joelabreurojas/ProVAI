@@ -81,7 +81,6 @@ def get_ingestion_service(
     text_splitter: RecursiveCharacterTextSplitter = Depends(get_text_splitter),
     doc_repo: DocumentRepositoryProtocol = Depends(get_document_repository),
     chunk_repo: ChunkRepositoryProtocol = Depends(get_chunk_repository),
-    tutor_repo: TutorRepositoryProtocol = Depends(get_tutor_repository),
 ) -> IngestionServiceProtocol:
     return IngestionService(
         db=db,
@@ -89,7 +88,6 @@ def get_ingestion_service(
         text_splitter=text_splitter,
         doc_repo=doc_repo,
         chunk_repo=chunk_repo,
-        tutor_repo=tutor_repo,
     )
 
 
@@ -97,12 +95,10 @@ def get_rag_service(
     llm_service: LLMServiceProtocol = Depends(get_llm_service),
     vector_store: Chroma = Depends(get_rag_vector_store),
     prompt: ChatPromptTemplate = Depends(get_rag_prompt_template),
-    tutor_repo: TutorRepositoryProtocol = Depends(get_tutor_repository),
 ) -> RAGServiceProtocol:
     llm = llm_service.get_llm()
     return RAGService(
         llm=llm,
         vector_store=vector_store,
         prompt=prompt,
-        tutor_repo=tutor_repo,
     )

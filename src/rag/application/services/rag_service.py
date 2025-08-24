@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from langchain_chroma import Chroma
 from langchain_community.llms.llamacpp import LlamaCpp
@@ -10,7 +11,6 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from langsmith import traceable
 
 from src.rag.application.protocols import RAGServiceProtocol
-from src.tutor.application.protocols import TutorRepositoryProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -30,28 +30,19 @@ class RAGService(RAGServiceProtocol):
         llm: LlamaCpp,
         vector_store: Chroma,
         prompt: ChatPromptTemplate,
-        tutor_repo: TutorRepositoryProtocol,
     ):
         self.llm = llm
         self.vector_store = vector_store
         self.prompt = prompt
-        self.tutor_repo = tutor_repo
 
     @traceable(name="Answer Pipeline")
-    def answer_query(self, query: str, tutor_id: int) -> str:
+    def answer_query(self, query: str, context_filter: dict[str, Any]) -> str:
         """
-        Takes a user query and tutor_id, runs the full RAG pipeline with
-        filtering, and returns the answer.
+        Takes a user query and a context filter, runs the RAG pipeline,
+        and returns the answer. It has no knowledge of Tutors.
         """
-        valid_chunk_hashes = self.tutor_repo.get_chunk_hashes_for_tutor(tutor_id)
-        if not valid_chunk_hashes:
-            return "No documents have been added to this tutor yet."
-
         retriever = self.vector_store.as_retriever(
-            search_kwargs={
-                "k": 4,
-                "filter": {"content_hash": {"$in": valid_chunk_hashes}},
-            }
+            search_kwargs={"k": 4, "filter": context_filter}
         )
 
         rag_chain = self._build_rag_chain(retriever)
