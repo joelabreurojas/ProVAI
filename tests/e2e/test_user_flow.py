@@ -1,4 +1,5 @@
 import fitz
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 from sqlalchemy.orm import Session
@@ -9,7 +10,7 @@ from src.rag.dependencies import get_rag_vector_store
 
 
 def test_full_user_flow(
-    client: TestClient,
+    app_and_client: tuple[FastAPI, TestClient],
     db_session: Session,
     mocker: MockerFixture,
 ) -> None:
@@ -26,7 +27,9 @@ def test_full_user_flow(
     7. The Student asks a question in their chat and gets a correct,
        context-aware answer.
     """
-    # Register users and manually promote Teacher
+    app, client = app_and_client
+
+    # Register users & manually promote Teacher
     client.post(
         "/api/v1/auth/register",
         json={
@@ -74,9 +77,9 @@ def test_full_user_flow(
     assert tutor_res.status_code == 201
     tutor_id = tutor_res.json()["id"]
 
-    # Teacher uploads a Document to the Tutor
+    # Teacher uploads a document to the Tutor
     mock_vector_store = mocker.MagicMock()
-    client.app.dependency_overrides[get_rag_vector_store] = lambda: mock_vector_store
+    app.dependency_overrides[get_rag_vector_store] = lambda: mock_vector_store
 
     doc = fitz.open()
     page = doc.new_page()
@@ -91,7 +94,7 @@ def test_full_user_flow(
     )
     assert upload_res.status_code == 201, f"Document upload failed: {upload_res.json()}"
 
-    # Teacher creates an Invitation
+    # Teacher invites Student and Student enrolls
     invitation_res = client.post(
         f"/api/v1/tutors/{tutor_id}/invitations",
         json={"student_emails": ["student@e2e.com"]},
@@ -100,7 +103,6 @@ def test_full_user_flow(
     assert invitation_res.status_code == 201
     invitation_token = invitation_res.json()[0]["token"]
 
-    # Student enrolls in the Tutor
     enrollment_res = client.post(
         f"/api/v1/tutors/{tutor_id}/enrollments",
         json={"invitation_token": invitation_token},
@@ -108,7 +110,7 @@ def test_full_user_flow(
     )
     assert enrollment_res.status_code == 201
 
-    # Student creates a Chat with the Tutor
+    # Student creates a chat with the Tutor
     student_chat_res = client.post(
         "/api/v1/chats",
         json={"tutor_id": tutor_id, "title": "My Private Study Chat"},
@@ -117,12 +119,13 @@ def test_full_user_flow(
     assert student_chat_res.status_code == 201
     student_chat_id = student_chat_res.json()["id"]
 
-    # Student queries the Chat
+    # Student asks a question in the Chat.
     mock_llm_service = mocker.MagicMock()
-    mock_llm = mocker.MagicMock()
-    mock_llm.return_value = "mocked llm response about multi-head attention"
+    mock_llm = mocker.MagicMock(
+        return_value="mocked llm response about multi-head attention"
+    )
     mock_llm_service.get_llm.return_value = mock_llm
-    client.app.dependency_overrides[get_llm_service] = lambda: mock_llm_service
+    app.dependency_overrides[get_llm_service] = lambda: mock_llm_service
 
     query_res = client.post(
         f"/api/v1/chats/{student_chat_id}/query",
@@ -131,7 +134,3 @@ def test_full_user_flow(
     )
     assert query_res.status_code == 200, f"Query failed: {query_res.json()}"
     assert "mocked llm response" in query_res.json()["answer"]
-
-    # Cleanup
-    del client.app.dependency_overrides[get_rag_vector_store]
-    del client.app.dependency_overrides[get_llm_service]

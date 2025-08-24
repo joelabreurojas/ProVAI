@@ -3,6 +3,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from langchain_chroma import Chroma
 from sqlalchemy import create_engine
@@ -12,7 +13,6 @@ from sqlalchemy.orm import sessionmaker
 os.environ["ENV_STATE"] = "test"
 
 from src.ai.application.services import EmbeddingService
-from src.ai.dependencies import get_embedding_service, get_llm_service
 from src.core.app import create_app
 from src.core.infrastructure.database import Base, get_db
 from src.core.infrastructure.settings import settings
@@ -74,15 +74,17 @@ def test_vector_store(embedding_service: EmbeddingService) -> Chroma:
 
 
 @pytest.fixture(scope="function")
-def client(
+def app_and_client(
     db_session: SQLAlchemySession, test_vector_store: Chroma
-) -> Generator[TestClient, None, None]:
+) -> Generator[tuple[FastAPI, TestClient], None, None]:
     """
-    Provides a FastAPI TestClient that is configured to use the clean,
-    transactional test database session.
+    Provides a configured FastAPI app instance and a TestClient for that app.
+    This pattern allows tests to have a correctly typed handle to the app
+    for managing dependency overrides.
     """
     app = create_app()
 
+    # Define overrides before yielding
     def override_get_db() -> Generator[SQLAlchemySession, None, None]:
         yield db_session
 
@@ -93,10 +95,7 @@ def client(
     app.dependency_overrides[get_rag_vector_store] = override_get_vector_store
 
     with TestClient(app) as test_client:
-        yield test_client
+        yield app, test_client
 
     # Idempotent cleanup of all potential overrides
-    app.dependency_overrides.pop(get_db, None)
-    app.dependency_overrides.pop(get_rag_vector_store, None)
-    app.dependency_overrides.pop(get_llm_service, None)
-    app.dependency_overrides.pop(get_embedding_service, None)
+    app.dependency_overrides.clear()

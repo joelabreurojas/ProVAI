@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 from pytest_mock import MockerFixture
 
@@ -6,10 +8,7 @@ from src.chat.application.exceptions import ChatNotFoundError
 from src.chat.application.protocols import ChatRepositoryProtocol
 from src.chat.application.services import ChatService
 from src.chat.domain.models import Chat, Message
-from src.rag.application.protocols import (
-    IngestionServiceProtocol,
-    RAGServiceProtocol,
-)
+from src.rag.application.protocols import IngestionServiceProtocol, RAGServiceProtocol
 from src.rag.domain.models import Document
 from src.tutor.application.protocols import (
     TutorRepositoryProtocol,
@@ -20,7 +19,7 @@ from src.tutor.domain.models import Tutor
 
 def create_mocked_chat_service(
     mocker: MockerFixture,
-) -> tuple[ChatService, dict[str, MockerFixture]]:
+) -> tuple[ChatService, dict[str, MagicMock]]:
     """Creates a ChatService with all its dependencies mocked."""
     mock_chat_repo = mocker.MagicMock(spec=ChatRepositoryProtocol)
     mock_tutor_service = mocker.MagicMock(spec=TutorServiceProtocol)
@@ -96,6 +95,40 @@ def test_get_chat_raises_error_when_not_found(mocker: MockerFixture) -> None:
     mocks["tutor_service"].verify_user_can_access_tutor.assert_not_called()
 
 
+def test_get_chats_for_user_and_tutor(mocker: MockerFixture) -> None:
+    """
+    Tests that the service authorizes the user, fetches all their chats,
+    and correctly filters them for the specified tutor.
+    """
+    service, mocks = create_mocked_chat_service(mocker)
+    mock_user = mocker.MagicMock(spec=User, id=101)
+    tutor_id = 1
+
+    # Simulate the repository returning chats from MULTIPLE tutors
+    chat_for_tutor1 = mocker.MagicMock(spec=Chat, tutor_id=1)
+    chat_for_tutor2 = mocker.MagicMock(spec=Chat, tutor_id=2)
+    chat2_for_tutor1 = mocker.MagicMock(spec=Chat, tutor_id=1)
+    mocks["chat_repo"].get_chats_for_user.return_value = [
+        chat_for_tutor1,
+        chat_for_tutor2,
+        chat2_for_tutor1,
+    ]
+
+    result = service.get_chats_for_user_and_tutor(tutor_id=tutor_id, user=mock_user)
+
+    # Verify the orchestration
+    mocks["tutor_service"].verify_user_can_access_tutor.assert_called_once_with(
+        tutor_id, mock_user
+    )
+    mocks["chat_repo"].get_chats_for_user.assert_called_once_with(user_id=mock_user.id)
+
+    # Verify the filtering logic
+    assert len(result) == 2
+    assert chat_for_tutor1 in result
+    assert chat2_for_tutor1 in result
+    assert chat_for_tutor2 not in result
+
+
 def test_add_document_to_chat_orchestration(mocker: MockerFixture) -> None:
     """
     Tests the full orchestration logic for adding a document to a chat.
@@ -106,6 +139,7 @@ def test_add_document_to_chat_orchestration(mocker: MockerFixture) -> None:
     mock_tutor = mocker.MagicMock(spec=Tutor, id=1)
     mock_document = mocker.MagicMock(spec=Document)
 
+    # Setup the return values for the mocked calls
     mocks["chat_repo"].get_chat_by_id.return_value = mock_chat
     mocks["tutor_service"].get_tutor.return_value = mock_tutor
     mocks["ingestion_service"].ingest_document.return_value = mock_document
