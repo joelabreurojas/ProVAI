@@ -4,6 +4,7 @@ from src.auth.application.exceptions import (
     InsufficientPermissionsError,
     TokenInvalidScopeError,
     TokenMissingDataError,
+    TokenValidationError,
 )
 from src.auth.application.protocols import TokenServiceProtocol
 from src.auth.domain.models import User
@@ -88,13 +89,16 @@ class TutorService(TutorServiceProtocol):
         """Enrolls a student in a tutor using a valid invitation token."""
         payload = self.token_service.decode_access_token(token)
 
+        if payload is None:
+            raise TokenValidationError()
+
         if payload.get("scope") != "enrollment":
             raise TokenInvalidScopeError()
 
         tutor_id = payload.get("tutor_id")
         authorized_email = payload.get("student_email")
 
-        if not all([tutor_id, authorized_email]):
+        if not tutor_id or not authorized_email:
             raise TokenMissingDataError()
 
         if authorized_email != student_user.email:
