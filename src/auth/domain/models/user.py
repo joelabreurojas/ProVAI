@@ -7,7 +7,8 @@ from src.core.infrastructure.database import Base
 from src.tutor.domain.models.links import tutor_students
 
 if TYPE_CHECKING:
-    from src.chat.domain.models import Chat, Tutor
+    from src.chat.domain.models import Chat
+    from src.tutor.domain.models import Tutor
 
 
 class User(Base):

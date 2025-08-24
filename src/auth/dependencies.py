@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.auth.application.exceptions import InvalidTokenError
+from src.auth.application.exceptions import TokenValidationError
 from src.auth.application.protocols import (
     AuthServiceProtocol,
     PasswordServiceProtocol,
@@ -58,7 +58,7 @@ def get_current_user(
     """
     try:
         return auth_service.get_user_from_token(token)
-    except InvalidTokenError as e:
+    except TokenValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),

@@ -1,9 +1,9 @@
-from src.core.domain.errors import ErrorCode
 from src.auth.application.exceptions.token_validation_error import TokenValidationError
+from src.core.domain.errors import ErrorCode
 
 
-class TokenInvalidScopeError(TokenValidationError):
-    """Raised when a JWT has an invalid or missing 'scope' claim."""
+class TokenMissingDataError(TokenValidationError):
+    """Raised when a JWT is missing a required field."""
 
-    error_code = ErrorCode.TOKEN_INVALID_SCOPE
-    message = "The provided token is not valid for this action."
+    error_code = ErrorCode.TOKEN_MISSING_DATA
+    message = "The provided token is missing required data."
