@@ -1,10 +1,10 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from src.tutor.application.exceptions import ChatNotFoundError
-from src.tutor.application.protocols import ChatRepositoryProtocol
-from src.tutor.application.services import ChatService
-from src.tutor.domain.models import Chat
+from src.chat.application.exceptions import ChatNotFoundError
+from src.chat.application.protocols import ChatRepositoryProtocol
+from src.chat.application.services import ChatService
+from src.chat.domain.models import Chat
 
 
 def test_create_new_chat_successfully(mocker: MockerFixture) -> None:

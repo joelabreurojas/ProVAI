@@ -1,6 +1,6 @@
 import fitz
 from fastapi.testclient import TestClient
-from pytest_mock import MockerFixture  # <-- Use the correct import
+from pytest_mock import MockerFixture
 from sqlalchemy.orm import Session
 
 from src.ai.dependencies import get_llm_service
@@ -14,39 +14,43 @@ def test_full_user_flow(
     mocker: MockerFixture,
 ) -> None:
     """
-    Tests the full end-to-end workflow by simulating real API calls and
-    mocking external AI services for speed and determinism.
+    Tests the full end-to-end workflow by simulating real API calls.
 
     This test simulates the entire lifecycle of a user interaction:
     1. A Teacher and a Student are registered via the API.
-    2. The Teacher logs in and creates a Tutor via the API.
-    3. The Teacher creates an invitation for the Tutor.
-    4. The Student logs in and uses the invitation to enroll.
-    5. The Teacher successfully uploads a valid PDF to the Tutor.
-    6. The Student successfully queries the Tutor and receives a mocked response.
+    2. The "teacher" user is manually promoted via direct DB access for the test.
+    3. The Teacher logs in and creates a Tutor.
+    4. The Teacher creates an invitation for the Tutor.
+    5. The Student logs in and uses the invitation to enroll.
+    6. The Teacher successfully uploads a valid PDF to the Tutor.
+    7. The Student successfully queries the Tutor and receives a mocked response.
     """
-    # Register User and promote it as Teacher
+    # Register a user who WILL BECOME the teacher
     response = client.post(
         "/api/v1/auth/register",
         json={
             "name": "E2E Teacher",
             "email": "teacher@e2e.com",
             "password": "password123",
-            "role": "teacher",
         },
     )
     assert response.status_code == 201, "Teacher registration failed"
+
+    # Manually promote the user to 'teacher' in the database.
     teacher_db = db_session.query(User).filter_by(email="teacher@e2e.com").first()
     assert teacher_db is not None, "Teacher not found in DB after registration"
+    teacher_db.role = "teacher"
+    db_session.commit()
+    db_session.refresh(teacher_db)
+    assert teacher_db.role == "teacher"
 
-    # Register User as Student
+    # Register a user who will remain a student
     response = client.post(
         "/api/v1/auth/register",
         json={
             "name": "E2E Student",
             "email": "student@e2e.com",
             "password": "password456",
-            "role": "student",
         },
     )
     assert response.status_code == 201, "Student registration failed"
@@ -72,10 +76,12 @@ def test_full_user_flow(
     # Teacher creates an Invitation
     response = client.post(
         f"/api/v1/tutors/{tutor_id}/invitations",
+        json={"student_emails": ["student@e2e.com"]},  # Invite the specific student
         headers=teacher_headers,
     )
     assert response.status_code == 201, f"Invitation creation failed: {response.json()}"
-    invitation_token = response.json()["enrollment_token"]
+    invitation = response.json()[0]  # Get the first invitation object
+    invitation_token = invitation["token"]
 
     # Student logs in
     response = client.post(
@@ -98,7 +104,6 @@ def test_full_user_flow(
     mock_vector_store = mocker.MagicMock()
     client.app.dependency_overrides[get_rag_vector_store] = lambda: mock_vector_store
 
-    # Create a valid PDF file in memory
     doc = fitz.open()
     page = doc.new_page()
     page.insert_text((50, 72), "This is a real test PDF about multi-head attention.")
@@ -113,7 +118,7 @@ def test_full_user_flow(
     assert response.status_code == 201, f"Document upload failed: {response.json()}"
     mock_vector_store.add_texts.assert_called_once()
 
-    # 5. Student queries
+    # Student queries
     mock_llm_service = mocker.MagicMock()
     mock_llm = mocker.MagicMock()
     mock_llm.return_value = "mocked llm response about multi-head attention"
