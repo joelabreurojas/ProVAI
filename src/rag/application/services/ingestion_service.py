@@ -5,10 +5,10 @@ import fitz
 from langchain_chroma import Chroma
 from langchain_core.documents import Document as LangChainDocument
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.assistant.application.exceptions import AssistantNotFoundError
-from src.assistant.application.protocols import AssistantRepositoryProtocol
+from src.core.application.exceptions import DatabaseError
 from src.rag.application.exceptions import (
     IngestionError,
     PDFParsingError,
@@ -18,7 +18,7 @@ from src.rag.application.protocols import (
     DocumentRepositoryProtocol,
     IngestionServiceProtocol,
 )
-from src.rag.domain.models import Chunk
+from src.rag.domain.models import Chunk, Document
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,7 @@ logger = logging.getLogger(__name__)
 class IngestionService(IngestionServiceProtocol):
     """
     Orchestrates the document ingestion pipeline. This service is responsible for
-    processing a document, ensuring its content is stored idempotently,
-    and linking it to the correct assistant in a single, atomic transaction.
+    processing a document, ensuring its content is stored idempotently.
     """
 
     def __init__(
@@ -37,31 +36,27 @@ class IngestionService(IngestionServiceProtocol):
         text_splitter: RecursiveCharacterTextSplitter,
         doc_repo: DocumentRepositoryProtocol,
         chunk_repo: ChunkRepositoryProtocol,
-        assistant_repo: AssistantRepositoryProtocol,
     ):
         self.db = db
         self.vector_store = vector_store
         self.text_splitter = text_splitter
         self.doc_repo = doc_repo
         self.chunk_repo = chunk_repo
-        self.assistant_repo = assistant_repo
 
-    def ingest_document(
-        self, file_bytes: bytes, file_name: str, assistant_id: int
-    ) -> None:
+    def ingest_document(self, file_bytes: bytes, file_name: str) -> Document:
         """
-        Processes a PDF, creating relational records for documents and chunks,
-        and storing embeddings in the vector store. This process is idempotent.
+        Processes a PDF, creating all necessary Document and Chunk records,
+        and returns the created Document object. It does not know about Tutors.
         """
-        assistant = self.assistant_repo.get_assistant_by_id(assistant_id)
-        if not assistant:
-            raise AssistantNotFoundError(assistant_id=assistant_id)
+        try:
+            langchain_docs = self._load_pdf_from_bytes(file_bytes)
+        except RuntimeError as e:
+            logger.error(f"PDF parsing failed for document {file_name}: {e}")
+            raise PDFParsingError() from e
 
         try:
             db_document = self.doc_repo.create_document(file_name=file_name)
-            self.assistant_repo.link_document_to_assistant(assistant, db_document)
 
-            langchain_docs = self._load_pdf_from_bytes(file_bytes)
             chunks = self._split_documents(langchain_docs)
 
             all_hashes = [
@@ -92,31 +87,37 @@ class IngestionService(IngestionServiceProtocol):
                         f"Failed to create chunk for content hash {content_hash}"
                     )
 
-            self.db.commit()
-
             if new_chunks_for_vector_store:
                 self.vector_store.add_texts(
                     texts=new_chunks_for_vector_store,
                     ids=new_chunk_ids_for_vector_store,
                 )
 
-        except fitz.errors.FitzError as e:
-            logger.error(f"PDF parsing failed for document {file_name}: {e}")
+            self.db.commit()
+
+            logger.info(
+                f"Successfully ingested '{file_name}'. "
+                f"Added {len(new_chunks_for_vector_store)} new unique chunks."
+            )
+
+            return db_document
+
+        except RuntimeError as e:
+            logger.error(f"PDF parsing failed for {file_name}: {e}")
             self.db.rollback()
             raise PDFParsingError() from e
+
+        except SQLAlchemyError as e:
+            logger.error(f"Database error during ingestion for {file_name}: {e}")
+            self.db.rollback()
+            raise DatabaseError() from e
+
         except Exception as e:
             logger.error(
-                f"Ingestion failed for document {file_name}, \
-                rolling back transaction: {e}"
+                f"An unexpected error occurred during ingestion for {file_name}: {e}"
             )
             self.db.rollback()
             raise IngestionError() from e
-
-        logger.info(
-            f"Successfully ingested '{file_name}' for assistant_id {assistant_id}. "
-            f"Added {len(new_chunks_for_vector_store)} new unique chunks \
-            to the vector store."
-        )
 
     def _load_pdf_from_bytes(self, file_bytes: bytes) -> list[LangChainDocument]:
         """Loads a PDF from in-memory bytes using PyMuPDF."""

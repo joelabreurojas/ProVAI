@@ -14,12 +14,14 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
     def get_by_email(self, email: str) -> User | None:
         return self.db.query(User).filter(User.email == email).first()
 
+    def get_by_id(self, user_id: int) -> User | None:
+        return self.db.query(User).filter(User.id == user_id).first()
+
     def add(self, user_create: UserCreate, hashed_password: str) -> User:
         db_user = User(
             name=user_create.name,
             email=user_create.email,
             hashed_password=hashed_password,
-            role="student",  # Default
         )
 
         self.db.add(db_user)

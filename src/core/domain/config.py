@@ -24,6 +24,7 @@ class _BaseConfig(BaseModel):
     # Environment variables
     SECRET_KEY: str
     DB_URL: str
+    ENV_STATE: str
 
     # Security settings
     ALGORITHM: str = "HS256"

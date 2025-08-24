@@ -3,9 +3,8 @@ from unittest.mock import MagicMock
 
 from langchain_core.documents import Document as LangChainDocument
 from pytest_mock import MockerFixture
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.assistant.application.protocols import AssistantRepositoryProtocol
 from src.rag.application.protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
@@ -21,12 +20,12 @@ def test_ingestion_new_document_and_new_chunks(mocker: MockerFixture) -> None:
     it correctly orchestrates the creation of all records (metadata-only for chunks)
     and adds the chunk CONTENT to the vector store.
     """
-    mock_db_session = mocker.MagicMock(spec=Session)
+    mock_db_session = mocker.MagicMock(spec=SQLAlchemySession)
+
     mock_vector_store = mocker.MagicMock()
     mock_text_splitter = mocker.MagicMock()
     mock_doc_repo = mocker.MagicMock(spec=DocumentRepositoryProtocol)
     mock_chunk_repo = mocker.MagicMock(spec=ChunkRepositoryProtocol)
-    mock_assistant_repo = mocker.MagicMock(spec=AssistantRepositoryProtocol)
 
     mocker.patch(
         "src.rag.application.services.ingestion_service.IngestionService._load_pdf_from_bytes",
@@ -45,16 +44,12 @@ def test_ingestion_new_document_and_new_chunks(mocker: MockerFixture) -> None:
         text_splitter=mock_text_splitter,
         doc_repo=mock_doc_repo,
         chunk_repo=mock_chunk_repo,
-        assistant_repo=mock_assistant_repo,
     )
 
-    service.ingest_document(
-        file_bytes=FAKE_PDF_BYTES, file_name="new_doc.pdf", assistant_id=1
-    )
+    service.ingest_document(file_bytes=FAKE_PDF_BYTES, file_name="new_doc.pdf")
 
-    # Assert Document and Assistant interactions
+    # Assert Document interactions
     mock_doc_repo.create_document.assert_called_once_with(file_name="new_doc.pdf")
-    mock_assistant_repo.link_document_to_assistant.assert_called_once()
 
     # Assert Chunk interactions
     mock_chunk_repo.get_existing_chunks_by_hashes.assert_called_once()
@@ -84,12 +79,11 @@ def test_ingestion_new_document_with_existing_chunks(mocker: MockerFixture) -> N
     """
     Tests the de-duplication path: a document with an existing chunk is ingested.
     """
-    mock_db_session = mocker.MagicMock(spec=Session)
+    mock_db_session = mocker.MagicMock(spec=SQLAlchemySession)
     mock_vector_store = mocker.MagicMock()
     mock_text_splitter = mocker.MagicMock()
     mock_doc_repo = mocker.MagicMock(spec=DocumentRepositoryProtocol)
     mock_chunk_repo = mocker.MagicMock(spec=ChunkRepositoryProtocol)
-    mock_assistant_repo = mocker.MagicMock(spec=AssistantRepositoryProtocol)
 
     mocker.patch(
         "src.rag.application.services.ingestion_service.IngestionService._load_pdf_from_bytes",
@@ -110,15 +104,11 @@ def test_ingestion_new_document_with_existing_chunks(mocker: MockerFixture) -> N
         text_splitter=mock_text_splitter,
         doc_repo=mock_doc_repo,
         chunk_repo=mock_chunk_repo,
-        assistant_repo=mock_assistant_repo,
     )
 
-    service.ingest_document(
-        file_bytes=FAKE_PDF_BYTES, file_name="another_doc.pdf", assistant_id=1
-    )
+    service.ingest_document(file_bytes=FAKE_PDF_BYTES, file_name="another_doc.pdf")
 
     mock_doc_repo.create_document.assert_called_once()
-    mock_assistant_repo.link_document_to_assistant.assert_called_once()
     mock_chunk_repo.get_chunk_by_hash.assert_called_once_with(expected_hash)
     mock_chunk_repo.create_chunk.assert_not_called()
     mock_vector_store.add_texts.assert_not_called()

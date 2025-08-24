@@ -80,7 +80,6 @@ We use a two-part field system to categorize every issue. This helps us filter t
 ### 3. What part of the codebase does this touch?
 
 - `module:api` - Related to FastAPI endpoints and the API layer.
-- `module:assistant` - Related to the core Assistant, Chat, and Enrollment logic.
 - `module:auth` - Related to user authentication and authorization logic.
 - `module:database` - Related to the database schema (SQLAlchemy) or migrations (Alembic).
 - `module:devops` - Related to Docker, CI/CD (GitHub Actions), or deployment.

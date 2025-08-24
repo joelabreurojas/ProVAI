@@ -19,7 +19,7 @@
 
 ### ✨ Overview
 
-ProVAI (Professor Virtual with AI) is an intelligent learning assistant designed to enhance educational experiences. It uses a Retrieval-Augmented Generation (RAG) engine to provide personalized support by interacting with teacher-provided course materials.
+ProVAI (Professor Virtual with AI) is an intelligent learning tutor designed to enhance educational experiences. It uses a Retrieval-Augmented Generation (RAG) engine to provide personalized support by interacting with teacher-provided course materials.
 
 **ProVAI helps:**
 
@@ -28,7 +28,7 @@ ProVAI (Professor Virtual with AI) is an intelligent learning assistant designed
   - Automated, non-graded quizzes for effective self-assessment.
 
 - **Teachers** to provide scalable, personalized support with:
-  - An AI assistant that handles common student questions 24/7.
+  - An AI tutor that handles common student questions 24/7.
   - Privacy-preserving analytics that identify classroom-wide learning gaps.
 
 - **Educational Institutions** to deploy a secure, self-hostable, and resource-efficient AI learning tool.
@@ -102,8 +102,8 @@ ProVAI is built on a foundation of modern, high-performance technologies, guided
 |   Vector Database   |            ChromaDB            | _file-based for MVP_ |
 |  AI Orchestration   |           LangChain            |                      |
 |     LLM Serving     |        llama-cpp-python        |                      |
-|      LLM Model      |             phi-2              |      _for MVP_       |
-|   Embedding Model   |       bge-small-en-v1.5        |                      |
+|      LLM Model      |         Qwen1.5-1.8B           |      _for MVP_       |
+|   Embedding Model   |  all-MiniLM-L6-v2 (fastembed)  |      _for MVP_       |
 |   Dev Environment   |          Docker & uv           |                      |
 |  Quality Assurance  |    tox, pytest, ruff, mypy     |                      |
 
@@ -127,7 +127,7 @@ This is a high-level overview of our development milestones, focusing on the pat
 
 **Milestone 3: The Minimum Viable Interface (In Progress)**
 - [ ] Build the Streamlit UI for user interaction, login, and document upload.
-- [ ] Implement "Teacher" and "Student" role-based access control via **Enrollments**.
+- [ ] Implement "Teacher" and "Student" role-based access control.
 - [ ] Deploy the complete MVP to a public platform.
 
 <details>

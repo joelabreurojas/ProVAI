@@ -37,13 +37,15 @@ def _load_settings() -> DevConfig | TestConfig | ProdConfig:
     _validate_settings(env)
 
     if env.ENV_STATE == "dev":
-        return DevConfig(SECRET_KEY=env.SECRET_KEY)
+        return DevConfig(SECRET_KEY=env.SECRET_KEY, ENV_STATE=env.ENV_STATE)
 
     if env.ENV_STATE == "test":
-        return TestConfig(SECRET_KEY=env.SECRET_KEY)
+        return TestConfig(SECRET_KEY=env.SECRET_KEY, ENV_STATE=env.ENV_STATE)
 
     assert env.DB_URL is not None
-    return ProdConfig(SECRET_KEY=env.SECRET_KEY, DB_URL=env.DB_URL)
+    return ProdConfig(
+        SECRET_KEY=env.SECRET_KEY, DB_URL=env.DB_URL, ENV_STATE=env.ENV_STATE
+    )
 
 
 settings = _load_settings()

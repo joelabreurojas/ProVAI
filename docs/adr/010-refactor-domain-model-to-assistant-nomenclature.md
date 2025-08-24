@@ -1,6 +1,6 @@
 # ADR-010: Refactor Domain Model to Assistant/Chat Nomenclature
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-015](./015-refactoring-to-tutor-model.md)
 - **Date:** 2025-08-22
 - **Authors:** @joelabreurojas
 

@@ -24,7 +24,7 @@ graph TD
 1.  **Embed Query:** The user's raw query string is sent to the `bge-small` embedding model to be converted into a numerical vector.
 2.  **Retrieve Chunks:** The query vector is used to perform a similarity search in `ChromaDB`. The top `k` most similar document chunks are returned.
 3.  **Construct Prompt:** The retrieved chunks (context) and the original user query are inserted into a predefined prompt template that instructs the LLM to answer only based on the context.
-4.  **Generate Answer:** The final, context-rich prompt is sent to the `Phi-2` LLM, which generates the final answer.
+4.  **Generate Answer:** The final, context-rich prompt is sent to the `Qwen1.5-1.8B` LLM, which generates the final answer.
 
 ---
 

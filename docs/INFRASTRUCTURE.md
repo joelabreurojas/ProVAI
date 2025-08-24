@@ -31,7 +31,7 @@ graph TD
             M[FastAPI App]
             N[Application Services]
             O[Domain Models]
-            P[LLM: Phi-2 via llama-cpp]
+            P[LLM: Qwen1.5-1.8B via llama-cpp]
 
             L --> M
             M --> N
