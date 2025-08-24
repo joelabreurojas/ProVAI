@@ -10,7 +10,6 @@ from src.rag.application.protocols import (
     DocumentRepositoryProtocol,
 )
 from src.rag.application.services import IngestionService
-from src.tutor.application.protocols import TutorRepositoryProtocol
 
 FAKE_PDF_BYTES = b"%PDF-1.4..."
 
@@ -27,7 +26,6 @@ def test_ingestion_new_document_and_new_chunks(mocker: MockerFixture) -> None:
     mock_text_splitter = mocker.MagicMock()
     mock_doc_repo = mocker.MagicMock(spec=DocumentRepositoryProtocol)
     mock_chunk_repo = mocker.MagicMock(spec=ChunkRepositoryProtocol)
-    mock_tutor_repo = mocker.MagicMock(spec=TutorRepositoryProtocol)
 
     mocker.patch(
         "src.rag.application.services.ingestion_service.IngestionService._load_pdf_from_bytes",
@@ -46,16 +44,12 @@ def test_ingestion_new_document_and_new_chunks(mocker: MockerFixture) -> None:
         text_splitter=mock_text_splitter,
         doc_repo=mock_doc_repo,
         chunk_repo=mock_chunk_repo,
-        tutor_repo=mock_tutor_repo,
     )
 
-    service.ingest_document(
-        file_bytes=FAKE_PDF_BYTES, file_name="new_doc.pdf", tutor_id=1
-    )
+    service.ingest_document(file_bytes=FAKE_PDF_BYTES, file_name="new_doc.pdf")
 
-    # Assert Document and Tutor interactions
+    # Assert Document interactions
     mock_doc_repo.create_document.assert_called_once_with(file_name="new_doc.pdf")
-    mock_tutor_repo.link_document_to_tutor.assert_called_once()
 
     # Assert Chunk interactions
     mock_chunk_repo.get_existing_chunks_by_hashes.assert_called_once()
@@ -90,7 +84,6 @@ def test_ingestion_new_document_with_existing_chunks(mocker: MockerFixture) -> N
     mock_text_splitter = mocker.MagicMock()
     mock_doc_repo = mocker.MagicMock(spec=DocumentRepositoryProtocol)
     mock_chunk_repo = mocker.MagicMock(spec=ChunkRepositoryProtocol)
-    mock_tutor_repo = mocker.MagicMock(spec=TutorRepositoryProtocol)
 
     mocker.patch(
         "src.rag.application.services.ingestion_service.IngestionService._load_pdf_from_bytes",
@@ -111,15 +104,11 @@ def test_ingestion_new_document_with_existing_chunks(mocker: MockerFixture) -> N
         text_splitter=mock_text_splitter,
         doc_repo=mock_doc_repo,
         chunk_repo=mock_chunk_repo,
-        tutor_repo=mock_tutor_repo,
     )
 
-    service.ingest_document(
-        file_bytes=FAKE_PDF_BYTES, file_name="another_doc.pdf", tutor_id=1
-    )
+    service.ingest_document(file_bytes=FAKE_PDF_BYTES, file_name="another_doc.pdf")
 
     mock_doc_repo.create_document.assert_called_once()
-    mock_tutor_repo.link_document_to_tutor.assert_called_once()
     mock_chunk_repo.get_chunk_by_hash.assert_called_once_with(expected_hash)
     mock_chunk_repo.create_chunk.assert_not_called()
     mock_vector_store.add_texts.assert_not_called()
