@@ -19,8 +19,6 @@ from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.ai.application.services import EmbeddingService, LLMService
-from src.assistant.domain.models import Assistant
-from src.assistant.infrastructure.repositories import SQLAlchemyAssistantRepository
 from src.auth.domain.models import User
 from src.core.infrastructure.database import SessionLocal
 from src.core.modules import import_models
@@ -31,6 +29,8 @@ from src.rag.infrastructure.repositories import (
     SQLAlchemyDocumentRepository,
 )
 from src.rag.infrastructure.vector_store import get_vector_store
+from src.tutor.domain.models import Tutor
+from src.tutor.infrastructure.repositories import SQLAlchemyTutorRepository
 
 
 class PerformanceMetrics:
@@ -70,9 +70,9 @@ def main(doc_path: Path, query: str) -> None:
     db = SessionLocal()
 
     try:
-        print("--- Seeding database with a dummy Teacher and Assistant ---")
+        print("--- Seeding database with a dummy Teacher and Tutor ---")
         DUMMY_USER_ID = 1
-        DUMMY_ASSISTANT_ID = 1
+        DUMMY_TUTOR_ID = 1
 
         teacher_user = db.query(User).filter(User.id == DUMMY_USER_ID).first()
         if not teacher_user:
@@ -86,14 +86,12 @@ def main(doc_path: Path, query: str) -> None:
                 )
             )
 
-        benchmark_assistant = (
-            db.query(Assistant).filter(Assistant.id == DUMMY_ASSISTANT_ID).first()
-        )
-        if not benchmark_assistant:
+        benchmark_tutor = db.query(Tutor).filter(Tutor.id == DUMMY_TUTOR_ID).first()
+        if not benchmark_tutor:
             db.add(
-                Assistant(
-                    id=DUMMY_ASSISTANT_ID,
-                    name="Benchmark Assistant",
+                Tutor(
+                    id=DUMMY_TUTOR_ID,
+                    name="Benchmark Tutor",
                     teacher_id=DUMMY_USER_ID,
                 )
             )
@@ -113,7 +111,7 @@ def main(doc_path: Path, query: str) -> None:
         )
         doc_repo = SQLAlchemyDocumentRepository(db)
         chunk_repo = SQLAlchemyChunkRepository(db)
-        assistant_repo = SQLAlchemyAssistantRepository(db)
+        tutor_repo = SQLAlchemyTutorRepository(db)
 
         ingestion_service = IngestionService(
             db=db,
@@ -121,18 +119,18 @@ def main(doc_path: Path, query: str) -> None:
             text_splitter=text_splitter,
             doc_repo=doc_repo,
             chunk_repo=chunk_repo,
-            assistant_repo=assistant_repo,
+            tutor_repo=tutor_repo,
         )
         rag_service = RAGService(
             llm=llm,
             vector_store=vector_store,
             prompt=prompt,
-            assistant_repo=assistant_repo,
+            tutor_repo=tutor_repo,
         )
         print("Services initialized.")
 
         print("\n--- Running Warm-up Query (to load models) ---")
-        _ = rag_service.answer_query("Warm-up query", assistant_id=0)
+        _ = rag_service.answer_query("Warm-up query", tutor_id=0)
         print("Models are now loaded into memory.")
 
         print(f"\n--- Benchmarking Ingestion for '{doc_path.name}' ---")
@@ -141,7 +139,7 @@ def main(doc_path: Path, query: str) -> None:
         ingestion_service.ingest_document(
             file_bytes=pdf_bytes,
             file_name=doc_path.name,
-            assistant_id=DUMMY_ASSISTANT_ID,
+            tutor_id=DUMMY_TUTOR_ID,
         )
         metrics.ingestion_time_seconds = time.time() - start_time
         print("Ingestion complete.")
@@ -149,7 +147,7 @@ def main(doc_path: Path, query: str) -> None:
         print("\n--- Benchmarking RAG Query ---")
         print(f"Query: '{query}'")
         start_time = time.time()
-        answer = rag_service.answer_query(query, assistant_id=DUMMY_ASSISTANT_ID)
+        answer = rag_service.answer_query(query, tutor_id=DUMMY_TUTOR_ID)
         metrics.query_latency_seconds = time.time() - start_time
         print(f"Answer:\n{answer}")
 

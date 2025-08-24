@@ -2,14 +2,14 @@ import logging
 
 from langchain_chroma import Chroma
 
-from src.assistant.application.exceptions import AssistantNotFoundError
-from src.assistant.application.protocols import AssistantRepositoryProtocol
 from src.rag.application.exceptions import DocumentNotFoundError
 from src.rag.application.protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
     DocumentServiceProtocol,
 )
+from src.tutor.application.exceptions import TutorNotFoundError
+from src.tutor.application.protocols import TutorRepositoryProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -23,32 +23,30 @@ class DocumentService(DocumentServiceProtocol):
         self,
         doc_repo: DocumentRepositoryProtocol,
         chunk_repo: ChunkRepositoryProtocol,
-        assistant_repo: AssistantRepositoryProtocol,
+        tutor_repo: TutorRepositoryProtocol,
         vector_store: Chroma,
     ):
         self.doc_repo = doc_repo
         self.chunk_repo = chunk_repo
-        self.assistant_repo = assistant_repo
+        self.tutor_repo = tutor_repo
         self.vector_store = vector_store
 
-    def delete_document_from_assistant(
-        self, document_id: int, assistant_id: int
-    ) -> None:
+    def delete_document_from_tutor(self, document_id: int, tutor_id: int) -> None:
         """
-        Removes a document's link to an assistant and performs garbage collection
+        Removes a document's link to a tutor and performs garbage collection
         on any chunks that are no longer referenced by any other documents.
         """
-        assistant = self.assistant_repo.get_assistant_by_id(assistant_id)
-        if not assistant:
-            raise AssistantNotFoundError(assistant_id=assistant_id)
+        tutor = self.tutor_repo.get_tutor_by_id(tutor_id)
+        if not tutor:
+            raise TutorNotFoundError(tutor_id=tutor_id)
 
         document = self.doc_repo.get_document_by_id(document_id)
         if not document:
             raise DocumentNotFoundError(document_id=document_id)
 
-        self.assistant_repo.remove_document_from_assistant(assistant, document)
+        self.tutor_repo.remove_document_from_tutor(tutor, document)
 
-        if not document.assistants:
+        if not document.tutors:
             logger.info(
                 f"Document {document_id} is now orphaned. Starting garbage collection."
             )

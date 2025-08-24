@@ -6,7 +6,7 @@ This document defines the five core modules of the ProVAI project. It outlines t
 
 ## Module Architecture Diagram
 
-This diagram illustrates the high-level architecture of the ProVAI system. The `API & User Interface` module is the entry point for users, while the `Assistant Core` is the central orchestrator, using the other modules as specialized features.
+This diagram illustrates the high-level architecture of the ProVAI system. The `API & User Interface` module is the entry point for users, while the `Tutor Core` is the central orchestrator, using the other modules as specialized features.
 
 ```mermaid
 graph TD
@@ -22,7 +22,7 @@ graph TD
         end
 
         subgraph "Module 3:"
-            C["<b>Assistant Core</b><br/>(The Central Orchestrator)"]
+            C["<b>Tutor Core</b><br/>(The Central Orchestrator)"]
         end
 
         subgraph "Module 5:"
@@ -82,12 +82,12 @@ graph TD
 
 ---
 
-## 3. Assistant Core
+## 3. Tutor Core
 
 **Purpose:** The central orchestrator for the entire application, containing the core domain models and high-level business logic.
 
 - **Crawl (M2):**
-  - Define core models: `User`, `Assistant`, `Enrollment`, `Chat`, `Message`, `Document`, `Chunk`.
+  - Define core models: `User`, `Tutor`, `Chat`, `Message`, `Document`, `Chunk`.
   - Implement simple orchestration logic that defaults to using the RAG Engine for all queries.
 - **Run (M4):**
   - Refactor the service into a `LangGraph` state machine to act as an agentic "brain," dynamically routing requests to the appropriate tool (RAG, Learning, or Analytics).
@@ -102,7 +102,7 @@ graph TD
   - Implement a standalone `QuizGenerator` service.
   - Implement a standalone `RoadmapGenerator` service.
 - **Run (M4):**
-  - Orchestrate the standalone tools into a complete, automated learning workflow triggered by the `Assistant`'s LangGraph brain.
+  - Orchestrate the standalone tools into a complete, automated learning workflow triggered by the `Tutor`'s LangGraph brain.
 
 ---
 

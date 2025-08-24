@@ -19,6 +19,8 @@ from src.rag.application.protocols import (
     IngestionServiceProtocol,
 )
 from src.rag.domain.models import Chunk
+from src.tutor.application.exceptions import TutorNotFoundError
+from src.tutor.application.protocols import TutorRepositoryProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ class IngestionService(IngestionServiceProtocol):
     """
     Orchestrates the document ingestion pipeline. This service is responsible for
     processing a document, ensuring its content is stored idempotently,
-    and linking it to the correct assistant in a single, atomic transaction.
+    and linking it to the correct tutor in a single, atomic transaction.
     """
 
     def __init__(
@@ -37,31 +39,34 @@ class IngestionService(IngestionServiceProtocol):
         text_splitter: RecursiveCharacterTextSplitter,
         doc_repo: DocumentRepositoryProtocol,
         chunk_repo: ChunkRepositoryProtocol,
-        assistant_repo: AssistantRepositoryProtocol,
+        tutor_repo: TutorRepositoryProtocol,
     ):
         self.db = db
         self.vector_store = vector_store
         self.text_splitter = text_splitter
         self.doc_repo = doc_repo
         self.chunk_repo = chunk_repo
-        self.assistant_repo = assistant_repo
+        self.tutor_repo = tutor_repo
 
-    def ingest_document(
-        self, file_bytes: bytes, file_name: str, assistant_id: int
-    ) -> None:
+    def ingest_document(self, file_bytes: bytes, file_name: str, tutor_id: int) -> None:
         """
         Processes a PDF, creating relational records for documents and chunks,
         and storing embeddings in the vector store. This process is idempotent.
         """
-        assistant = self.assistant_repo.get_assistant_by_id(assistant_id)
-        if not assistant:
-            raise AssistantNotFoundError(assistant_id=assistant_id)
+        tutor = self.tutor_repo.get_tutor_by_id(tutor_id)
+        if not tutor:
+            raise TutorNotFoundError(tutor_id=tutor_id)
+
+        try:
+            langchain_docs = self._load_pdf_from_bytes(file_bytes)
+        except RuntimeError as e:
+            logger.error(f"PDF parsing failed for document {file_name}: {e}")
+            raise PDFParsingError() from e
 
         try:
             db_document = self.doc_repo.create_document(file_name=file_name)
-            self.assistant_repo.link_document_to_assistant(assistant, db_document)
+            self.tutor_repo.link_document_to_tutor(tutor, db_document)
 
-            langchain_docs = self._load_pdf_from_bytes(file_bytes)
             chunks = self._split_documents(langchain_docs)
 
             all_hashes = [

@@ -1,7 +1,7 @@
 """
 A headless script to run a full, end-to-end test of the ProVAI RAG engine.
 
-It simulates the core workflow of creating an assistant, ingesting a document,
+It simulates the core workflow of creating a tutor, ingesting a document,
 starting a chat, and asking a question.
 
 Example:
@@ -17,12 +17,6 @@ from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.ai.application.services import EmbeddingService, LLMService
-from src.assistant.application.services import ChatService
-from src.assistant.domain.models import Assistant
-from src.assistant.infrastructure.repositories import (
-    SQLAlchemyAssistantRepository,
-    SQLAlchemyChatRepository,
-)
 from src.auth.domain.models import User
 from src.core.infrastructure.database import SessionLocal
 from src.core.modules import import_models
@@ -33,6 +27,12 @@ from src.rag.infrastructure.repositories import (
     SQLAlchemyDocumentRepository,
 )
 from src.rag.infrastructure.vector_store import get_vector_store
+from src.tutor.application.services import ChatService
+from src.tutor.domain.models import Tutor
+from src.tutor.infrastructure.repositories import (
+    SQLAlchemyChatRepository,
+    SQLAlchemyTutorRepository,
+)
 
 
 def main(doc_path: Path, query: str) -> None:
@@ -46,9 +46,9 @@ def main(doc_path: Path, query: str) -> None:
     db = SessionLocal()
 
     try:
-        print("--- Seeding database with a dummy Teacher and Assistant ---")
+        print("--- Seeding database with a dummy Teacher and Tutor ---")
         DUMMY_USER_ID = 1
-        DUMMY_ASSISTANT_ID = 1
+        DUMMY_TUTOR_ID = 1
 
         teacher_user = db.query(User).filter(User.id == DUMMY_USER_ID).first()
         if not teacher_user:
@@ -61,14 +61,12 @@ def main(doc_path: Path, query: str) -> None:
             )
             db.add(teacher_user)
 
-        demo_assistant = (
-            db.query(Assistant).filter(Assistant.id == DUMMY_ASSISTANT_ID).first()
-        )
-        if not demo_assistant:
-            demo_assistant = Assistant(
-                id=DUMMY_ASSISTANT_ID, name="Demo Assistant", teacher_id=DUMMY_USER_ID
+        demo_tutor = db.query(Tutor).filter(Tutor.id == DUMMY_TUTOR_ID).first()
+        if not demo_tutor:
+            demo_tutor = Tutor(
+                id=DUMMY_TUTOR_ID, name="Demo Tutor", teacher_id=DUMMY_USER_ID
             )
-            db.add(demo_assistant)
+            db.add(demo_tutor)
 
         db.commit()
         print("Seeding complete.")
@@ -88,7 +86,7 @@ def main(doc_path: Path, query: str) -> None:
 
         doc_repo = SQLAlchemyDocumentRepository(db)
         chunk_repo = SQLAlchemyChunkRepository(db)
-        assistant_repo = SQLAlchemyAssistantRepository(db)
+        tutor_repo = SQLAlchemyTutorRepository(db)
         chat_repo = SQLAlchemyChatRepository(db)
 
         chat_service = ChatService(chat_repo=chat_repo)
@@ -98,13 +96,13 @@ def main(doc_path: Path, query: str) -> None:
             text_splitter=text_splitter,
             doc_repo=doc_repo,
             chunk_repo=chunk_repo,
-            assistant_repo=assistant_repo,
+            tutor_repo=tutor_repo,
         )
         rag_service = RAGService(
             llm=llm,
             vector_store=vector_store,
             prompt=prompt,
-            assistant_repo=assistant_repo,
+            tutor_repo=tutor_repo,
         )
         print("Services initialized.")
 
@@ -113,13 +111,13 @@ def main(doc_path: Path, query: str) -> None:
         ingestion_service.ingest_document(
             file_bytes=pdf_bytes,
             file_name=doc_path.name,
-            assistant_id=DUMMY_ASSISTANT_ID,
+            tutor_id=DUMMY_TUTOR_ID,
         )
         print("Ingestion complete.")
 
         print("\nCreating a new chat for this demo...")
         chat = chat_service.create_new_chat(
-            assistant_id=DUMMY_ASSISTANT_ID,
+            tutor_id=DUMMY_TUTOR_ID,
             user_id=DUMMY_USER_ID,
             title=f"Chat about {doc_path.name}",
         )
@@ -127,14 +125,14 @@ def main(doc_path: Path, query: str) -> None:
 
         print("\n--- Querying RAG Engine ---")
         print(f"Query: '{query}'")
-        answer = rag_service.answer_query(query, assistant_id=DUMMY_ASSISTANT_ID)
+        answer = rag_service.answer_query(query, tutor_id=DUMMY_TUTOR_ID)
         print(f"\nAnswer:\n{answer}")
 
         print("\n--- Logging interaction to history ---")
         chat_service.log_interaction(
             chat_id=chat.id,
             user_query=query,
-            assistant_response=answer,
+            tutor_response=answer,
         )
         print("Interaction logged successfully.")
 
