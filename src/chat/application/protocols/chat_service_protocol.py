@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from src.tutor.domain.models import Chat, Message
+    from src.chat.domain.models import Chat, Message
 
 
 @runtime_checkable

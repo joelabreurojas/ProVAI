@@ -8,7 +8,8 @@ from src.core.infrastructure.database import Base
 
 if TYPE_CHECKING:
     from src.auth.domain.models import User
-    from src.chat.domain.models import Message, Tutor
+    from src.chat.domain.models import Message
+    from src.tutor.domain.models import Tutor
 
 
 class Chat(Base):

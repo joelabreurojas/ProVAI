@@ -1,9 +1,9 @@
-from src.tutor.application.exceptions import ChatNotFoundError
-from src.tutor.application.protocols import (
+from src.chat.application.exceptions import ChatNotFoundError
+from src.chat.application.protocols import (
     ChatRepositoryProtocol,
     ChatServiceProtocol,
 )
-from src.tutor.domain.models import Chat, Message
+from src.chat.domain.models import Chat, Message
 
 
 class ChatService(ChatServiceProtocol):

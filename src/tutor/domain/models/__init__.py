@@ -1,9 +1,7 @@
-from .chat import Chat
-from .message import Message
+from .links import tutor_students
 from .tutor import Tutor
 
 __all__ = [
     "Tutor",
-    "Message",
-    "Chat",
+    "tutor_students",
 ]

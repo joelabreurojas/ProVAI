@@ -1,8 +1,8 @@
 from sqlalchemy import desc
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.tutor.application.protocols import ChatRepositoryProtocol
-from src.tutor.domain.models import Chat, Message
+from src.chat.application.protocols import ChatRepositoryProtocol
+from src.chat.domain.models import Chat, Message
 
 
 class SQLAlchemyChatRepository(ChatRepositoryProtocol):
