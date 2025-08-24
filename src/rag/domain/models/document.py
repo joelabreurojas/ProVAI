@@ -7,8 +7,8 @@ from src.core.infrastructure.database import Base
 from src.rag.domain.models.links import document_chunk_link, tutor_document_link
 
 if TYPE_CHECKING:
-    from src.chat.domain.models import Tutor
     from src.rag.domain.models import Chunk
+    from src.tutor.domain.models import Tutor
 
 
 class Document(Base):

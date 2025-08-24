@@ -32,15 +32,13 @@ from src.tutor.dependencies import get_tutor_repository
 def get_chunk_repository(
     db: SQLAlchemySession = Depends(get_db),
 ) -> ChunkRepositoryProtocol:
-    chunk_repo: ChunkRepositoryProtocol = SQLAlchemyChunkRepository(db)
-    return chunk_repo
+    return SQLAlchemyChunkRepository(db)
 
 
 def get_document_repository(
     db: SQLAlchemySession = Depends(get_db),
 ) -> DocumentRepositoryProtocol:
-    doc_repo: DocumentRepositoryProtocol = SQLAlchemyDocumentRepository(db)
-    return doc_repo
+    return SQLAlchemyDocumentRepository(db)
 
 
 def get_rag_vector_store(
@@ -60,7 +58,6 @@ def get_text_splitter() -> RecursiveCharacterTextSplitter:
     )
 
 
-# --- Service Assemblers ---
 def get_document_service(
     doc_repo: DocumentRepositoryProtocol = Depends(get_document_repository),
     chunk_repo: ChunkRepositoryProtocol = Depends(get_chunk_repository),
@@ -75,6 +72,7 @@ def get_document_service(
     )
 
 
+# --- Service Assemblers ---
 def get_ingestion_service(
     db: SQLAlchemySession = Depends(get_db),
     vector_store: Chroma = Depends(get_rag_vector_store),
