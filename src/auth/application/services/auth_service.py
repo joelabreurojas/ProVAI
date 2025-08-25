@@ -1,3 +1,5 @@
+from langsmith import traceable
+
 from src.auth.application.exceptions import (
     InvalidCredentialsError,
     TokenValidationError,
@@ -29,6 +31,7 @@ class AuthService(AuthServiceProtocol):
         self.password_svc = password_svc
         self.token_svc = token_svc
 
+    @traceable(name="Register User")
     def register_user(self, user_create: UserCreate) -> User:
         db_user = self.user_repo.get_by_email(user_create.email)
 
@@ -38,6 +41,7 @@ class AuthService(AuthServiceProtocol):
         hashed_password = self.password_svc.get_password_hash(user_create.password)
         return self.user_repo.add(user_create, hashed_password)
 
+    @traceable(name="Authenticate User")
     def authenticate_user(self, email: str, password: str) -> tuple[User, str]:
         user = self.user_repo.get_by_email(email)
 

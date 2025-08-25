@@ -1,5 +1,7 @@
 import logging
 
+from langsmith import traceable
+
 from src.auth.domain.models import User
 from src.chat.application.exceptions import ChatNotFoundError
 from src.chat.application.protocols import (
@@ -35,12 +37,14 @@ class ChatService(ChatServiceProtocol):
         self.ingestion_service = ingestion_service
         self.tutor_repo = tutor_repo
 
+    @traceable(name="Create Chat")
     def create_new_chat(self, tutor_id: int, user: User, title: str) -> Chat:
         self.tutor_service.verify_user_can_access_tutor(tutor_id, user)
         return self.chat_repo.create_chat(
             tutor_id=tutor_id, user_id=user.id, title=title
         )
 
+    @traceable(name="Add Document")
     def get_chat(self, chat_id: int, user: User) -> Chat:
         chat = self.chat_repo.get_chat_by_id(chat_id=chat_id)
         if not chat:
@@ -75,6 +79,7 @@ class ChatService(ChatServiceProtocol):
         self.tutor_repo.link_document_to_tutor(tutor, new_document)
         return new_document
 
+    @traceable(name="Post Message")
     def post_message(self, chat_id: int, query: str, current_user: User) -> str:
         """Orchestrates the full query -> RAG -> response -> log workflow."""
         chat = self.get_chat(chat_id, current_user)
