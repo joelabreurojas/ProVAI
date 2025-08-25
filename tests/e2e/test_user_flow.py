@@ -2,7 +2,7 @@ import fitz
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as SQLAlchemySession
 
 from src.ai.dependencies import get_llm_service
 from src.auth.domain.models import User
@@ -11,7 +11,7 @@ from src.rag.dependencies import get_rag_vector_store
 
 def test_full_user_flow(
     app_and_client: tuple[FastAPI, TestClient],
-    db_session: Session,
+    db_session: SQLAlchemySession,
     mocker: MockerFixture,
 ) -> None:
     """
