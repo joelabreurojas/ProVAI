@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 
 from src.auth.dependencies import get_current_user
 from src.auth.domain.models import User
@@ -11,6 +11,7 @@ from src.chat.domain.schemas import (
     QueryRequest,
     QueryResponse,
 )
+from src.core.infrastructure.limiter import limiter
 
 TAG = {
     "name": "Chat",
@@ -48,7 +49,9 @@ async def get_user_chats_for_tutor(
 
 
 @router.post("/{chat_id}/query", response_model=QueryResponse)
+@limiter.limit("20/minute")
 async def post_message_to_chat(
+    request: Request,
     chat_id: int,
     query_data: QueryRequest,
     current_user: User = Depends(get_current_user),

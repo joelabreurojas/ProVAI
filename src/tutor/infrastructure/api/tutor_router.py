@@ -1,9 +1,10 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Request, UploadFile, status
 
 from src.auth.dependencies import get_current_user
 from src.auth.domain.models import User
+from src.core.infrastructure.limiter import limiter
 from src.rag.application.protocols import IngestionServiceProtocol
 from src.rag.dependencies import get_ingestion_service
 from src.tutor.application.protocols import TutorServiceProtocol
@@ -45,7 +46,9 @@ async def create_tutor(
     status_code=status.HTTP_201_CREATED,
     summary="Upload a document to the tutor's knowledge base",
 )
+@limiter.limit("5/minute")
 async def upload_document_to_tutor(
+    request: Request,
     tutor_id: int,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
