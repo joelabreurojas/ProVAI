@@ -10,6 +10,7 @@ services:
       - .env
     volumes:
       # Data persistence
+      - ./assets:/app/assets:ro
       - ./models:/app/models:ro
       - ./sample_data:/app/sample_data:ro
       - ./databases:/app/databases

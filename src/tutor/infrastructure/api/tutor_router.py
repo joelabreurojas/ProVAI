@@ -1,9 +1,10 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Request, UploadFile, status
 
 from src.auth.dependencies import get_current_user
 from src.auth.domain.models import User
+from src.core.infrastructure.limiter import limiter
 from src.rag.application.protocols import IngestionServiceProtocol
 from src.rag.dependencies import get_ingestion_service
 from src.tutor.application.protocols import TutorServiceProtocol
@@ -34,6 +35,7 @@ async def create_tutor(
     current_user: User = Depends(get_current_user),
     tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
 ) -> TutorResponse:
+    """Creates a new tutor for the current user."""
     new_tutor = tutor_service.create_tutor(
         tutor_create=tutor_data, teacher=current_user
     )
@@ -45,13 +47,16 @@ async def create_tutor(
     status_code=status.HTTP_201_CREATED,
     summary="Upload a document to the tutor's knowledge base",
 )
+@limiter.limit("5/minute")
 async def upload_document_to_tutor(
+    request: Request,
     tutor_id: int,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
     ingestion_service: IngestionServiceProtocol = Depends(get_ingestion_service),
 ) -> dict[str, Any]:
+    """Uploads a document to the tutor's knowledge base."""
     tutor = tutor_service.verify_user_is_tutor_owner(
         tutor_id=tutor_id, user=current_user
     )
@@ -85,6 +90,7 @@ async def invite_students(
     current_user: User = Depends(get_current_user),
     tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
 ) -> list[TutorInvitationResponse]:
+    """Invites students to join a tutor."""
     return tutor_service.create_invitations(
         tutor_id=tutor_id,
         requesting_user=current_user,
@@ -103,6 +109,7 @@ async def enroll_student(
     current_user: User = Depends(get_current_user),
     tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
 ) -> dict[str, str]:
+    """Enrolls the current user in a tutor."""
     tutor_service.enroll_student(
         token=enrollment_data.invitation_token, student_user=current_user
     )

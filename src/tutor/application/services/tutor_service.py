@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from langsmith import traceable
+
 from src.auth.application.exceptions import (
     InsufficientPermissionsError,
     TokenInvalidScopeError,
@@ -39,6 +41,7 @@ class TutorService(TutorServiceProtocol):
         self.tutor_repo = tutor_repo
         self.token_service = token_service
 
+    @traceable(name="Create Tutor")
     def create_tutor(self, tutor_create: TutorCreate, teacher: User) -> Tutor:
         """Creates a new Tutor, enforcing that only teachers can create them."""
         if teacher.role != "teacher":
@@ -58,6 +61,7 @@ class TutorService(TutorServiceProtocol):
         """Links an existing Document object to a Tutor."""
         self.tutor_repo.link_document_to_tutor(tutor, document)
 
+    @traceable(name="Create Invitations")
     def create_invitations(
         self, tutor_id: int, requesting_user: User, student_emails: list[str]
     ) -> list[TutorInvitationResponse]:
@@ -85,6 +89,7 @@ class TutorService(TutorServiceProtocol):
             )
         return responses
 
+    @traceable(name="Enroll Student")
     def enroll_student(self, token: str, student_user: User) -> None:
         """Enrolls a student in a tutor using a valid invitation token."""
         payload = self.token_service.decode_access_token(token)

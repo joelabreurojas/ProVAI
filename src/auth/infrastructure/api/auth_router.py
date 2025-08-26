@@ -25,7 +25,6 @@ async def register_user(
 
     - Creates a new user record in the database.
     - Passwords are automatically hashed before storage.
-    - Raises a 409 Conflict error if the email already exists.
     """
 
     new_user = auth_service.register_user(user_data)
@@ -46,7 +45,6 @@ async def login_for_access_token(
 
     - Authenticates the user with their email and password.
     - Returns a JWT access token upon successful authentication.
-    - Raises a 401 Unauthorized error for invalid credentials.
     """
 
     _, access_token = auth_service.authenticate_user(

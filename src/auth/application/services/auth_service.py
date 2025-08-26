@@ -1,7 +1,13 @@
+import logging
+
+from langsmith import traceable
+
 from src.auth.application.exceptions import (
     InvalidCredentialsError,
+    TokenMissingDataError,
     TokenValidationError,
     UserAlreadyExistsError,
+    UserNotFoundError,
 )
 from src.auth.application.protocols import (
     AuthServiceProtocol,
@@ -11,6 +17,8 @@ from src.auth.application.protocols import (
 )
 from src.auth.domain.models import User
 from src.auth.domain.schemas import UserCreate
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService(AuthServiceProtocol):
@@ -29,6 +37,7 @@ class AuthService(AuthServiceProtocol):
         self.password_svc = password_svc
         self.token_svc = token_svc
 
+    @traceable(name="Register User")
     def register_user(self, user_create: UserCreate) -> User:
         db_user = self.user_repo.get_by_email(user_create.email)
 
@@ -38,6 +47,7 @@ class AuthService(AuthServiceProtocol):
         hashed_password = self.password_svc.get_password_hash(user_create.password)
         return self.user_repo.add(user_create, hashed_password)
 
+    @traceable(name="Authenticate User")
     def authenticate_user(self, email: str, password: str) -> tuple[User, str]:
         user = self.user_repo.get_by_email(email)
 
@@ -57,18 +67,29 @@ class AuthService(AuthServiceProtocol):
         """
         try:
             payload = self.token_svc.decode_access_token(token)
+
             if payload is None:
                 raise TokenValidationError()
 
             email: str | None = payload.get("sub")
-            if email is None:
-                raise TokenValidationError()
+            if not email:
+                raise TokenMissingDataError(missing_claim="sub")
 
             user = self.user_repo.get_by_email(email)
-            if user is None:
-                raise TokenValidationError()
+            if not user:
+                raise UserNotFoundError()
 
             return user
+
+        except (UserNotFoundError, TokenValidationError) as e:
+            raise e
+
         except Exception as e:
-            # We will want to log the original error `e`
-            raise TokenValidationError() from e
+            logger.error(
+                "An unexpected error occurred during token validation.", exc_info=e
+            )
+            raise e
+
+    def get_user_by_email(self, email: str) -> User | None:
+        """Retrieves a user by their email address."""
+        return self.user_repo.get_by_email(email)

@@ -2,7 +2,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.auth.application.exceptions import TokenValidationError
+from src.auth.application.exceptions import (
+    TokenValidationError,
+    UserNotFoundError,
+)
 from src.auth.application.protocols import (
     AuthServiceProtocol,
     PasswordServiceProtocol,
@@ -52,13 +55,18 @@ def get_current_user(
 ) -> User:
     """
     The primary dependency for protected endpoints. It provides the currently
-    authenticated user or raises a 401 HTTPException if authentication fails.
+    authenticated user or raises a HTTPException if auth fails.
     """
     try:
         return auth_service.get_user_from_token(token)
-    except TokenValidationError as e:
+    except (TokenValidationError, UserNotFoundError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
-        ) from None
+        ) from e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An internal error occurred during authentication.",
+        ) from e

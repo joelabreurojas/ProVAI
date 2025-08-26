@@ -7,4 +7,4 @@ class MessageCreationError(AppException):
 
     status_code = 500  # Internal Server Error
     error_code = ErrorCode.MESSAGE_CREATION_FAILED
-    message = "Could not save the message to the session."
+    message = "Could not save the message to the chat."

@@ -12,7 +12,7 @@ class SQLAlchemyChunkRepository(ChunkRepositoryProtocol):
 
     def create_chunk(self, content_hash: str) -> Chunk:
         """
-        Creates and adds a new Chunk to the session, but does NOT commit.
+        Creates and adds a new Chunk to the database session, but does NOT commit.
         The service layer is responsible for the transaction boundary.
         """
         db_chunk = Chunk(content_hash=content_hash)
@@ -47,7 +47,7 @@ class SQLAlchemyChunkRepository(ChunkRepositoryProtocol):
 
     def delete_chunks(self, chunks: list[Chunk]) -> None:
         """
-        Deletes a list of chunk objects from the session, but does NOT commit.
+        Deletes a list of chunk objects from the database session, but does NOT commit.
         """
         for chunk in chunks:
             self.db.delete(chunk)

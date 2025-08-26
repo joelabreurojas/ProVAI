@@ -1,8 +1,14 @@
 from fastapi import FastAPI
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.core.application.exceptions import AppException
-from src.core.infrastructure.handlers import app_exception_handler
+from src.core.infrastructure.handlers import (
+    app_exception_handler,
+    rate_limit_exception_handler,
+)
+from src.core.infrastructure.limiter import limiter
 from src.core.infrastructure.logging_config import setup_logging
 from src.core.infrastructure.middleware import logging_middleware
 from src.core.infrastructure.settings import settings
@@ -23,6 +29,11 @@ def create_app() -> FastAPI:
         contact=settings.CONTACT,
         license_info=settings.LICENSE_INFO,
     )
+
+    app.state.limiter = limiter
+
+    app.add_middleware(SlowAPIMiddleware)
+    app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
 
     app.add_middleware(BaseHTTPMiddleware, dispatch=logging_middleware)
     app.add_exception_handler(AppException, app_exception_handler)
