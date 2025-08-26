@@ -99,15 +99,15 @@ def test_full_user_flow(
 
     # Teacher invites Student and Student enrolls
     invitation_res = client.post(
-        f"/api/v1/tutors/{tutor_id}/invitations",
-        json={"student_emails": ["student@e2e.com"]},
+        "/api/v1/invitations",
+        json={"tutor_id": tutor_id, "student_emails": ["student@e2e.com"]},
         headers=teacher_headers,
     )
     assert invitation_res.status_code == 201
-    invitation_token = invitation_res.json()[0]["token"]
+    invitation_token = invitation_res.json()["invitation_token"]
 
     enrollment_res = client.post(
-        f"/api/v1/tutors/{tutor_id}/enrollments",
+        "/api/v1/enrollments",
         json={"invitation_token": invitation_token},
         headers=student_headers,
     )

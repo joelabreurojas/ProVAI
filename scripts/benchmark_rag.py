@@ -43,7 +43,11 @@ from src.rag.dependencies import (
     get_rag_vector_store,
     get_text_splitter,
 )
-from src.tutor.dependencies import get_tutor_repository, get_tutor_service
+from src.tutor.dependencies import (
+    get_invitation_repository,
+    get_tutor_repository,
+    get_tutor_service,
+)
 from src.tutor.domain.schemas import TutorCreate
 
 VALID_PASSWORD = "ValidPassword123!"
@@ -79,39 +83,47 @@ class AppContainer:
     """A container to manually assemble and hold our application services."""
 
     def __init__(self, db_session: SQLAlchemySession) -> None:
-        # Repositories
+        # Repositories ---
         self.user_repo = get_user_repository(db_session)
         self.tutor_repo = get_tutor_repository(db_session)
+        self.invitation_repo = get_invitation_repository(db_session)
         self.chat_repo = get_chat_repository(db_session)
+        self.doc_repo = get_document_repository(db_session)
+        self.chunk_repo = get_chunk_repository(db_session)
 
-        # AI Services
+        # Infrastructure
+        self.token_service = get_token_service()
+        self.password_service = get_password_service()
         self.llm_service = get_llm_service()
         self.embedding_service = get_embedding_service()
+        self.vector_store = get_rag_vector_store(self.embedding_service)
+        self.text_splitter = get_text_splitter()
+        self.rag_prompt = get_rag_prompt_template()
 
-        # Core Services
+        # Services
         self.auth_service = get_auth_service(
             user_repo=self.user_repo,
-            password_svc=get_password_service(),
-            token_svc=get_token_service(),
+            password_svc=self.password_service,
+            token_svc=self.token_service,
         )
         self.tutor_service = get_tutor_service(
             tutor_repo=self.tutor_repo,
-            token_service=get_token_service(),
+            invitation_repo=self.invitation_repo,
         )
         self.ingestion_service = get_ingestion_service(
             db=db_session,
-            vector_store=get_rag_vector_store(self.embedding_service),
-            text_splitter=get_text_splitter(),
-            doc_repo=get_document_repository(db_session),
-            chunk_repo=get_chunk_repository(db_session),
+            vector_store=self.vector_store,
+            text_splitter=self.text_splitter,
+            doc_repo=self.doc_repo,
+            chunk_repo=self.chunk_repo,
         )
         self.rag_service = get_rag_service(
             llm_service=self.llm_service,
-            vector_store=get_rag_vector_store(self.embedding_service),
-            prompt=get_rag_prompt_template(),
+            vector_store=self.vector_store,
+            prompt=self.rag_prompt,
         )
 
-        # Orchestrator
+        # The Orchestrator
         self.chat_service = get_chat_service(
             chat_repo=self.chat_repo,
             tutor_service=self.tutor_service,
@@ -200,17 +212,17 @@ def main(doc_path: Path, query: str) -> None:
             teacher=teacher,
         )
 
-        invitations = container.tutor_service.create_invitations(
+        invitation_response = container.tutor_service.add_students_to_invitation(
             tutor_id=tutor.id,
             requesting_user=teacher,
-            student_emails=[student.email],
+            student_emails=["student@benchmark.com"],
         )
 
-        invitation_token = invitations[0].token
+        invitation_token = invitation_response.invitation_token
         if not invitation_token:
             raise ValueError("Failed to create invitation token for benchmark.")
 
-        container.tutor_service.enroll_student(
+        container.tutor_service.enroll_student_from_token(
             token=invitation_token, student_user=student
         )
 
