@@ -8,6 +8,9 @@ from src.ai.dependencies import get_llm_service
 from src.auth.domain.models import User
 from src.rag.dependencies import get_rag_vector_store
 
+VALID_TEACHER_PASSWORD = "TeacherPassword123!"
+VALID_STUDENT_PASSWORD = "StudentPassword456!"
+
 
 def test_full_user_flow(
     app_and_client: tuple[FastAPI, TestClient],
@@ -35,7 +38,7 @@ def test_full_user_flow(
         json={
             "name": "E2E Teacher",
             "email": "teacher@e2e.com",
-            "password": "password123",
+            "password": VALID_TEACHER_PASSWORD,
         },
     )
     teacher_db = db_session.query(User).filter_by(email="teacher@e2e.com").first()
@@ -49,21 +52,21 @@ def test_full_user_flow(
         json={
             "name": "E2E Student",
             "email": "student@e2e.com",
-            "password": "password456",
+            "password": VALID_STUDENT_PASSWORD,
         },
     )
 
     # Both users log in
     teacher_login_res = client.post(
         "/api/v1/auth/token",
-        data={"username": "teacher@e2e.com", "password": "password123"},
+        data={"username": "teacher@e2e.com", "password": VALID_TEACHER_PASSWORD},
     )
     teacher_token = teacher_login_res.json()["access_token"]
     teacher_headers = {"Authorization": f"Bearer {teacher_token}"}
 
     student_login_res = client.post(
         "/api/v1/auth/token",
-        data={"username": "student@e2e.com", "password": "password456"},
+        data={"username": "student@e2e.com", "password": VALID_STUDENT_PASSWORD},
     )
     student_token = student_login_res.json()["access_token"]
     student_headers = {"Authorization": f"Bearer {student_token}"}

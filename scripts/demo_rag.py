@@ -16,12 +16,14 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session as SQLAlchemySession
 
 from src.ai.dependencies import get_embedding_service, get_llm_service
+from src.auth.application.protocols import AuthServiceProtocol
 from src.auth.dependencies import (
     get_auth_service,
     get_password_service,
     get_token_service,
     get_user_repository,
 )
+from src.auth.domain.models import User
 from src.auth.domain.schemas import UserCreate
 from src.chat.dependencies import get_chat_repository, get_chat_service
 from src.core.infrastructure.database import SessionLocal
@@ -41,6 +43,7 @@ from src.tutor.domain.schemas import TutorCreate
 
 SAMPLE_DOC_PATH = Path("sample_data/attention_is_all_you_need.pdf")
 SAMPLE_QUERY = "What is a multi-head self-attention mechanism?"
+VALID_PASSWORD = "ValidPassword123!"
 
 
 class AppContainer:
@@ -96,6 +99,36 @@ class AppContainer:
         )
 
 
+def get_or_create_user(
+    auth_service: AuthServiceProtocol,
+    db_session: SQLAlchemySession,
+    name: str,
+    email: str,
+    password: str,
+    role: str | None = None,
+) -> User:
+    """Gets a user by email, or creates them if they don't exist."""
+    user = auth_service.get_user_by_email(email)
+    if user:
+        print(f"User '{email}' already exists, using existing user.")
+        # Ensure role is correct
+        if role and user.role != role:
+            user.role = role
+            db_session.commit()
+            db_session.refresh(user)
+        return user
+
+    print(f"Creating new user: '{email}'...")
+    new_user = auth_service.register_user(
+        UserCreate(name=name, email=email, password=password)
+    )
+    if role:
+        new_user.role = role
+        db_session.commit()
+        db_session.refresh(new_user)
+    return new_user
+
+
 def main() -> None:
     """Runs a full, end-to-end demo of the headless RAG pipeline."""
     load_dotenv()
@@ -122,21 +155,23 @@ def main() -> None:
         print("--- Services assembled successfully.")
 
         print("\n--- Seeding database with a Teacher and a Student ---")
-        teacher = container.auth_service.register_user(
-            UserCreate(
-                name="Demo Teacher", email="teacher@demo.com", password="password123"
-            )
+        teacher = get_or_create_user(
+            auth_service=container.auth_service,
+            db_session=db,
+            name="Demo Teacher",
+            email="teacher@demo.com",
+            password=VALID_PASSWORD,
+            role="teacher",
         )
-        teacher.role = "teacher"
-        db.commit()
-        db.refresh(teacher)
-
-        student = container.auth_service.register_user(
-            UserCreate(
-                name="Demo Student", email="student@demo.com", password="password456"
-            )
+        student = get_or_create_user(
+            auth_service=container.auth_service,
+            db_session=db,
+            name="Demo Student",
+            email="student@demo.com",
+            password=VALID_PASSWORD,
+            role="student",
         )
-        print(f"Created Teacher (ID: {teacher.id}) and Student (ID: {student.id}).")
+        print(f"Using Teacher (ID: {teacher.id}) and Student (ID: {student.id}).")
 
         print("\n--- Teacher creates a new Tutor ---")
         tutor = container.tutor_service.create_tutor(

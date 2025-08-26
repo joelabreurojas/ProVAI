@@ -21,12 +21,14 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session as SQLAlchemySession
 
 from src.ai.dependencies import get_embedding_service, get_llm_service
+from src.auth.application.protocols import AuthServiceProtocol
 from src.auth.dependencies import (
     get_auth_service,
     get_password_service,
     get_token_service,
     get_user_repository,
 )
+from src.auth.domain.models import User
 from src.auth.domain.schemas import UserCreate
 from src.chat.dependencies import get_chat_repository, get_chat_service
 from src.core.infrastructure.database import SessionLocal
@@ -43,6 +45,8 @@ from src.rag.dependencies import (
 )
 from src.tutor.dependencies import get_tutor_repository, get_tutor_service
 from src.tutor.domain.schemas import TutorCreate
+
+VALID_PASSWORD = "ValidPassword123!"
 
 
 class PerformanceMetrics:
@@ -117,6 +121,36 @@ class AppContainer:
         )
 
 
+def get_or_create_user(
+    auth_service: AuthServiceProtocol,
+    db_session: SQLAlchemySession,
+    name: str,
+    email: str,
+    password: str,
+    role: str | None = None,
+) -> User:
+    """Gets a user by email, or creates them if they don't exist."""
+    user = auth_service.get_user_by_email(email)
+    if user:
+        print(f"User '{email}' already exists, using existing user.")
+        # Ensure role is correct
+        if role and user.role != role:
+            user.role = role
+            db_session.commit()
+            db_session.refresh(user)
+        return user
+
+    print(f"Creating new user: '{email}'...")
+    new_user = auth_service.register_user(
+        UserCreate(name=name, email=email, password=password)
+    )
+    if role:
+        new_user.role = role
+        db_session.commit()
+        db_session.refresh(new_user)
+    return new_user
+
+
 def main(doc_path: Path, query: str) -> None:
     """Runs the full pipeline and measures performance."""
 
@@ -143,24 +177,23 @@ def main(doc_path: Path, query: str) -> None:
         # Assemble dependencies
         container = AppContainer(db)
 
-        # Seed the database
-        teacher = container.auth_service.register_user(
-            UserCreate(
-                name="Benchmark Teacher",
-                email="teacher@benchmark.com",
-                password="password123",
-            )
+        # Seed database
+        teacher = get_or_create_user(
+            auth_service=container.auth_service,
+            db_session=db,
+            name="Benchmark Teacher",
+            email="teacher@benchmark.com",
+            password=VALID_PASSWORD,
+            role="teacher",
         )
-        teacher.role = "teacher"
-        student = container.auth_service.register_user(
-            UserCreate(
-                name="Benchmark Student",
-                email="student@benchmark.com",
-                password="password456",
-            )
+        student = get_or_create_user(
+            auth_service=container.auth_service,
+            db_session=db,
+            name="Benchmark Student",
+            email="student@benchmark.com",
+            password=VALID_PASSWORD,
+            role="student",
         )
-        db.commit()
-        db.refresh(teacher)
 
         tutor = container.tutor_service.create_tutor(
             TutorCreate(course_name="Benchmark Course"),

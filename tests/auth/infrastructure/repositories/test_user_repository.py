@@ -4,6 +4,8 @@ from src.auth.domain.models import User
 from src.auth.domain.schemas import UserCreate
 from src.auth.infrastructure.repositories import SQLAlchemyUserRepository
 
+VALID_PASSWORD = "ValidPassword123!"
+
 
 def test_add_user_successfully(db_session: Session) -> None:
     """
@@ -12,9 +14,7 @@ def test_add_user_successfully(db_session: Session) -> None:
     """
     repo = SQLAlchemyUserRepository(db_session)
     user_schema = UserCreate(
-        name="Test User",
-        email="test@example.com",
-        password="password123",
+        name="Test User", email="test@example.com", password=VALID_PASSWORD
     )
     hashed_password = "a_real_hashed_password"
 

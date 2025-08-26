@@ -76,3 +76,7 @@ class AuthService(AuthServiceProtocol):
         except Exception as e:
             # We will want to log the original error `e`
             raise TokenValidationError() from e
+
+    def get_user_by_email(self, email: str) -> User | None:
+        """Retrieves a user by their email address."""
+        return self.user_repo.get_by_email(email)
