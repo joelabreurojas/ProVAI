@@ -1,10 +1,14 @@
+from unittest.mock import MagicMock
+
 import pytest
 from pytest_mock import MockerFixture
 
 from src.auth.application.exceptions import (
     InvalidCredentialsError,
-    TokenValidationError,
+    TokenExpiredError,
+    TokenMissingDataError,
     UserAlreadyExistsError,
+    UserNotFoundError,
 )
 from src.auth.application.protocols import (
     PasswordServiceProtocol,
@@ -12,88 +16,117 @@ from src.auth.application.protocols import (
     UserRepositoryProtocol,
 )
 from src.auth.application.services import AuthService
+from src.auth.domain.models import User
 from src.auth.domain.schemas import UserCreate
 
-VALID_PASSWORD = "ValidPassword123!"
+
+def create_mocked_auth_service(
+    mocker: MockerFixture,
+) -> tuple[AuthService, dict[str, MagicMock]]:
+    """Creates an AuthService with all its dependencies mocked."""
+    mock_user_repo = mocker.MagicMock(spec=UserRepositoryProtocol)
+    mock_password_svc = mocker.MagicMock(spec=PasswordServiceProtocol)
+    mock_token_svc = mocker.MagicMock(spec=TokenServiceProtocol)
+
+    service = AuthService(
+        user_repo=mock_user_repo,
+        password_svc=mock_password_svc,
+        token_svc=mock_token_svc,
+    )
+
+    mocks = {
+        "user_repo": mock_user_repo,
+        "password_svc": mock_password_svc,
+        "token_service": mock_token_svc,
+    }
+    return service, mocks
 
 
 def test_register_user_successfully(mocker: MockerFixture) -> None:
-    """
-    Tests that a user is registered successfully when the email is not already in use.
-    """
-    mock_user_repo = mocker.MagicMock(spec=UserRepositoryProtocol)
-    mock_password_svc = mocker.MagicMock(spec=PasswordServiceProtocol)
-    mock_token_svc = mocker.MagicMock(spec=TokenServiceProtocol)
-
-    mock_user_repo.get_by_email.return_value = None  # Simulate user not found
-    mock_password_svc.get_password_hash.return_value = "hashed_password"
-
-    auth_service = AuthService(mock_user_repo, mock_password_svc, mock_token_svc)
+    service, mocks = create_mocked_auth_service(mocker)
+    mocks["user_repo"].get_by_email.return_value = None
+    mocks["password_svc"].get_password_hash.return_value = "hashed_password"
     user_data = UserCreate(
-        name="Test User", email="test@example.com", password=VALID_PASSWORD
+        name="Test User", email="test@example.com", password="ValidPassword123!"
     )
-
-    auth_service.register_user(user_data)
-
-    mock_user_repo.get_by_email.assert_called_once_with("test@example.com")
-    mock_password_svc.get_password_hash.assert_called_once_with(VALID_PASSWORD)
-    mock_user_repo.add.assert_called_once()
+    service.register_user(user_data)
+    mocks["user_repo"].add.assert_called_once()
 
 
 def test_register_user_fails_if_email_exists(mocker: MockerFixture) -> None:
-    """
-    Tests that UserAlreadyExistsError is raised if the user's email already exists.
-    """
-    mock_user_repo = mocker.MagicMock(spec=UserRepositoryProtocol)
-
-    # Simulate finding an existing user
-    mock_user_repo.get_by_email.return_value = mocker.MagicMock()
-
-    auth_service = AuthService(mock_user_repo, mocker.MagicMock(), mocker.MagicMock())
+    service, mocks = create_mocked_auth_service(mocker)
+    mocks["user_repo"].get_by_email.return_value = mocker.MagicMock()
     user_data = UserCreate(
-        name="Test User", email="test@example.com", password=VALID_PASSWORD
+        name="Test User", email="test@example.com", password="ValidPassword123!"
     )
-
     with pytest.raises(UserAlreadyExistsError):
-        auth_service.register_user(user_data)
+        service.register_user(user_data)
 
 
 def test_authenticate_user_fails_with_bad_password(mocker: MockerFixture) -> None:
-    """
-    Tests that InvalidCredentialsError is raised if the password verification fails.
-    """
-    mock_user_repo = mocker.MagicMock(spec=UserRepositoryProtocol)
-    mock_password_svc = mocker.MagicMock(spec=PasswordServiceProtocol)
-
-    mock_user = mocker.MagicMock()
-    mock_user.hashed_password = "correct_hashed_password"
-    mock_user_repo.get_by_email.return_value = mock_user
-    mock_password_svc.verify_password.return_value = False  # Simulate password mismatch
-
-    auth_service = AuthService(mock_user_repo, mock_password_svc, mocker.MagicMock())
-
+    service, mocks = create_mocked_auth_service(mocker)
+    mock_user = mocker.MagicMock(hashed_password="correct_hashed_password")
+    mocks["user_repo"].get_by_email.return_value = mock_user
+    mocks["password_svc"].verify_password.return_value = False
     with pytest.raises(InvalidCredentialsError):
-        auth_service.authenticate_user("test@example.com", "wrong_password")
-
-    mock_password_svc.verify_password.assert_called_once_with(
-        "wrong_password", "correct_hashed_password"
-    )
+        service.authenticate_user("test@example.com", "wrong_password")
 
 
-def test_get_user_from_token_fails_if_user_not_found(mocker: MockerFixture) -> None:
+def test_get_user_from_token_success(mocker: MockerFixture) -> None:
+    """Tests the happy path for successfully validating a token and finding a user."""
+    service, mocks = create_mocked_auth_service(mocker)
+    mock_user = mocker.MagicMock(spec=User)
+    valid_payload = {"sub": "test@example.com"}
+
+    mocks["token_service"].decode_access_token.return_value = valid_payload
+    mocks["user_repo"].get_by_email.return_value = mock_user
+
+    user = service.get_user_from_token("valid_token")
+
+    assert user is mock_user
+    mocks["token_service"].decode_access_token.assert_called_once_with("valid_token")
+    mocks["user_repo"].get_by_email.assert_called_once_with("test@example.com")
+
+
+def test_get_user_from_token_raises_specific_error_on_expiry(
+    mocker: MockerFixture,
+) -> None:
+    """Tests that a specific TokenExpiredError from the token service is propagated."""
+    service, mocks = create_mocked_auth_service(mocker)
+    mocks["token_service"].decode_access_token.side_effect = TokenExpiredError()
+
+    with pytest.raises(TokenExpiredError):
+        service.get_user_from_token("expired_token")
+
+
+def test_get_user_from_token_raises_error_if_claim_is_missing(
+    mocker: MockerFixture,
+) -> None:
     """
-    Tests that token validation fails if the email in the token payload
-    does not correspond to an existing user (e.g., user was deleted).
+    Tests that TokenMissingDataError is raised if the 'sub' claim is not in the payload.
     """
-    mock_user_repo = mocker.MagicMock(spec=UserRepositoryProtocol)
-    mock_token_svc = mocker.MagicMock(spec=TokenServiceProtocol)
+    service, mocks = create_mocked_auth_service(mocker)
+    payload_without_sub = {"scope": "login"}
+    mocks["token_service"].decode_access_token.return_value = payload_without_sub
 
-    # Simulate a valid token payload for a user that no longer exists
-    valid_payload = {"sub": "deleted-user@example.com"}
-    mock_token_svc.decode_access_token.return_value = valid_payload
-    mock_user_repo.get_by_email.return_value = None
+    with pytest.raises(TokenMissingDataError) as exc_info:
+        service.get_user_from_token("token_with_missing_data")
 
-    auth_service = AuthService(mock_user_repo, mocker.MagicMock(), mock_token_svc)
+    assert "missing required claim: 'sub'" in str(exc_info.value)
 
-    with pytest.raises(TokenValidationError):
-        auth_service.get_user_from_token("any_valid_token")
+
+def test_get_user_from_token_raises_error_if_user_not_found(
+    mocker: MockerFixture,
+) -> None:
+    """
+    Tests that UserNotFoundError is raised if the token is valid but the
+    user it points to no longer exists.
+    """
+    service, mocks = create_mocked_auth_service(mocker)
+    valid_payload = {"sub": "deleted@example.com"}
+
+    mocks["token_service"].decode_access_token.return_value = valid_payload
+    mocks["user_repo"].get_by_email.return_value = None
+
+    with pytest.raises(UserNotFoundError):
+        service.get_user_from_token("valid_token_for_deleted_user")
