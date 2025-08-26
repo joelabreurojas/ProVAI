@@ -28,18 +28,16 @@ class TutorResponse(TutorBase):
 class TutorInvitationCreate(BaseModel):
     """Schema for inviting a batch of students to a tutor."""
 
-    student_emails: list[EmailStr] = Field(
-        ..., description="A list of unique student email addresses to invite."
-    )
+    tutor_id: int
+    student_emails: list[EmailStr]
 
 
 class TutorInvitationResponse(BaseModel):
-    """Schema for returning the status of a created invitation."""
+    """Schema for returning the single, shareable invitation token."""
 
-    email: EmailStr
+    tutor_id: int
+    invitation_token: str
     status: str
-    token: str | None = None
-    model_config = ConfigDict(from_attributes=True)
 
 
 class StudentEnrollmentCreate(BaseModel):

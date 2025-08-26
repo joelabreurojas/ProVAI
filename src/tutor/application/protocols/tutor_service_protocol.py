@@ -2,29 +2,34 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from src.auth.domain.models import User
-    from src.document.domain.models import Document
-    from src.tutor.domain.models import Tutor
+    from src.rag.domain.models import Document
+    from src.tutor.domain.models import Invitation, Tutor
     from src.tutor.domain.schemas import TutorCreate, TutorInvitationResponse
 
 
 @runtime_checkable
 class TutorServiceProtocol(Protocol):
     """
-    Defines the contract for the main Tutor service, which handles all
-    high-level business logic for creation, authorization, and student management.
+    Defines the contract for the main Tutor service.
     """
 
     def create_tutor(self, tutor_create: "TutorCreate", teacher: "User") -> "Tutor": ...
 
     def get_tutor(self, tutor_id: int) -> "Tutor": ...
 
-    def link_document_to_tutor(self, tutor: "Tutor", document: "Document") -> None: ...
+    def get_or_create_invitation(
+        self, tutor_id: int, requesting_user: "User"
+    ) -> "Invitation": ...
 
-    def create_invitations(
+    def add_students_to_invitation(
         self, tutor_id: int, requesting_user: "User", student_emails: list[str]
-    ) -> list["TutorInvitationResponse"]: ...
+    ) -> "TutorInvitationResponse": ...
 
-    def enroll_student(self, token: str, student_user: "User") -> None: ...
+    def enroll_student_from_token(
+        self, token: str, student_user: "User"
+    ) -> "Tutor": ...
+
+    def link_document_to_tutor(self, tutor: "Tutor", document: "Document") -> None: ...
 
     def verify_user_is_tutor_owner(self, tutor_id: int, user: "User") -> "Tutor": ...
 

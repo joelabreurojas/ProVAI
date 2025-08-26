@@ -10,10 +10,7 @@ from src.rag.dependencies import get_ingestion_service
 from src.tutor.application.protocols import TutorServiceProtocol
 from src.tutor.dependencies import get_tutor_service
 from src.tutor.domain.schemas import (
-    StudentEnrollmentCreate,
     TutorCreate,
-    TutorInvitationCreate,
-    TutorInvitationResponse,
     TutorResponse,
 )
 
@@ -76,41 +73,3 @@ async def upload_document_to_tutor(
         "message": message,
         "document_id": new_document.id,
     }
-
-
-@router.post(
-    "/{tutor_id}/invitations",
-    response_model=list[TutorInvitationResponse],
-    status_code=status.HTTP_201_CREATED,
-    summary="Invite students to a tutor",
-)
-async def invite_students(
-    tutor_id: int,
-    invitation_data: TutorInvitationCreate,
-    current_user: User = Depends(get_current_user),
-    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
-) -> list[TutorInvitationResponse]:
-    """Invites students to join a tutor."""
-    return tutor_service.create_invitations(
-        tutor_id=tutor_id,
-        requesting_user=current_user,
-        student_emails=invitation_data.student_emails,
-    )
-
-
-@router.post(
-    "/{tutor_id}/enrollments",
-    status_code=status.HTTP_201_CREATED,
-    summary="Enroll in a tutor",
-)
-async def enroll_student(
-    tutor_id: int,
-    enrollment_data: StudentEnrollmentCreate,
-    current_user: User = Depends(get_current_user),
-    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
-) -> dict[str, str]:
-    """Enrolls the current user in a tutor."""
-    tutor_service.enroll_student(
-        token=enrollment_data.invitation_token, student_user=current_user
-    )
-    return {"message": "Successfully enrolled in the tutor."}

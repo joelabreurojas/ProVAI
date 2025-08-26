@@ -38,7 +38,11 @@ from src.rag.dependencies import (
     get_rag_vector_store,
     get_text_splitter,
 )
-from src.tutor.dependencies import get_tutor_repository, get_tutor_service
+from src.tutor.dependencies import (
+    get_invitation_repository,
+    get_tutor_repository,
+    get_tutor_service,
+)
 from src.tutor.domain.schemas import TutorCreate
 
 SAMPLE_DOC_PATH = Path("sample_data/attention_is_all_you_need.pdf")
@@ -50,9 +54,10 @@ class AppContainer:
     """A container to manually assemble and hold our application services."""
 
     def __init__(self, db_session: SQLAlchemySession) -> None:
-        # Repositories
+        # Repositories ---
         self.user_repo = get_user_repository(db_session)
         self.tutor_repo = get_tutor_repository(db_session)
+        self.invitation_repo = get_invitation_repository(db_session)
         self.chat_repo = get_chat_repository(db_session)
         self.doc_repo = get_document_repository(db_session)
         self.chunk_repo = get_chunk_repository(db_session)
@@ -74,7 +79,7 @@ class AppContainer:
         )
         self.tutor_service = get_tutor_service(
             tutor_repo=self.tutor_repo,
-            token_service=self.token_service,
+            invitation_repo=self.invitation_repo,
         )
         self.ingestion_service = get_ingestion_service(
             db=db_session,
@@ -89,7 +94,7 @@ class AppContainer:
             prompt=self.rag_prompt,
         )
 
-        # Orchestrator
+        # The Orchestrator
         self.chat_service = get_chat_service(
             chat_repo=self.chat_repo,
             tutor_service=self.tutor_service,
@@ -179,24 +184,24 @@ def main() -> None:
         )
         print(f"Tutor '{tutor.course_name}' created with ID: {tutor.id}.")
 
-        print("\n--- Teacher creates an invitation for the Student ---")
-        invitations = container.tutor_service.create_invitations(
+        invitation_response = container.tutor_service.add_students_to_invitation(
             tutor_id=tutor.id,
             requesting_user=teacher,
             student_emails=["student@demo.com"],
         )
-        invitation_token = invitations[0].token
+        invitation_token = invitation_response.invitation_token
+
         if not invitation_token:
             raise ValueError("Failed to create a valid invitation token.")
         print("Invitation token generated.")
 
         print("\n--- Student enrolls in the Tutor using the token ---")
-        container.tutor_service.enroll_student(
+        container.tutor_service.enroll_student_from_token(
             token=invitation_token, student_user=student
         )
         print(f"Student {student.id} successfully enrolled in Tutor {tutor.id}.")
 
-        print("\n--- Student creates their own private Chat with the Tutor ---")
+        print("\n--- Student creates their own Chat with the Tutor ---")
         student_chat = container.chat_service.create_new_chat(
             tutor_id=tutor.id, user=student, title=f"Chat about {SAMPLE_DOC_PATH.name}"
         )
