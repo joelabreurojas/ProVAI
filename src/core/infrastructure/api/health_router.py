@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends
 import chromadb
+from chromadb.api import ClientAPI
+from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.ai.dependencies import get_embedding_service, get_llm_service
 from src.ai.application.protocols import (
     EmbeddingServiceProtocol,
     LLMServiceProtocol,
 )
+from src.ai.dependencies import get_embedding_service, get_llm_service
 from src.core.constants import PROJECT_ROOT
 from src.core.infrastructure.database import get_db
 
@@ -16,7 +17,7 @@ TAG: dict[str, str] = {"name": "Status", "description": "API health and monitori
 router = APIRouter(tags=[TAG["name"]])
 
 
-def get_health_check_vector_store_client() -> chromadb.PersistentClient:
+def get_health_check_vector_store_client() -> ClientAPI:
     """Provides a lightweight ChromaDB client specifically for fast health checks."""
     persist_dir_path = str(PROJECT_ROOT / "vector_store")
     return chromadb.PersistentClient(path=persist_dir_path)
@@ -25,9 +26,7 @@ def get_health_check_vector_store_client() -> chromadb.PersistentClient:
 @router.get("/health", summary="Perform a lightweight health check")
 async def health_check(
     db: SQLAlchemySession = Depends(get_db),
-    vector_store_client: chromadb.PersistentClient = Depends(
-        get_health_check_vector_store_client
-    ),
+    vector_store_client: ClientAPI = Depends(get_health_check_vector_store_client),
 ) -> dict[str, str]:
     """
     Checks the status of basic external services (database, vector store)
