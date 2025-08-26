@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from sqlalchemy import JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from src.auth.domain.models import User
     from src.chat.domain.models import Chat
     from src.rag.domain.models import Document
+    from src.tutor.domain.models import Invitation
 
 
 class Tutor(Base):
@@ -31,3 +32,6 @@ class Tutor(Base):
         secondary=tutor_document_link, back_populates="tutors"
     )
     chats: Mapped[list["Chat"]] = relationship(back_populates="tutor")
+    invitation: Mapped[Optional["Invitation"]] = relationship(
+        back_populates="tutor", uselist=False, cascade="all, delete-orphan"
+    )
