@@ -3,6 +3,7 @@ from pytest_mock import MockerFixture
 
 from src.auth.application.exceptions import (
     InvalidCredentialsError,
+    TokenValidationError,
     UserAlreadyExistsError,
 )
 from src.auth.application.protocols import (
@@ -77,3 +78,22 @@ def test_authenticate_user_fails_with_bad_password(mocker: MockerFixture) -> Non
     mock_password_svc.verify_password.assert_called_once_with(
         "wrong_password", "correct_hashed_password"
     )
+
+
+def test_get_user_from_token_fails_if_user_not_found(mocker: MockerFixture) -> None:
+    """
+    Tests that token validation fails if the email in the token payload
+    does not correspond to an existing user (e.g., user was deleted).
+    """
+    mock_user_repo = mocker.MagicMock(spec=UserRepositoryProtocol)
+    mock_token_svc = mocker.MagicMock(spec=TokenServiceProtocol)
+
+    # Simulate a valid token payload for a user that no longer exists
+    valid_payload = {"sub": "deleted-user@example.com"}
+    mock_token_svc.decode_access_token.return_value = valid_payload
+    mock_user_repo.get_by_email.return_value = None
+
+    auth_service = AuthService(mock_user_repo, mocker.MagicMock(), mock_token_svc)
+
+    with pytest.raises(TokenValidationError):
+        auth_service.get_user_from_token("any_valid_token")

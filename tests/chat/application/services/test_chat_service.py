@@ -10,6 +10,7 @@ from src.chat.application.services import ChatService
 from src.chat.domain.models import Chat, Message
 from src.rag.application.protocols import IngestionServiceProtocol, RAGServiceProtocol
 from src.rag.domain.models import Document
+from src.tutor.application.exceptions import UserNotEnrolledError
 from src.tutor.application.protocols import (
     TutorRepositoryProtocol,
     TutorServiceProtocol,
@@ -226,3 +227,27 @@ def test_get_history_authorizes_and_returns_sorted(mocker: MockerFixture) -> Non
         mock_chat.tutor_id, mock_user
     )
     assert result == [msg1, msg2, msg3]  # Verifies sorting
+
+
+def test_post_message_fails_if_user_not_enrolled(mocker: MockerFixture) -> None:
+    """
+    Tests that a user cannot post a message to a chat if they are not
+    enrolled in the parent tutor.
+    """
+    service, mocks = create_mocked_chat_service(mocker)
+    mock_user = mocker.MagicMock(spec=User)
+    mock_chat = mocker.MagicMock(spec=Chat, tutor_id=1)
+
+    mocks["chat_repo"].get_chat_by_id.return_value = mock_chat
+
+    # Simulate the authorization service throwing a permission error
+    mocks[
+        "tutor_service"
+    ].verify_user_can_access_tutor.side_effect = UserNotEnrolledError()
+
+    with pytest.raises(UserNotEnrolledError):
+        service.post_message(
+            chat_id=5, query="Am I allowed here?", current_user=mock_user
+        )
+
+    mocks["rag_service"].answer_query.assert_not_called()
