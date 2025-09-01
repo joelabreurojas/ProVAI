@@ -38,6 +38,6 @@ The following table compares the benchmark results before and after the full opt
 ## Consequences
 
 -   The application is now **dramatically faster and more responsive.** Query latency is now within an acceptable range for an interactive MVP.
--   The **1.3 GB reduction in RAM usage** makes the system significantly more stable on our 8GB target hardware and provides ample resources for the future Streamlit UI.
+-   The **1.3 GB reduction in RAM usage** makes the system significantly more stable on our 8GB target hardware and provides ample resources for the future UI.
 -   **Document ingestion is now nearly instantaneous** for small-to-medium documents, representing a massive improvement in user experience.
 -   We have established a new, **high-performance baseline** for the project going forward.

@@ -1,6 +1,6 @@
 # ADR-004: Prioritize Streamlit over HTMX/Alpine.js for MVP UI
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-020](./020-pivot-frontend-to-fastapi-htmx.md)
 - **Date:** 2025-06-29
 - **Authors:** Joel Abreu Rojas
 
