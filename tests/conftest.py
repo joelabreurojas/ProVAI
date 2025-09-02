@@ -12,11 +12,11 @@ from sqlalchemy.orm import sessionmaker
 
 os.environ["ENV_STATE"] = "test"
 
-from src.ai.application.services import EmbeddingService
-from src.core.app import create_app
-from src.core.infrastructure.database import Base, get_db
-from src.core.infrastructure.settings import settings
-from src.rag.dependencies import get_rag_vector_store
+from src.api.ai.application.services import EmbeddingService
+from src.api.core.app import create_app
+from src.api.core.infrastructure.database import Base, get_db
+from src.api.core.infrastructure.settings import settings
+from src.api.rag.dependencies import get_rag_vector_store
 
 # The connect_args is specific to SQLite and is necessary
 # to allow the database connection to be shared across different threads.
