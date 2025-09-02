@@ -1,3 +1,11 @@
+"""
+This file contains the application factory for the ProVAI FastAPI application.
+
+It is the main "Composition Root" of the project, responsible for creating and
+configuring the FastAPI app instance, including setting up middleware, exception
+handlers, and registering routers.
+"""
+
 from fastapi import FastAPI
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -12,7 +20,7 @@ from src.api.core.infrastructure.limiter import limiter
 from src.api.core.infrastructure.logging_config import setup_logging
 from src.api.core.infrastructure.middleware import logging_middleware
 from src.api.core.infrastructure.settings import settings
-from src.api.core.modules import import_models, register_routers
+from src.api.core.modules import import_models, register_api_routers
 
 
 def create_app() -> FastAPI:
@@ -25,24 +33,17 @@ def create_app() -> FastAPI:
         title=settings.TITLE,
         description=settings.DESCRIPTION,
         version=settings.VERSION,
-        root_path=settings.API_ROOT_PATH,
         contact=settings.CONTACT,
         license_info=settings.LICENSE_INFO,
     )
 
     app.state.limiter = limiter
-
     app.add_middleware(SlowAPIMiddleware)
-    app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
-
     app.add_middleware(BaseHTTPMiddleware, dispatch=logging_middleware)
+
+    app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
     app.add_exception_handler(AppException, app_exception_handler)
 
-    register_routers(app)
-
-    @app.get("/", tags=["Root"])
-    async def read_root() -> dict[str, str]:
-        """A welcome message to confirm that the API is running."""
-        return {"message": f"Welcome to {settings.TITLE} API"}
+    register_api_routers(app)
 
     return app

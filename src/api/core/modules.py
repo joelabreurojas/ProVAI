@@ -1,10 +1,10 @@
 """
-This file acts as the central registry for all modules in the ProVAI
+This file acts as the central registry for all API modules in the ProVAI
 application.
 
-By defining all modules in one place, we can programmatically discover
-and wire up their components (routers, models, etc.) without having
-to manually update multiple files every time a new feature is added.
+It programmatically discovers and wires up their components, specifically the API
+routers, ensuring that all machine-readable endpoints are consistently prefixed
+and documented.
 """
 
 import importlib
@@ -14,23 +14,23 @@ from typing import Iterator, NamedTuple
 from fastapi import APIRouter, FastAPI
 
 from src.api.core.constants import PROJECT_ROOT
+from src.api.core.infrastructure.settings import settings
 
 
-def _discover_app_modules() -> list[str]:
+def _discover_api_modules() -> list[str]:
     """
-    Discovers all valid feature modules in the `src` directory.
-    A directory is considered a module if it's a Python package.
+    Discovers all valid feature modules ONLY within the `src/api` directory.
     """
-    src_path = PROJECT_ROOT / "src/api"
+    api_path = PROJECT_ROOT / "src" / "api"
 
     return [
         d.name
-        for d in src_path.iterdir()
+        for d in api_path.iterdir()
         if d.is_dir() and (d / "__init__.py").exists()
     ]
 
 
-APPLICATION_MODULES = _discover_app_modules()
+API_MODULES = _discover_api_modules()
 
 
 class _DiscoveredRouter(NamedTuple):
@@ -38,12 +38,12 @@ class _DiscoveredRouter(NamedTuple):
     tag_metadata: dict[str, str] | None
 
 
-def _discover_routers() -> Iterator[_DiscoveredRouter]:
+def _discover_api_routers() -> Iterator[_DiscoveredRouter]:
     """
     A generator that discovers and yields all APIRouter instances from
     the modules declared in APPLICATION_MODULES.
     """
-    for module_name in APPLICATION_MODULES:
+    for module_name in API_MODULES:
         api_path = f"src.api.{module_name}.infrastructure.routers"
 
         try:
@@ -55,39 +55,38 @@ def _discover_routers() -> Iterator[_DiscoveredRouter]:
                     router_path = f"{api_path}.{sub_module_name}"
                     router_module = importlib.import_module(router_path)
 
-                    yield _DiscoveredRouter(
-                        router=router_module.router,
-                        tag_metadata=getattr(router_module, "TAG", None),
-                    )
+                    if hasattr(router_module, "router"):
+                        yield _DiscoveredRouter(
+                            router=router_module.router,
+                            tag_metadata=getattr(router_module, "TAG", None),
+                        )
 
         except (ImportError, AttributeError) as e:
             print(f"Skipping router for module {module_name}: {e}")
 
 
-def register_routers(app: FastAPI) -> None:
+def register_api_routers(app: FastAPI) -> None:
     """
-    Discovers all routers and registers them with the FastAPI application,
-    including their OpenAPI tags.
+    Discovers all API routers and registers them under a master router,
+    applying the global API prefix from settings.
     """
-    all_tags = [{"name": "Root", "description": "Root-level endpoints."}]
+    all_tags = app.openapi_tags or []
+    api_router = APIRouter(prefix=settings.API_ROOT_PATH)
 
-    for discovered in _discover_routers():
-        app.include_router(discovered.router)
-
-        if discovered.tag_metadata:
+    for discovered in _discover_api_routers():
+        api_router.include_router(discovered.router)
+        if discovered.tag_metadata and discovered.tag_metadata not in all_tags:
             all_tags.append(discovered.tag_metadata)
 
+    app.include_router(api_router)
     app.openapi_tags = all_tags
 
 
 def import_models() -> None:
     """
-    Dynamically imports all `models.py` files from every feature module.
-    This is used by Alembic to ensure all tables are discoverable.
-    The function doesn't need to return anything; the act of importing
-    is what makes the models available to SQLAlchemy's Base.
+    Dynamically imports all `models` submodules from every API feature module.
     """
-    for module_name in APPLICATION_MODULES:
+    for module_name in API_MODULES:
         try:
             importlib.import_module(f"src.api.{module_name}.domain.models")
         except ImportError:
