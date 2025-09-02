@@ -13,7 +13,7 @@ from typing import Iterator
 
 from dotenv import load_dotenv
 
-from src.ai.dependencies import get_embedding_service, get_llm_service
+from src.api.ai.dependencies import get_embedding_service, get_llm_service
 
 
 def main() -> None:

@@ -15,21 +15,21 @@ from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.ai.dependencies import get_embedding_service, get_llm_service
-from src.auth.application.protocols import AuthServiceProtocol
-from src.auth.dependencies import (
+from src.api.ai.dependencies import get_embedding_service, get_llm_service
+from src.api.auth.application.protocols import AuthServiceProtocol
+from src.api.auth.dependencies import (
     get_auth_service,
     get_password_service,
     get_token_service,
     get_user_repository,
 )
-from src.auth.domain.models import User
-from src.auth.domain.schemas import UserCreate
-from src.chat.dependencies import get_chat_repository, get_chat_service
-from src.core.infrastructure.database import SessionLocal
-from src.core.infrastructure.settings import settings
-from src.core.modules import import_models
-from src.rag.dependencies import (
+from src.api.auth.domain.models import User
+from src.api.auth.domain.schemas import UserCreate
+from src.api.chat.dependencies import get_chat_repository, get_chat_service
+from src.api.core.infrastructure.database import SessionLocal
+from src.api.core.infrastructure.settings import settings
+from src.api.core.modules import import_models
+from src.api.rag.dependencies import (
     get_chunk_repository,
     get_document_repository,
     get_ingestion_service,
@@ -38,12 +38,12 @@ from src.rag.dependencies import (
     get_rag_vector_store,
     get_text_splitter,
 )
-from src.tutor.dependencies import (
+from src.api.tutor.dependencies import (
     get_invitation_repository,
     get_tutor_repository,
     get_tutor_service,
 )
-from src.tutor.domain.schemas import TutorCreate
+from src.api.tutor.domain.schemas import TutorCreate
 
 SAMPLE_DOC_PATH = Path("sample_data/attention_is_all_you_need.pdf")
 SAMPLE_QUERY = "What is a multi-head self-attention mechanism?"
