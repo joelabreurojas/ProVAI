@@ -4,18 +4,16 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 from src.api.core.infrastructure.limiter import limiter
+from src.api.core.infrastructure.settings import settings
 
 
-def test_rate_limiting_on_query_endpoint(
-    app_and_client: tuple[FastAPI, TestClient],
-) -> None:
+def test_rate_limiting_on_query_endpoint(app: FastAPI, client: TestClient) -> None:
     """
     Tests that the rate limiter correctly blocks excessive requests to a
     protected endpoint.
     """
-    app, client = app_and_client
 
-    @app.get("/test-rate-limit")
+    @app.get(f"{settings.API_ROOT_PATH}/test-rate-limit")
     @limiter.limit("5/second")
     async def _test_rate_limit(request: Request) -> dict[str, str]:
         return {"status": "ok"}

@@ -74,17 +74,15 @@ def test_vector_store(embedding_service: EmbeddingService) -> Chroma:
 
 
 @pytest.fixture(scope="function")
-def app_and_client(
+def app(
     db_session: SQLAlchemySession, test_vector_store: Chroma
-) -> Generator[tuple[FastAPI, TestClient], None, None]:
+) -> Generator[FastAPI, None, None]:
     """
-    Provides a configured FastAPI app instance and a TestClient for that app.
-    This pattern allows tests to have a correctly typed handle to the app
-    for managing dependency overrides.
+    Provides a fully configured application instance for testing,
+    with all dependencies overridden.
     """
     app = create_app()
 
-    # Define overrides before yielding
     def override_get_db() -> Generator[SQLAlchemySession, None, None]:
         yield db_session
 
@@ -94,8 +92,19 @@ def app_and_client(
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_rag_vector_store] = override_get_vector_store
 
-    with TestClient(app) as test_client:
-        yield app, test_client
+    yield app
 
     # Idempotent cleanup of all potential overrides
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(scope="function")
+def client(app: FastAPI) -> Generator[TestClient, None, None]:
+    """
+    Provides a TestClient that is configured with the correct API base URL.
+    This is the definitive client that all E2E tests should use.
+    """
+    base_url = f"http://testserver{settings.API_ROOT_PATH}"
+
+    with TestClient(app, base_url=base_url) as test_client:
+        yield test_client
