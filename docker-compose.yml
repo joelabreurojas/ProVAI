@@ -1,5 +1,5 @@
 services:
-  backend:
+  app:
     build:
       context: .
       dockerfile: ./docker/app.Dockerfile
@@ -10,11 +10,11 @@ services:
       - .env
     volumes:
       # Data persistence
+      - ./databases:/app/databases
+      - ./vector_store:/app/vector_store
       - ./assets:/app/assets:ro
       - ./models:/app/models:ro
       - ./sample_data:/app/sample_data:ro
-      - ./databases:/app/databases
-      - ./vector_store:/app/vector_store
     develop:
       watch:
         # Sync all our source code changes instantly
@@ -27,6 +27,13 @@ services:
         - action: sync
           path: ./scripts
           target: /app/scripts
+        - action: sync
+          path: ./alembic
+          target: /app/alembic
+        - action: sync
+          path: ./alembic.ini
+          target: /app/alembic.ini
+
 
         # Rebuild the image automatically if dependencies change
         - action: rebuild
@@ -34,3 +41,26 @@ services:
         - action: rebuild
           path: ./uv.lock
     restart: unless-stopped
+    networks:
+        - provai_net
+
+  tailwind_watcher:
+    build:
+      context: .
+      dockerfile: ./docker/app.Dockerfile
+      target: frontend_builder
+    command: npm run watch:css
+    tty: true
+    develop:
+      watch:
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./tailwind.config.js
+    restart: unless-stopped
+    networks:
+      - provai_net
+
+networks:
+  provai_net:
+    driver: bridge

@@ -1,0 +1,15 @@
+{
+	"name": "provai-frontend",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"build:css": "npx @tailwindcss/cli  -i ./src/ui/static/css/input.css -o ./src/ui/static/css/output.css --minify",
+		"watch:css": "npx @tailwindcss/cli -i ./src/ui/static/css/input.css -o ./src/ui/static/css/output.css --watch"
+	},
+	"devDependencies": {
+		"tailwindcss": "^4.1.13"
+	},
+	"dependencies": {
+		"@tailwindcss/cli": "^4.1.13"
+	}
+}

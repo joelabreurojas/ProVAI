@@ -1,0 +1,23 @@
+/*
+This is the definitive, CSS-first configuration for Tailwind v4.
+It imports the core layers and defines our custom theme directly.
+*/
+
+/* 1. Import the core Tailwind styles. */
+@import "tailwindcss";
+
+/* 2. Define our custom theme using the @theme directive. */
+@theme {
+	--color-nord-bg: #0d1117;
+	--color-nord-bg-2: #161b22;
+	--color-nord-border: #30363d;
+	--color-nord-text: #adbac7;
+	--color-nord-accent: #58a6ff;
+	--color-nord-success: #238636;
+}
+
+/* 
+   We can add more customizations here in the future, like fonts.
+   For example:
+   --font-sans: "Inter", sans-serif;
+*/

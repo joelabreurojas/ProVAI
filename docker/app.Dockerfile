@@ -1,4 +1,4 @@
-# Build stage
+# Build stage - Server
 FROM ghcr.io/astral-sh/uv:0.8.3-python3.13-bookworm-slim AS builder
 
 WORKDIR /app
@@ -10,6 +10,17 @@ RUN apt-get update \
 
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=0 UV_HTTP_TIMEOUT=1200
 
+# Build stage - Frontend
+FROM node:24-alpine AS frontend_builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY src/ui/templates/ ./src/ui/templates/
+COPY src/ui/static/css/input.css ./src/ui/static/css/input.css
+
+RUN npm ci
+RUN npm run build:css
 
 # Dependencies stage - Production
 FROM builder AS production_dependencies
@@ -45,6 +56,7 @@ COPY ./src ./src
 COPY ./alembic ./alembic
 COPY ./alembic.ini .
 COPY ./scripts ./scripts
+COPY --from=frontend_builder /app/src/ui/static/css/output.css ./src/ui/static/css/output.css
 
 RUN mkdir -p databases models sample_data vector_store scripts
 

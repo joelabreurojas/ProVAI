@@ -7,6 +7,8 @@ handlers, and registering routers.
 """
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -21,6 +23,7 @@ from src.api.core.infrastructure.logging_config import setup_logging
 from src.api.core.infrastructure.middleware import logging_middleware
 from src.api.core.infrastructure.settings import settings
 from src.api.core.modules import import_models, register_api_routers
+from src.ui.module import register_ui_routers
 
 
 def create_app() -> FastAPI:
@@ -37,6 +40,9 @@ def create_app() -> FastAPI:
         license_info=settings.LICENSE_INFO,
     )
 
+    app.mount("/static", StaticFiles(directory="src/ui/static"), name="static")
+    app.state.templates = Jinja2Templates(directory="src/ui/templates")
+
     app.state.limiter = limiter
     app.add_middleware(SlowAPIMiddleware)
     app.add_middleware(BaseHTTPMiddleware, dispatch=logging_middleware)
@@ -45,5 +51,6 @@ def create_app() -> FastAPI:
     app.add_exception_handler(AppException, app_exception_handler)
 
     register_api_routers(app)
+    register_ui_routers(app)
 
     return app
