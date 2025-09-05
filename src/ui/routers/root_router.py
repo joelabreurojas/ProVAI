@@ -10,7 +10,7 @@ async def show_landing_page(request: Request) -> HTMLResponse:
     templates = request.app.state.templates
 
     response: HTMLResponse = templates.TemplateResponse(
-        "landing.html", {"request": request}
+        "landing.html", {"request": request, "is_authenticated": False}
     )
 
     return response

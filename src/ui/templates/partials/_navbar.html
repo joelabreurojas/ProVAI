@@ -1,0 +1,18 @@
+<header class="bg-nord-bg-2 border-b border-nord-border sticky top-0 z-50">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center">
+                <a href="/dashboard" class="text-nord-accent font-bold text-2xl">ProVAI</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/dashboard" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                <a href="/chat" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Chat</a>
+                
+                <!-- This will be the form for the logout button -->
+                <form hx-post="/auth/logout" hx-target="body">
+                    <button type="submit" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Logout</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+</header>

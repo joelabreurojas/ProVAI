@@ -17,11 +17,23 @@
     {% block head_scripts %}{% endblock %}
 </head>
 <body class="bg-nord-bg text-nord-text font-sans antialiased">
+    <!-- Conditionally include the navbar. -->
+    {% if is_authenticated %}
+        {% include "partials/_navbar.html" %}
+    {% endif %}
+
+    <header>
+        <!-- _header.html here -->
+    </header>
     
     <!-- Main application container -->
     <div id="app-container" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {% block content %}{% endblock %}
     </div>
+
+    <footer>
+        <!-- _footer.html here -->
+    </footer>
 
     {% block footer_scripts %}{% endblock %}
 </body>
