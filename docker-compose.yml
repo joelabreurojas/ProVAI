@@ -34,7 +34,6 @@ services:
           path: ./alembic.ini
           target: /app/alembic.ini
 
-
         # Rebuild the image automatically if dependencies change
         - action: rebuild
           path: ./pyproject.toml
@@ -42,24 +41,29 @@ services:
           path: ./uv.lock
     restart: unless-stopped
     networks:
-        - provai_net
+      - provai_net
 
-  tailwind_watcher:
+  live_server:
     build:
       context: .
       dockerfile: ./docker/app.Dockerfile
       target: frontend_builder
-    command: npm run watch:css
-    tty: true
+    command: npm run dev
+    ports:
+      - "3000:3000" # BrowserSync Proxy Port
+      - "3001:3001" # BrowserSync UI Port
+    volumes:
+      - ./src/ui:/app/src/ui
     develop:
       watch:
         - action: rebuild
           path: ./package.json
         - action: rebuild
           path: ./tailwind.config.js
-    restart: unless-stopped
     networks:
       - provai_net
+    depends_on:
+      - app
 
 networks:
   provai_net:
