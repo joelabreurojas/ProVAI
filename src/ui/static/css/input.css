@@ -14,10 +14,21 @@ It imports the core layers and defines our custom theme directly.
 	--color-nord-text: #adbac7;
 	--color-nord-accent: #58a6ff;
 	--color-nord-success: #238636;
+	--color-nord-snow: #ECEFF4;
+	--color-nord-dark-text: #2E3440;
+    /* 
+       We can also add our font definitions here, making this
+       the single source of truth for the entire style guide.
+    */
+    --font-sans: "Inter", sans-serif;
 }
 
 /* 
-   We can add more customizations here in the future, like fonts.
+   We can add any custom CSS or component layers here in the future.
    For example:
-   --font-sans: "Inter", sans-serif;
+   @layer components {
+     .btn-primary {
+       @apply bg-nord-success text-white font-semibold py-2 px-4 rounded-md;
+     }
+   }
 */

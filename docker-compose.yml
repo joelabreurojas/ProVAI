@@ -60,6 +60,7 @@ services:
           path: ./package.json
         - action: rebuild
           path: ./tailwind.config.js
+    restart: unless-stopped
     networks:
       - provai_net
     depends_on:

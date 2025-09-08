@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from src.api.core.application.exceptions import AppException
 from src.api.core.infrastructure.handlers import (
@@ -39,6 +40,8 @@ def create_app() -> FastAPI:
         contact=settings.CONTACT,
         license_info=settings.LICENSE_INFO,
     )
+
+    app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
     app.mount("/static", StaticFiles(directory="src/ui/static"), name="static")
     app.state.templates = Jinja2Templates(directory="src/ui/templates")

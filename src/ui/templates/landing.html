@@ -1,20 +1,156 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center">
-    <div class="text-center">
-        <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl">
-            Welcome to 
-            <span class="text-nord-accent">ProVAI</span>
-        </h1>
-        <p class="mt-6 text-lg leading-8 text-nord-text">
-            The foundation is set. The UI is served by FastAPI and styled with Tailwind CSS.
-        </p>
-        <div class="mt-10">
-            <a href="#" class="rounded-md bg-nord-success px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
-                Get Started
-            </a>
+<div x-data class="overflow-x-hidden">
+
+    <!-- Section 1: The Hero - "The Spark" -->
         </div>
-    </div>
+    </section>
+    <section 
+        class="flex items-center py-20"
+        aria-labelledby="hero-heading"
+    >
+        <div class="absolute inset-0 bg-grid-pattern opacity-10" aria-hidden="true"></div>
+        
+        <div 
+            x-data="{ shown: false }"
+            x-init="setTimeout(() => shown = true, 200)"
+            class="mt-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 xl:grid-cols-2 gap-12 items-center transition-all duration-1000 ease-out"
+            :class="shown ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
+        >
+            <article class="text-center xl:text-left">
+                <h1 id="hero-heading" class="text-5xl font-extrabold tracking-tight text-white md:text-7xl">
+                    Stop Searching.
+                    <br>
+                    <span class="text-nord-accent">Start Understanding.</span>
+                </h1>
+                <p class="mt-6 text-lg leading-8 text-gray-300">
+                    Transforms static course documents into a dynamic, interactive conversation.
+                </p>
+                <div class="mt-10 flex justify-center space-x-4">
+                    <a href="/login" class="rounded-md bg-nord-success px-8 py-4 text-lg font-semibold text-white shadow-lg hover:bg-green-700 transition-transform hover:scale-105">
+                       Begin Your Journey!
+                    </a>
+                </div>
+            </article>
+
+
+            <!-- ASIDE: The visual metaphor, now built with a robust 3-column grid -->
+            <aside class="h-auto w-full flex justify-center xl:w-full">
+                <!-- Mobile Layout: A simple, vertical stack -->
+                <div class="h-full xl:w-full items-center w-96 grid-cols-3 gap-x-7 items-center">
+                    <figure class="w-full h-fit transition-transform duration-500 hover:-rotate-0 z-30 transform rotate-3">
+                        <div class="w-full bg-nord-snow rounded-lg shadow-2xl p-4 border border-nord-border">
+                            <figcaption class="font-bold text-nord-dark-text">🤔 Student's Question:</figcaption>
+                            <blockquote class="text-sm text-nord-dark-text/80 mt-2">"What is a multi-head self-attention mechanism?"</blockquote>
+                        </div>
+                    </figure>
+                    <figure class="mt-10 w-full h-fit transition-transform duration-500 hover:rotate-0 z-20 transform -rotate-3">
+                        <div class="w-full h-full bg-nord-bg-2 rounded-lg shadow-2xl p-4 border border-nord-border">
+                            <figcaption class="font-bold text-gray-400">📘 Source Document</figcaption>
+                            <blockquote class="text-xs text-gray-500 mt-2">[...] the self-attention mechanism allows the model to weigh the importance of different words in a sequence, effectively deciding which words to pay more attention to...</blockquote>
+                            <p class="mt-2 text-center text-xs text-gray-600">attention_is_all_you_need.pdf</p>
+                        </div>
+                    </figure>
+                    <figure class="mt-10 w-full h-fit transition-transform duration-500 hover:-rotate-0 z-10 transform rotate-3">
+                        <div class="w-full h-full bg-nord-accent rounded-lg shadow-2xl p-4 border border-nord-border">
+                            <figcaption class="font-bold text-nord-bg">🎓 ProVAI's Answer</figcaption>
+                            <blockquote class="text-sm text-nord-bg-2 mt-2">Of course! Think of it as the AI highlighting the most important words in a sentence to understand its meaning, just like you would with a marker.</blockquote>
+                        </div>
+                    </figure>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <!-- Section 2: "How It Works" -->
+    <section id="features" class="py-24 sm:py-32">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-bold tracking-tight text-white">A Smarter Way to Study</h2>
+            <p class="mt-4 text-lg text-gray-400">Transform your study process in three simple steps.</p>
+            <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-12">
+                <!-- Step 1: Upload -->
+                <article class="text-center flex flex-col items-center">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-lg bg-nord-bg-2 border border-nord-border">
+                        <svg class="h-8 w-8 text-nord-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" /></svg>
+                    </div>
+                    <h3 class="mt-6 text-xl font-semibold text-white">1. Provide Your Materials</h3>
+                    <p class="mt-2 text-gray-400">A teacher uploads PDFs, lecture notes, and study guides to create a secure, private knowledge base for their course.</p>
+                </article>
+                <!-- Step 2: Ask -->
+                <article class="text-center flex flex-col items-center">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-lg bg-nord-bg-2 border border-nord-border">
+                       <svg class="h-8 w-8 text-nord-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
+                    </div>
+                    <h3 class="mt-6 text-xl font-semibold text-white">2. Invite Your Students</h3>
+                    <p class="mt-2 text-gray-400">The teacher securely invites students to their private Tutor, giving them access to the AI-powered learning environment.</p>
+                </article>
+                <!-- Step 3: Master -->
+                <article class="text-center flex flex-col items-center">
+                    <div class="flex items-center justify-center h-16 w-16 rounded-lg bg-nord-bg-2 border border-nord-border">
+                        <svg class="h-8 w-8 text-nord-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.25-4.75 7.5-9 7.5S3 16.25 3 12 7.75 4.5 12 4.5s9 3.25 9 7.5z" /></svg>
+                    </div>
+                    <h3 class="mt-6 text-xl font-semibold text-white">3. Start the Conversation</h3>
+                    <p class="mt-2 text-gray-400">Students ask questions in natural language and receive instant, accurate answers grounded in their course documents.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Section 3: "Who Is It For?" -->
+    <section id="who-is-it-for" class="py-24 sm:py-32">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold tracking-tight text-white">Built for Education</h2>
+                <p class="mt-4 text-lg text-gray-400">Designed for students and professors.</p>
+            </div>
+            <div class="mt-16 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <article>
+                    <h3 class="text-2xl font-bold text-white">For the Overwhelmed Achiever</h3>
+                    <p class="mt-4 text-gray-400">Ask all the questions you're afraid to ask during class. Test your knowledge with low-stakes quizzes and defeat the "illusion of knowing" before the exam.</p>
+                </article>
+                <article>
+                    <h3 class="text-2xl font-bold text-white">For the Passionate Professor</h3>
+                    <p class="mt-4 text-gray-400">Automate repetitive Q&A and get privacy-preserving insights into where your class is struggling. Spend less time on administrative tasks and more time teaching.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Our Commitment" -->
+    <section id="our-commitment" class="py-24 sm:py-32" aria-labelledby="principles-heading">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 id="principles-heading" class="text-center text-4xl font-bold tracking-tight text-white">Grounded in Principles</h2>
+            
+            <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-12">
+                <div class="text-center">
+                    <dt class="text-2xl font-semibold text-nord-accent">A Reinforcement, Not a Replacement</dt>
+                    <dd class="mt-2 text-gray-400">ProVAI amplifies a teacher's effectiveness, reinforcing their instruction and freeing them for high-impact, human-centric support.</dd>
+                </div>
+                <div class="text-center">
+                    <dt class="text-2xl font-semibold text-nord-accent">A Practice Field, Not an Exam Hall</dt>
+                    <dd class="mt-2 text-gray-400">We provide a private, safe space for students to ask any question and make mistakes without fear of judgment, building confidence and curiosity.</dd>
+                </div>
+                <div class="text-center">
+                    <dt class="text-2xl font-semibold text-nord-accent">An Insight Engine, Not a Surveillance System</dt>
+                    <dd class="mt-2 text-gray-400">Our analytics generate actionable, privacy-preserving signals to help people learn, never to monitor user activity.</dd>
+                </div>
+            </dl>
+        </div>
+    </section>
+    
+    <!-- Section 5: The Final CTA -->
+    <section class="mt-6 bg-nord-bg-2">
+        <div class="max-w-4xl mx-auto py-24 px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-bold tracking-tight text-white">Ready to Transform Your Study Process?</h2>
+            <p class="mt-4 text-lg text-gray-400">Join the community and get accurate answer to finally master the material.</p>
+            <div class="mt-8 flex justify-center space-x-4">
+                <a href="/login" class="rounded-md bg-nord-success px-8 py-4 text-lg font-semibold text-white shadow-lg hover:bg-green-700 transition-transform hover:scale-105">
+                   Start Learning
+                </a>
+            </div>
+        </div>
+    </section>
 </div>
 {% endblock %}

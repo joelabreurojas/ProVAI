@@ -19,7 +19,7 @@ COPY package.json package-lock.json ./
 COPY src/ui/templates/ ./src/ui/templates/
 COPY src/ui/static/css/input.css ./src/ui/static/css/input.css
 
-RUN npm ci
+RUN npm install
 RUN npm run build:css
 
 # Dependencies stage - Production
