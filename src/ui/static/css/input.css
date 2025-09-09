@@ -14,21 +14,68 @@ It imports the core layers and defines our custom theme directly.
 	--color-nord-text: #adbac7;
 	--color-nord-accent: #58a6ff;
 	--color-nord-success: #238636;
-	--color-nord-snow: #ECEFF4;
-	--color-nord-dark-text: #2E3440;
-    /* 
+	--color-nord-snow: #eceff4;
+	--color-nord-dark-text: #2e3440;
+	/* 
        We can also add our font definitions here, making this
        the single source of truth for the entire style guide.
     */
-    --font-sans: "Inter", sans-serif;
+	--font-sans: "Inter", sans-serif;
 }
 
-/* 
-   We can add any custom CSS or component layers here in the future.
-   For example:
-   @layer components {
-     .btn-primary {
-       @apply bg-nord-success text-white font-semibold py-2 px-4 rounded-md;
-     }
-   }
-*/
+@layer components {
+	/* 1. Base Button Style (All shared properties go here) */
+	.btn {
+		@apply inline-flex items-center justify-center rounded-md text-sm font-semibold shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 cursor-pointer disabled:opacity-50;
+	}
+
+	/* 2. Primary Variant (Only color and border styles) */
+	.btn-primary {
+		@apply bg-nord-success text-white border-transparent hover:bg-nord-success/80;
+	}
+
+	/* 3. Secondary Variant (Only color and border styles) */
+	.btn-secondary {
+		@apply text-sm font-semibold text-gray-300 hover:text-white transition-colors;
+	}
+
+	/* 4. Tertiary Variant (This is a text-only style, so it doesn't need the .btn base) */
+	.btn-tertiary {
+		@apply text-sm text-gray-400 hover:text-nord-accent hover:underline cursor-pointer;
+	}
+
+	/* --- Size Modifiers --- */
+	.btn-normal {
+		@apply px-4 py-2;
+	}
+	.btn-lg {
+		@apply px-8 py-4 text-lg;
+	}
+	.btn-sm {
+		@apply px-3 py-1.5 text-xs;
+	}
+
+	/* --- Button States --- */
+	.btn-loading {
+		@apply relative !bg-gray-500 !cursor-not-allowed;
+	}
+	.btn-loading::after {
+		content: "";
+		position: absolute;
+		width: 16px;
+		height: 16px;
+		top: 50%;
+		left: 50%;
+		margin-top: -8px;
+		margin-left: -8px;
+		border: 2px solid #fff;
+		border-top-color: transparent;
+		border-radius: 50%;
+		animation: spin 0.6s linear infinite;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+}

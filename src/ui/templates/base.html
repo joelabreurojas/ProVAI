@@ -22,7 +22,11 @@
 </head>
 <body class="bg-nord-bg text-nord-text font-sans antialiased">
     <header>
-        {% include "partials/_navbar.html" %}
+        {% if navbar_type == 'public' %}
+            {% include "partials/_public-navbar.html" %}
+        {% elif navbar_type == 'app' %}
+            {% include "partials/_app-navbar.html" %}
+        {% endif %}
     </header>
 
     <main>

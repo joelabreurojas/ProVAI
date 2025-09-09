@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-screen px-4 py-12">
+    <div class="w-full max-w-sm">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold tracking-tight text-white">
+                Create Your Account
+            </h2>
+            <p class="mt-2 text-sm text-gray-400">
+                Already have an account? 
+                <a href="/auth/login" class="font-medium text-nord-accent hover:underline">Sign in</a>
+            </p>
+        </div>
+
+        <!-- This container is the target for HTMX swaps -->
+        <div id="register-form-container" class="mt-8">
+            
+            <!-- Alpine.js component to manage the form's submission state -->
+            <form class="space-y-6"
+                  x-data="{ isSubmitting: false }"
+                  hx-post="/auth/register"
+                  hx-target="#register-form-container"
+                  hx-swap="outerHTML"
+                  @htmx:before-request="isSubmitting = true"
+                  @htmx:after-request="isSubmitting = false">
+
+                {% if error_message %}
+                <div class="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-md text-sm" role="alert">
+                    {{ error_message }}
+                </div>
+                {% endif %}
+
+                <div>
+                    <label for="name" class="block text-sm font-medium text-nord-text">Full Name</label>
+                    <input id="name" name="name" type="text" required class="mt-1 w-full bg-nord-bg border border-nord-border rounded-md p-2">
+                </div>
+                <div>
+                    <label for="email-reg" class="block text-sm font-medium text-nord-text">Email address</label>
+                    <input id="email-reg" name="email" type="email" required class="mt-1 w-full bg-nord-bg border border-nord-border rounded-md p-2">
+                </div>
+                <div>
+                    <label for="password-reg" class="block text-sm font-medium text-nord-text">Password</label>
+                    <input id="password-reg" name="password" type="password" required class="mt-1 w-full bg-nord-bg border border-nord-border rounded-md p-2">
+                </div>
+                <div>
+                    <div class="flex justify-center">
+                        <button type="submit" 
+                                :disabled="isSubmitting"
+                                :class="{ 'btn-loading': isSubmitting }"
+                                class="btn btn-primary btn-normal">
+                            
+                            <span x-show="!isSubmitting">Join ProVAI</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="mt-10 text-center">
+            <a href="/" class="text-sm text-nord-accent hover:underline">
+                ← Back to Welcome Page
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
