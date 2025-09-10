@@ -1,9 +1,11 @@
 import logging
 
 from langsmith import traceable
+from pydantic import ValidationError
 
 from src.api.auth.application.exceptions import (
     InvalidCredentialsError,
+    InvalidPasswordError,
     TokenMissingDataError,
     TokenValidationError,
     UserAlreadyExistsError,
@@ -38,14 +40,18 @@ class AuthService(AuthServiceProtocol):
         self.token_svc = token_svc
 
     @traceable(name="Register User")
-    def register_user(self, user_create: UserCreate) -> User:
-        db_user = self.user_repo.get_by_email(user_create.email)
+    def register_user(self, name: str, email: str, password: str) -> User:
+        try:
+            user_data = UserCreate(name=name, email=email, password=password)
+        except ValidationError:
+            raise InvalidPasswordError()
 
+        db_user = self.user_repo.get_by_email(user_data.email)
         if db_user:
             raise UserAlreadyExistsError()
 
-        hashed_password = self.password_svc.get_password_hash(user_create.password)
-        return self.user_repo.add(user_create, hashed_password)
+        hashed_password = self.password_svc.get_password_hash(user_data.password)
+        return self.user_repo.add(user_data, hashed_password)
 
     @traceable(name="Authenticate User")
     def authenticate_user(self, email: str, password: str) -> tuple[User, str]:

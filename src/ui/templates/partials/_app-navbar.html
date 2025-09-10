@@ -11,9 +11,9 @@
           >📖 ProVAI</a
         >
       </div>
-      <div class="flex items-center space-x-4">
+      <div class="hidden md:flex items-center space-x-4">
         <a href="/account" class="btn btn-secondary">Account</a>
-        <form hx-post="/auth/logout" hx-target="body" class="inline">
+        <form hx-post="/auth/logout" hx-target="body" hx-push-url="true">
           <button type="submit" class="btn btn-secondary btn-normal">
             Logout
           </button>
@@ -22,7 +22,7 @@
       <div class="md:hidden flex items-center">
         <button
           @click="open = !open"
-          class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-nord-border focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+          class="btn inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-nord-border focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
         >
           <span class="sr-only">Open main menu</span>
           <!-- Icon for closed menu -->
@@ -45,7 +45,7 @@
           <!-- Icon for open menu -->
           <svg
             x-show="open"
-            class="h-6 w-6"
+            class="btn h-6 w-6"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -71,11 +71,14 @@
         class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-nord-border"
         >Account</a
       >
-      <a
-        href="/auth/logout"
-        class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-nord-border"
-        >Logout</a
-      >
+      <form hx-post="/auth/logout" hx-target="body" hx-push-url="true">
+        <button
+          type="submit"
+          class="cursor-pointer w-full block text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-nord-border"
+        >
+          Logout
+        </button>
+      </form>
     </div>
   </div>
 </nav>

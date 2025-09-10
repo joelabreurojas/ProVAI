@@ -33,6 +33,24 @@ class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
             .first()
         )
 
+    def get_tutors_for_user(self, user: User) -> list[Tutor]:
+        """
+        Retrieves all tutors a user is associated with, either as a
+        teacher or an enrolled student.
+        """
+        if user.role == "teacher":
+            # Teachers see all tutors they've created
+            return self.db.query(Tutor).filter(Tutor.teacher_id == user.id).all()
+
+        # Students see tutors they are enrolled in (requires loading the relationship)
+        user_with_tutors = (
+            self.db.query(User)
+            .filter(User.id == user.id)
+            .options(joinedload(User.enrolled_tutors))
+            .one()
+        )
+        return sorted(user_with_tutors.enrolled_tutors, key=lambda t: t.course_name)
+
     def add_student_to_tutor(self, tutor: Tutor, student: User) -> None:
         """
         Creates the many-to-many link to enroll a student in a tutor.

@@ -10,9 +10,6 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.middleware.sessions import SessionMiddleware
 
 from src.api.core.application.exceptions import AppException
 from src.api.core.infrastructure.handlers import (
@@ -21,7 +18,7 @@ from src.api.core.infrastructure.handlers import (
 )
 from src.api.core.infrastructure.limiter import limiter
 from src.api.core.infrastructure.logging_config import setup_logging
-from src.api.core.infrastructure.middleware import logging_middleware
+from src.api.core.infrastructure.middleware import register_middleware
 from src.api.core.infrastructure.settings import settings
 from src.api.core.modules import import_models, register_api_routers
 from src.ui.module import register_ui_routers
@@ -41,14 +38,11 @@ def create_app() -> FastAPI:
         license_info=settings.LICENSE_INFO,
     )
 
-    app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+    app.state.limiter = limiter
+    register_middleware(app)
 
     app.mount("/static", StaticFiles(directory="src/ui/static"), name="static")
     app.state.templates = Jinja2Templates(directory="src/ui/templates")
-
-    app.state.limiter = limiter
-    app.add_middleware(SlowAPIMiddleware)
-    app.add_middleware(BaseHTTPMiddleware, dispatch=logging_middleware)
 
     app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
     app.add_exception_handler(AppException, app_exception_handler)

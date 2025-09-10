@@ -55,6 +55,10 @@ class TutorService(TutorServiceProtocol):
             raise TutorNotFoundError(tutor_id=tutor_id)
         return tutor
 
+    def get_tutors_for_user(self, user: User) -> list[Tutor]:
+        """Pass-through method to get all tutors for a given user."""
+        return self.tutor_repo.get_tutors_for_user(user)
+
     @traceable(name="Get or Create Invitation")
     def get_or_create_invitation(
         self, tutor_id: int, requesting_user: User

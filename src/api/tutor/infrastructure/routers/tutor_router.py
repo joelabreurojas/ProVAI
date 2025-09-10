@@ -21,6 +21,16 @@ TAG = {
 router = APIRouter(prefix="/tutors", tags=[TAG["name"]])
 
 
+@router.get("", response_model=list[TutorResponse])
+async def get_my_tutors(
+    current_user: User = Depends(get_current_user),
+    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
+) -> list[TutorResponse]:
+    """Retrieves a list of all Tutors associated with the current user."""
+    tutors = tutor_service.get_tutors_for_user(current_user)
+    return [TutorResponse.model_validate(tutor) for tutor in tutors]
+
+
 @router.post(
     "",
     response_model=TutorResponse,

@@ -1,5 +1,6 @@
 from .insufficient_permissions_error import InsufficientPermissionsError
 from .invalid_credential_error import InvalidCredentialsError
+from .invalid_password_error import InvalidPasswordError
 from .token_expired_error import TokenExpiredError
 from .token_invalid_scope_error import TokenInvalidScopeError
 from .token_missing_data_error import TokenMissingDataError
@@ -10,6 +11,7 @@ from .user_not_found_error import UserNotFoundError
 __all__ = [
     "InsufficientPermissionsError",
     "InvalidCredentialsError",
+    "InvalidPasswordError",
     "TokenExpiredError",
     "TokenInvalidScopeError",
     "TokenMissingDataError",
