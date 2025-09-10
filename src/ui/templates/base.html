@@ -21,15 +21,7 @@
 
     {% block head_scripts %}{% endblock %}
 </head>
-<body class="bg-nord-bg text-nord-text font-sans antialiased"
-      x-data
-      @show-toast.window="
-          let toastContainer = document.getElementById('toast-container');
-          if (toastContainer) {
-              toastContainer.innerHTML += event.detail;
-          }
-      ">
-    <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
+<body class="bg-nord-bg text-nord-text font-sans antialiased">
     <header>
         {% if navbar_type == 'public' %}
             {% include "partials/_public-navbar.html" %}
@@ -39,6 +31,9 @@
     </header>
 
     <main>
+        {% if toast_message %}
+            {% include "partials/_toast.html" %}
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 

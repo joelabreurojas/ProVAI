@@ -24,10 +24,13 @@ async def serve_login_page(
     if user:
         return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
 
-    success_message = request.session.pop("flash_success", None)
+    toast_message = request.session.pop("toast_message", None)
+    toast_category = request.session.pop("toast_category", "success")
+
     context = {
         "request": request,
-        "success_message": success_message,
+        "toast_message": toast_message,
+        "toast_category": toast_category,
         "title": "Login to ProVAI",
     }
     response: HTMLResponse = templates.TemplateResponse("login.html", context)
@@ -81,7 +84,8 @@ async def handle_register_form(
     try:
         auth_service.register_user(name=name, email=email, password=password)
 
-        request.session["flash_success"] = "Registration successful!"
+        request.session["toast_message"] = "Registration successful!"
+        request.session["toast_category"] = "success"
 
         return Response(
             status_code=status.HTTP_200_OK, headers={"HX-Redirect": "/auth/login"}
@@ -98,7 +102,7 @@ async def handle_logout(request: Request) -> Response:
     Clears the user's session cookie and redirects them to the landing page.
     """
     request.session.clear()
-    response = Response(status_code=200, headers={"HX-Refresh": "true"})
+    response = Response(status_code=200, headers={"HX-Redirect": "/"})
 
     return response
 

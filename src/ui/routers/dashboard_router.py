@@ -18,12 +18,17 @@ router = APIRouter(
 
 @router.get("/")
 async def serve_dashboard(
-    request: Request, user: User = Depends(get_current_user_from_cookie)
+    request: Request,
+    user: User = Depends(get_current_user_from_cookie),
+    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
 ) -> HTMLResponse:
+    tutors = tutor_service.get_tutors_for_user(user)
+
     context = {
         "request": request,
         "navbar_type": "app",
         "user": user,
+        "tutors": tutors,
         "title": "Your Learning Hub",
     }
     response: HTMLResponse = templates.TemplateResponse("dashboard.html", context)
@@ -42,7 +47,11 @@ async def serve_tutor_list(
     """
     tutors = tutor_service.get_tutors_for_user(user)
     context = {"request": request, "tutors": tutors, "user": user}
-    return templates.TemplateResponse("partials/_tutor_list.html", context)
+    response: HTMLResponse = templates.TemplateResponse(
+        "partials/_tutor_list.html", context
+    )
+
+    return response
 
 
 @router.post("/tutors", response_class=HTMLResponse)
