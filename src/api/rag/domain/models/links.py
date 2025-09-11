@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey, Integer, Table
 
-from src.api.core.infrastructure.database import Base
+from src.core.infrastructure.database import Base
 
 tutor_document_link = Table(
     "tutor_document_link",

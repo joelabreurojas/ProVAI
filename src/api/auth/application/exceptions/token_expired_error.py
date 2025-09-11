@@ -1,7 +1,7 @@
 from src.api.auth.application.exceptions.token_validation_error import (
     TokenValidationError,
 )
-from src.api.core.domain.errors import ErrorCode
+from src.core.domain.errors import ErrorCode
 
 
 class TokenExpiredError(TokenValidationError):

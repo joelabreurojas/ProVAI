@@ -1,5 +1,5 @@
-from src.api.core.application.exceptions.app_exception import AppException
-from src.api.core.domain.errors import ErrorCode
+from src.core.application.exceptions.app_exception import AppException
+from src.core.domain.errors import ErrorCode
 
 
 class DatabaseError(AppException):

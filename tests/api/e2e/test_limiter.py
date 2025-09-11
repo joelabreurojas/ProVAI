@@ -3,8 +3,8 @@ import time
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
-from src.api.core.infrastructure.limiter import limiter
-from src.api.core.infrastructure.settings import settings
+from src.core.infrastructure.limiter import limiter
+from src.core.infrastructure.settings import settings
 
 
 def test_rate_limiting_on_query_endpoint(app: FastAPI, client: TestClient) -> None:

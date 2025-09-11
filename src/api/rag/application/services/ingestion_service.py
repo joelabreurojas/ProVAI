@@ -8,7 +8,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.api.core.application.exceptions import DatabaseError
 from src.api.rag.application.exceptions import (
     IngestionError,
     PDFParsingError,
@@ -19,6 +18,7 @@ from src.api.rag.application.protocols import (
     IngestionServiceProtocol,
 )
 from src.api.rag.domain.models import Chunk, Document
+from src.core.application.exceptions import DatabaseError
 
 logger = logging.getLogger(__name__)
 
@@ -132,4 +132,5 @@ class IngestionService(IngestionServiceProtocol):
         self, documents: list[LangChainDocument]
     ) -> list[LangChainDocument]:
         """Splits loaded documents into smaller chunks."""
-        return self.text_splitter.split_documents(documents)
+        chunks: list[LangChainDocument] = self.text_splitter.split_documents(documents)
+        return chunks

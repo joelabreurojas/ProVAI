@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING, Any, Optional
 from sqlalchemy import JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.api.core.infrastructure.database import Base
 from src.api.rag.domain.models.links import tutor_document_link
 from src.api.tutor.domain.models.links import tutor_students
+from src.core.infrastructure.database import Base
 
 if TYPE_CHECKING:
     from src.api.auth.domain.models import User

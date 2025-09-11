@@ -30,9 +30,7 @@ from src.api.auth.dependencies import (
 )
 from src.api.auth.domain.models import User
 from src.api.chat.dependencies import get_chat_repository, get_chat_service
-from src.api.core.infrastructure.database import SessionLocal
-from src.api.core.infrastructure.settings import settings
-from src.api.core.modules import import_models
+from src.api.modules import import_models
 from src.api.rag.dependencies import (
     get_chunk_repository,
     get_document_repository,
@@ -48,6 +46,8 @@ from src.api.tutor.dependencies import (
     get_tutor_service,
 )
 from src.api.tutor.domain.schemas import TutorCreate
+from src.core.infrastructure.database import SessionLocal
+from src.core.infrastructure.settings import settings
 
 VALID_PASSWORD = "ValidPassword123!"
 

@@ -7,7 +7,6 @@ from src.api.chat.application.protocols import (
 )
 from src.api.chat.application.services import ChatService
 from src.api.chat.infrastructure.repositories import SQLAlchemyChatRepository
-from src.api.core.infrastructure.database import get_db
 from src.api.rag.application.protocols import (
     IngestionServiceProtocol,
     RAGServiceProtocol,
@@ -18,6 +17,7 @@ from src.api.tutor.application.protocols import (
     TutorServiceProtocol,
 )
 from src.api.tutor.dependencies import get_tutor_repository, get_tutor_service
+from src.core.infrastructure.database import get_db
 
 
 def get_chat_repository(

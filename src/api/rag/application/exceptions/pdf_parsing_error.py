@@ -1,5 +1,5 @@
-from src.api.core.domain.errors import ErrorCode
 from src.api.rag.application.exceptions import IngestionError
+from src.core.domain.errors import ErrorCode
 
 
 class PDFParsingError(IngestionError):

@@ -13,8 +13,8 @@ from typing import Iterator, NamedTuple
 
 from fastapi import APIRouter, FastAPI
 
-from src.api.core.constants import PROJECT_ROOT
-from src.api.core.infrastructure.settings import settings
+from src.core.constants import PROJECT_ROOT
+from src.core.infrastructure.settings import settings
 
 
 def _discover_api_modules() -> list[str]:

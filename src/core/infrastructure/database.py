@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.api.core.infrastructure.settings import settings
+from src.core.infrastructure.settings import settings
 
 # The connect_args is specific to SQLite and is necessary
 # to allow the database connection to be shared across different threads.

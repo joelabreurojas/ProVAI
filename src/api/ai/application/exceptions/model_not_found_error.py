@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from src.api.core.application.exceptions import AppException
-from src.api.core.domain.errors import ErrorCode
+from src.core.application.exceptions import AppException
+from src.core.domain.errors import ErrorCode
 
 
 class ModelNotFoundError(AppException):

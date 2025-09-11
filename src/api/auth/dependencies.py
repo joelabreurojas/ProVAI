@@ -16,7 +16,7 @@ from src.api.auth.application.services import AuthService
 from src.api.auth.domain.models import User
 from src.api.auth.infrastructure.repositories import SQLAlchemyUserRepository
 from src.api.auth.infrastructure.security import PasswordService, TokenService
-from src.api.core.infrastructure.database import get_db
+from src.core.infrastructure.database import get_db
 
 # --- Authentication Scheme ---
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")

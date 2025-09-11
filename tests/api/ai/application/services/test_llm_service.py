@@ -22,7 +22,7 @@ def test_get_llm_loads_model_on_first_call_and_caches(
     )
 
     mocker.patch(
-        "src.api.core.dependencies.get_asset_manager_service",
+        "src.core.dependencies.get_asset_manager_service",
         return_value=mock_asset_manager,
     )
     mocker.patch(

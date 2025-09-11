@@ -9,7 +9,6 @@ from src.api.ai.application.protocols import (
     LLMServiceProtocol,
 )
 from src.api.ai.dependencies import get_embedding_service, get_llm_service
-from src.api.core.infrastructure.database import get_db
 from src.api.rag.application.prompts import get_rag_prompt
 from src.api.rag.application.protocols import (
     ChunkRepositoryProtocol,
@@ -30,6 +29,7 @@ from src.api.rag.infrastructure.repositories import (
 from src.api.rag.infrastructure.vector_store import get_vector_store
 from src.api.tutor.application.protocols import TutorRepositoryProtocol
 from src.api.tutor.dependencies import get_tutor_repository
+from src.core.infrastructure.database import get_db
 
 
 # --- Protocol Implementations ---

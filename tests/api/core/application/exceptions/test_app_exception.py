@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.api.core.application.exceptions import AppException
-from src.api.core.domain.errors import ErrorCode
-from src.api.core.infrastructure.handlers import app_exception_handler
+from src.core.application.exceptions import AppException
+from src.core.domain.errors import ErrorCode
+from src.core.infrastructure.handlers import app_exception_handler
 
 
 class _DummyError(AppException):

@@ -1,7 +1,6 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.api.core.infrastructure.database import get_db
 from src.api.tutor.application.protocols import (
     InvitationRepositoryProtocol,
     TutorRepositoryProtocol,
@@ -12,6 +11,7 @@ from src.api.tutor.infrastructure.repositories import (
     SQLAlchemyInvitationRepository,
     SQLAlchemyTutorRepository,
 )
+from src.core.infrastructure.database import get_db
 
 
 def get_invitation_repository(

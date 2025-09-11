@@ -11,7 +11,7 @@ from src.api.chat.domain.schemas import (
     QueryRequest,
     QueryResponse,
 )
-from src.api.core.infrastructure.limiter import limiter
+from src.core.infrastructure.limiter import limiter
 
 TAG = {
     "name": "Chat",

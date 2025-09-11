@@ -9,8 +9,8 @@ from src.api.ai.application.protocols import (
     LLMServiceProtocol,
 )
 from src.api.ai.dependencies import get_embedding_service, get_llm_service
-from src.api.core.constants import PROJECT_ROOT
-from src.api.core.infrastructure.database import get_db
+from src.core.constants import PROJECT_ROOT
+from src.core.infrastructure.database import get_db
 
 TAG: dict[str, str] = {"name": "Status", "description": "API health and monitoring"}
 

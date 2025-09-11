@@ -1,7 +1,7 @@
 from functools import lru_cache
 
-from src.api.core.application.services import AssetManagerService
-from src.api.core.constants import PROJECT_ROOT
+from src.core.application.services import AssetManagerService
+from src.core.constants import PROJECT_ROOT
 
 
 @lru_cache(maxsize=1)

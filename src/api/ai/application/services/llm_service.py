@@ -9,9 +9,9 @@ from src.api.ai.application.exceptions import (
     ModelNotFoundError,
 )
 from src.api.ai.application.protocols import LLMServiceProtocol
-from src.api.core.application.utils.performance import log_memory_usage
-from src.api.core.constants import PROJECT_ROOT
-from src.api.core.dependencies import get_asset_manager_service
+from src.core.application.utils.performance import log_memory_usage
+from src.core.constants import PROJECT_ROOT
+from src.core.dependencies import get_asset_manager_service
 
 logger = logging.getLogger(__name__)
 

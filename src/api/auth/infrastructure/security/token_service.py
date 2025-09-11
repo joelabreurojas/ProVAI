@@ -9,7 +9,7 @@ from src.api.auth.application.exceptions import (
     TokenValidationError,
 )
 from src.api.auth.application.protocols import TokenServiceProtocol
-from src.api.core.infrastructure.settings import settings
+from src.core.infrastructure.settings import settings
 
 
 class TokenService(TokenServiceProtocol):

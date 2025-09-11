@@ -1,7 +1,7 @@
 from pytest_mock import MockerFixture
 
 from src.api.ai.application.services.embedding_service import EmbeddingService
-from src.api.core.application.services.asset_service import AssetConfig
+from src.core.application.services.asset_service import AssetConfig
 
 
 def test_get_embedding_model_loads_and_caches(mocker: MockerFixture) -> None:

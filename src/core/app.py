@@ -11,17 +11,17 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from slowapi.errors import RateLimitExceeded
 
-from src.api.core.application.exceptions import AppException
-from src.api.core.infrastructure.handlers import (
+from src.api.modules import import_models, register_api_routers
+from src.core.application.exceptions import AppException
+from src.core.infrastructure.handlers import (
     app_exception_handler,
     rate_limit_exception_handler,
 )
-from src.api.core.infrastructure.limiter import limiter
-from src.api.core.infrastructure.logging_config import setup_logging
-from src.api.core.infrastructure.middlewares import register_middleware
-from src.api.core.infrastructure.settings import settings
-from src.api.core.modules import import_models, register_api_routers
-from src.ui.module import register_ui_routers
+from src.core.infrastructure.limiter import limiter
+from src.core.infrastructure.logging_config import setup_logging
+from src.core.infrastructure.middlewares import register_middlewares
+from src.core.infrastructure.settings import settings
+from src.ui.modules import register_ui_routers
 
 
 def create_app() -> FastAPI:
@@ -39,7 +39,7 @@ def create_app() -> FastAPI:
     )
 
     app.state.limiter = limiter
-    register_middleware(app)
+    register_middlewares(app)
 
     app.mount("/static", StaticFiles(directory="src/ui/static"), name="static")
     app.state.templates = Jinja2Templates(directory="src/ui/templates")

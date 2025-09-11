@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING, Any
 from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.api.core.infrastructure.database import Base
 from src.api.tutor.domain.models.links import tutor_students
+from src.core.infrastructure.database import Base
 
 if TYPE_CHECKING:
     from src.api.chat.domain.models import Chat

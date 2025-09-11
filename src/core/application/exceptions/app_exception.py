@@ -1,4 +1,4 @@
-from src.api.core.domain.errors import ErrorCode
+from src.core.domain.errors import ErrorCode
 
 
 class AppException(Exception):

@@ -1,7 +1,7 @@
 from langchain_chroma import Chroma
 from langchain_core.embeddings import Embeddings
 
-from src.api.core.constants import PROJECT_ROOT
+from src.core.constants import PROJECT_ROOT
 
 
 def get_vector_store(embedding_model: Embeddings) -> Chroma:
