@@ -29,7 +29,6 @@ from src.api.auth.dependencies import (
     get_user_repository,
 )
 from src.api.auth.domain.models import User
-from src.api.auth.domain.schemas import UserCreate
 from src.api.chat.dependencies import get_chat_repository, get_chat_service
 from src.api.core.infrastructure.database import SessionLocal
 from src.api.core.infrastructure.settings import settings
@@ -153,9 +152,7 @@ def get_or_create_user(
         return user
 
     print(f"Creating new user: '{email}'...")
-    new_user = auth_service.register_user(
-        UserCreate(name=name, email=email, password=password)
-    )
+    new_user = auth_service.register_user(name=name, email=email, password=password)
     if role:
         new_user.role = role
         db_session.commit()

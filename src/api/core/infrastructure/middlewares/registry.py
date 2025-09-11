@@ -1,13 +1,16 @@
+from typing import Any, Tuple
+
 from fastapi import FastAPI
-from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi.middleware import SlowAPIMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from src.api.core.infrastructure.middleware import logging_middleware
 from src.api.core.infrastructure.settings import settings
-from src.ui.middleware import AuthRedirectMiddleware
+from src.ui.middlewares import AuthRedirectMiddleware
 
-_MIDDLEWARE_STACK = [
+from .logging_middleware import logging_middleware
+
+_MIDDLEWARE_STACK: list[Tuple[Any, dict[str, Any]]] = [
     (SessionMiddleware, {"secret_key": settings.SECRET_KEY}),
     (AuthRedirectMiddleware, {}),
     (SlowAPIMiddleware, {}),
@@ -18,7 +21,6 @@ _MIDDLEWARE_STACK = [
 def register_middleware(app: FastAPI) -> None:
     """
     Registers all application middleware from the centralized stack.
-    This function is the single source of truth for middleware registration.
     """
-    for middleware, options in _MIDDLEWARE_STACK:
+    for middleware, options in reversed(_MIDDLEWARE_STACK):
         app.add_middleware(middleware, **options)

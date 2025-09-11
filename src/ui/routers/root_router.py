@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Request, Response, status
-from starlette.responses import HTMLResponse, RedirectResponse
+from starlette.responses import RedirectResponse
 
 from src.api.auth.domain.models import User
 from src.ui.dependencies import get_optional_current_user_from_cookie
-from src.ui.utils import templates
+from src.ui.utils import render_template
 
 router = APIRouter(tags=["UI - Root"], include_in_schema=False)
 
@@ -25,5 +25,5 @@ async def serve_landing_page(
         "navbar_type": "public",
         "title": "Welcome to ProVAI",
     }
-    response: HTMLResponse = templates.TemplateResponse("landing.html", context)
-    return response
+
+    return render_template("landing.html", context)

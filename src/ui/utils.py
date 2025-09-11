@@ -1,30 +1,39 @@
 import datetime
 from typing import Any
 
+from fastapi import Request
 from fastapi.templating import Jinja2Templates
+from starlette.templating import _TemplateResponse
 
-TEMPLATE_GLOBALS = {
-    "now": datetime.datetime.utcnow,
-}
+templates = Jinja2Templates(directory="src/ui/templates")
 
 
-class TemplateResponseWithGlobals(Jinja2Templates):
+def global_context(request: Request) -> dict[str, Any]:
     """
-    A custom Jinja2Templates class that automatically injects global context
-    into every template response.
+    Returns a dictionary of global variables to be available in all templates.
     """
-
-    def TemplateResponse(
-        self,
-        name: str,
-        context: dict[str, Any],
-        *args,
-        **kwargs,
-    ):
-        full_context = TEMPLATE_GLOBALS.copy()
-        full_context.update(context)
-
-        return super().TemplateResponse(name, full_context, *args, **kwargs)
+    return {
+        "now": datetime.datetime.utcnow,
+        # We can add any other global variables here in the future
+        # e.g., "current_user": get_optional_current_user_from_cookie(request)
+    }
 
 
-templates = TemplateResponseWithGlobals(directory="src/ui/templates")
+def render_template(
+    name: str,
+    context: dict[str, Any],
+    status_code: int = 200,
+    headers: dict[str, str] | None = None,
+) -> _TemplateResponse:
+    """
+    A helper function to render a Jinja2 template with our global context.
+    This is the definitive and ONLY way templates should be rendered.
+    """
+    request = context["request"]
+
+    full_context = global_context(request)
+    full_context.update(context)
+
+    return templates.TemplateResponse(
+        name, full_context, status_code=status_code, headers=headers
+    )

@@ -43,8 +43,8 @@ class AuthService(AuthServiceProtocol):
     def register_user(self, name: str, email: str, password: str) -> User:
         try:
             user_data = UserCreate(name=name, email=email, password=password)
-        except ValidationError:
-            raise InvalidPasswordError()
+        except ValidationError as e:
+            raise InvalidPasswordError() from e
 
         db_user = self.user_repo.get_by_email(user_data.email)
         if db_user:

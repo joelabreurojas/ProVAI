@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
+from starlette.exceptions import HTTPException
 
+from src.api.auth.application.exceptions import (
+    InvalidPasswordError,
+    UserAlreadyExistsError,
+)
 from src.api.auth.application.protocols import AuthServiceProtocol
 from src.api.auth.dependencies import get_auth_service
 from src.api.auth.domain.schemas import Token, UserCreate, UserResponse
@@ -27,8 +32,13 @@ async def register_user(
     - Passwords are automatically hashed before storage.
     """
 
-    new_user = auth_service.register_user(user_data)
-    return UserResponse.model_validate(new_user)
+    try:
+        new_user = auth_service.register_user(
+            name=user_data.name, email=user_data.email, password=user_data.password
+        )
+        return UserResponse.model_validate(new_user)
+    except (UserAlreadyExistsError, InvalidPasswordError) as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message) from e
 
 
 @router.post(

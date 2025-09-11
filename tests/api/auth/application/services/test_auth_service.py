@@ -17,7 +17,6 @@ from src.api.auth.application.protocols import (
 )
 from src.api.auth.application.services import AuthService
 from src.api.auth.domain.models import User
-from src.api.auth.domain.schemas import UserCreate
 
 
 def create_mocked_auth_service(
@@ -46,21 +45,20 @@ def test_register_user_successfully(mocker: MockerFixture) -> None:
     service, mocks = create_mocked_auth_service(mocker)
     mocks["user_repo"].get_by_email.return_value = None
     mocks["password_svc"].get_password_hash.return_value = "hashed_password"
-    user_data = UserCreate(
+    service.register_user(
         name="Test User", email="test@example.com", password="ValidPassword123!"
     )
-    service.register_user(user_data)
     mocks["user_repo"].add.assert_called_once()
 
 
 def test_register_user_fails_if_email_exists(mocker: MockerFixture) -> None:
     service, mocks = create_mocked_auth_service(mocker)
     mocks["user_repo"].get_by_email.return_value = mocker.MagicMock()
-    user_data = UserCreate(
-        name="Test User", email="test@example.com", password="ValidPassword123!"
-    )
+
     with pytest.raises(UserAlreadyExistsError):
-        service.register_user(user_data)
+        service.register_user(
+            name="Test User", email="test@example.com", password="ValidPassword123!"
+        )
 
 
 def test_authenticate_user_fails_with_bad_password(mocker: MockerFixture) -> None:

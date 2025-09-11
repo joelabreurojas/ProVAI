@@ -18,7 +18,7 @@ from src.api.core.infrastructure.handlers import (
 )
 from src.api.core.infrastructure.limiter import limiter
 from src.api.core.infrastructure.logging_config import setup_logging
-from src.api.core.infrastructure.middleware import register_middleware
+from src.api.core.infrastructure.middlewares import register_middleware
 from src.api.core.infrastructure.settings import settings
 from src.api.core.modules import import_models, register_api_routers
 from src.ui.module import register_ui_routers

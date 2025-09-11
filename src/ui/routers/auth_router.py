@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 
 from src.api.auth.application.exceptions import (
     InvalidCredentialsError,
@@ -10,14 +10,14 @@ from src.api.auth.application.protocols import AuthServiceProtocol
 from src.api.auth.dependencies import get_auth_service
 from src.api.auth.domain.models import User
 from src.ui.dependencies import get_optional_current_user_from_cookie
-from src.ui.utils import templates
+from src.ui.utils import render_template
 
 router = APIRouter(
     prefix="/auth", tags=["UI - Authentication"], include_in_schema=False
 )
 
 
-@router.get("/login", response_class=HTMLResponse)
+@router.get("/login", response_class=Response)
 async def serve_login_page(
     request: Request, user: User | None = Depends(get_optional_current_user_from_cookie)
 ) -> Response:
@@ -33,11 +33,11 @@ async def serve_login_page(
         "toast_category": toast_category,
         "title": "Login to ProVAI",
     }
-    response: HTMLResponse = templates.TemplateResponse("login.html", context)
-    return response
+
+    return render_template("login.html", context)
 
 
-@router.get("/register", response_class=HTMLResponse)
+@router.get("/register", response_class=Response)
 async def serve_register_page(
     request: Request, user: User | None = Depends(get_optional_current_user_from_cookie)
 ) -> Response:
@@ -45,8 +45,7 @@ async def serve_register_page(
         return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
 
     context = {"request": request, "title": "Create Your Account"}
-    response: HTMLResponse = templates.TemplateResponse("register.html", context)
-    return response
+    return render_template("register.html", context)
 
 
 @router.post("/login")
@@ -66,11 +65,7 @@ async def handle_login_form(
 
     except InvalidCredentialsError:
         context = {"request": request, "error_message": "Invalid email or password."}
-
-        response: HTMLResponse = templates.TemplateResponse(
-            "partials/_login_form.html", context
-        )
-        return response
+        return render_template("partials/_login_form.html", context)
 
 
 @router.post("/register")
@@ -93,7 +88,7 @@ async def handle_register_form(
 
     except (UserAlreadyExistsError, InvalidPasswordError) as e:
         context = {"request": request, "error_message": e.message}
-        return templates.TemplateResponse("partials/_register_form.html", context)
+        return render_template("partials/_register_form.html", context)
 
 
 @router.post("/logout")
@@ -102,12 +97,10 @@ async def handle_logout(request: Request) -> Response:
     Clears the user's session cookie and redirects them to the landing page.
     """
     request.session.clear()
-    response = Response(status_code=200, headers={"HX-Redirect": "/"})
-
-    return response
+    return Response(status_code=200, headers={"HX-Redirect": "/"})
 
 
-@router.get("/forgot-password", response_class=HTMLResponse)
+@router.get("/forgot-password", response_class=Response)
 async def serve_forgot_password_page(
     request: Request, user: User | None = Depends(get_optional_current_user_from_cookie)
 ) -> Response:
@@ -115,5 +108,4 @@ async def serve_forgot_password_page(
         return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
 
     context = {"request": request, "title": "Reset Your Password"}
-    response: HTMLResponse = templates.TemplateResponse("forgot-password.html", context)
-    return response
+    return render_template("forgot-password.html", context)
