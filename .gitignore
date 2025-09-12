@@ -19,7 +19,7 @@ ENV/
 build/
 dist/
 *.egg-info/
-/src/ui/static/css/output.css
+src/ui/shared/infrastructure/static/css/output.css
 node_modules/
 
 # Testing & Tool Caches
