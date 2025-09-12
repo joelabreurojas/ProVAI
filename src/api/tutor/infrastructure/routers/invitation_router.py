@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, status
 
-from src.api.auth.dependencies import get_current_user
 from src.api.auth.domain.models import User
+from src.api.auth.infrastructure.dependencies import get_current_user
 from src.api.tutor.application.protocols import TutorServiceProtocol
-from src.api.tutor.dependencies import get_tutor_service
 from src.api.tutor.domain.schemas import (
     TutorInvitationCreate,
     TutorInvitationResponse,
 )
+from src.api.tutor.infrastructure.dependencies import get_tutor_service
 
 TAG = {
     "name": "Invitations",

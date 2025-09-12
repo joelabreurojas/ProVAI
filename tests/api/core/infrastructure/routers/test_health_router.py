@@ -2,7 +2,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 
-from src.api.ai.dependencies import get_embedding_service, get_llm_service
+from src.api.ai.infrastructure.dependencies import (
+    get_embedding_service,
+    get_llm_service,
+)
 
 
 def test_lightweight_health_check_succeeds(

@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, Request, status
 
-from src.api.auth.dependencies import get_current_user
 from src.api.auth.domain.models import User
+from src.api.auth.infrastructure.dependencies import get_current_user
 from src.api.chat.application.protocols import ChatServiceProtocol
-from src.api.chat.dependencies import get_chat_service
 from src.api.chat.domain.schemas import (
     ChatCreate,
     ChatResponse,
@@ -11,6 +10,7 @@ from src.api.chat.domain.schemas import (
     QueryRequest,
     QueryResponse,
 )
+from src.api.chat.infrastructure.dependencies import get_chat_service
 from src.core.infrastructure.limiter import limiter
 
 TAG = {

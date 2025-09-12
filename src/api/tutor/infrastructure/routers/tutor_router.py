@@ -2,16 +2,16 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile, status
 
-from src.api.auth.dependencies import get_current_user
 from src.api.auth.domain.models import User
+from src.api.auth.infrastructure.dependencies import get_current_user
 from src.api.rag.application.protocols import IngestionServiceProtocol
-from src.api.rag.dependencies import get_ingestion_service
+from src.api.rag.infrastructure.dependencies import get_ingestion_service
 from src.api.tutor.application.protocols import TutorServiceProtocol
-from src.api.tutor.dependencies import get_tutor_service
 from src.api.tutor.domain.schemas import (
     TutorCreate,
     TutorResponse,
 )
+from src.api.tutor.infrastructure.dependencies import get_tutor_service
 from src.core.infrastructure.limiter import limiter
 
 TAG = {

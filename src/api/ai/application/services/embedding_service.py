@@ -8,7 +8,7 @@ from langsmith import traceable
 from src.api.ai.application.exceptions import ModelConfigurationError, ModelLoadError
 from src.api.ai.application.protocols import EmbeddingServiceProtocol
 from src.core.application.utils.performance import log_memory_usage
-from src.core.dependencies import get_asset_manager_service
+from src.core.infrastructure.dependencies import get_asset_manager_service
 
 logger = logging.getLogger(__name__)
 

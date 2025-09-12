@@ -69,7 +69,7 @@ testpaths = ["tests"]
 [tool.coverage.run]
 source = ["src"]
 omit = [
-  "src/core/main.py",
+  "src/core/infrastructure/main.py",
   "src/core/domain/errors.py",
   "src/core/domain/config.py",
   "src/core/infrastructure/settings.py",

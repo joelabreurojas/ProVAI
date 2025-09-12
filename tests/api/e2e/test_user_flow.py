@@ -4,9 +4,9 @@ from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.api.ai.dependencies import get_llm_service
+from src.api.ai.infrastructure.dependencies import get_llm_service
 from src.api.auth.domain.models import User
-from src.api.rag.dependencies import get_rag_vector_store
+from src.api.rag.infrastructure.dependencies import get_rag_vector_store
 
 VALID_TEACHER_PASSWORD = "TeacherPassword123!"
 VALID_STUDENT_PASSWORD = "StudentPassword456!"

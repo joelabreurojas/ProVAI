@@ -1,28 +1,37 @@
-import importlib
-import pkgutil
-from typing import Iterator
+from pathlib import Path
 
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
-
-def _discover_ui_routers() -> Iterator[APIRouter]:
-    """
-    A generator that discovers and yields all APIRouter instances from
-    the `src/ui/routers/` directory.
-    """
-    routers_path = "src.ui.routers"
-    routers_module = importlib.import_module(routers_path)
-
-    for _, module_name, _ in pkgutil.iter_modules(routers_module.__path__):
-        if module_name.endswith("_router"):
-            module = importlib.import_module(f"{routers_path}.{module_name}")
-            if hasattr(module, "router") and isinstance(module.router, APIRouter):
-                yield module.router
+from src.core.infrastructure.utils import discover_modules, discover_routers
 
 
 def register_ui_routers(app: FastAPI) -> None:
-    """
-    Discovers all UI routers and registers them with the FastAPI application.
-    """
-    for router in _discover_ui_routers():
-        app.include_router(router)
+    """Discovers and registers all UI routers with the FastAPI application."""
+    for discovered in discover_routers(consumer_area="ui"):
+        app.include_router(discovered.router)
+
+
+def mount_static_files(app: FastAPI) -> None:
+    app.mount(
+        "/static",
+        StaticFiles(directory="src/ui/shared/infrastructure/static"),
+        name="static",
+    )
+
+
+def discover_templates() -> list[str]:
+    templates = []
+
+    for module in discover_modules("ui"):
+        template_path = Path(f"src/ui/{module}/infrastructure/templates")
+
+        if template_path.exists():
+            templates.append(str(template_path))
+
+    return templates
+
+
+def register_templates(app: FastAPI) -> None:
+    app.state.templates = Jinja2Templates(directory=discover_templates())

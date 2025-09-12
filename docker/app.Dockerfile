@@ -16,8 +16,8 @@ FROM node:24-alpine AS frontend_builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY src/ui/templates/ ./src/ui/templates/
-COPY src/ui/static/css/input.css ./src/ui/static/css/input.css
+COPY src/ui/*/infrastructure/templates/ ./src/ui/*/infrastructure/templates/
+COPY src/ui/shared/infrastructure/static/css/input.css ./src/ui/shared/infrastructure/static/css/input.css
 
 RUN npm install
 RUN npm run build:css
@@ -56,7 +56,7 @@ COPY ./src ./src
 COPY ./alembic ./alembic
 COPY ./alembic.ini .
 COPY ./scripts ./scripts
-COPY --from=frontend_builder /app/src/ui/static/css/output.css ./src/ui/static/css/output.css
+COPY --from=frontend_builder /app/src/ui/shared/infrastructure/static/css/output.css ./src/ui/shared/infrastructure/static/css/output.css
 
 RUN mkdir -p databases models sample_data vector_store scripts
 
@@ -74,7 +74,7 @@ COPY --from=development_dependencies /app/.venv .venv
 
 COPY ./tests tests
 
-CMD ["uvicorn", "src.core.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop", "--reload"]
+CMD ["uvicorn", "src.core.infrastructure.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop", "--reload"]
 
 
 # Production stage
@@ -82,4 +82,4 @@ FROM base AS production
 
 COPY --from=production_dependencies /app/.venv .venv
 
-CMD ["uvicorn", "src.core.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop"]
+CMD ["uvicorn", "src.core.infrastructure.main:app", "--host", "0.0.0.0", "--port", "8000", "--loop", "uvloop"]

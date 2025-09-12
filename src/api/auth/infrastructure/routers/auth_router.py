@@ -7,8 +7,8 @@ from src.api.auth.application.exceptions import (
     UserAlreadyExistsError,
 )
 from src.api.auth.application.protocols import AuthServiceProtocol
-from src.api.auth.dependencies import get_auth_service
 from src.api.auth.domain.schemas import Token, UserCreate, UserResponse
+from src.api.auth.infrastructure.dependencies import get_auth_service
 
 TAG = {"name": "Auth", "description": "User authentication and registration"}
 
