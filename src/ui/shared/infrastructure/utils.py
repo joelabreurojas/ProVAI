@@ -15,7 +15,7 @@ def global_context(request: Request) -> dict[str, Any]:
     Returns a dictionary of global variables to be available in all templates.
     """
     return {
-        "now": datetime.datetime.utcnow,
+        "now": datetime.datetime.now(datetime.UTC),
         # We can add any other global variables here in the future
         # e.g., "current_user": get_optional_current_user_from_cookie(request)
     }
@@ -37,5 +37,5 @@ def render_template(
     full_context.update(context)
 
     return templates.TemplateResponse(
-        name, full_context, status_code=status_code, headers=headers
+        request, name, full_context, status_code=status_code, headers=headers
     )

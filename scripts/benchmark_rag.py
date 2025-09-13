@@ -34,7 +34,6 @@ from src.api.chat.infrastructure.dependencies import (
     get_chat_repository,
     get_chat_service,
 )
-from src.api.modules import import_models
 from src.api.rag.infrastructure.dependencies import (
     get_chunk_repository,
     get_document_repository,
@@ -54,6 +53,7 @@ from src.core.domain.models import User
 from src.core.domain.schemas import TutorCreate
 from src.core.infrastructure.database import SessionLocal
 from src.core.infrastructure.settings import settings
+from src.core.infrastructure.utils import import_core_models
 
 VALID_PASSWORD = "ValidPassword123!"
 
@@ -171,7 +171,7 @@ def main(doc_path: Path, query: str) -> None:
 
     load_dotenv()
     logging.basicConfig(level=logging.INFO)
-    import_models()
+    import_core_models()
 
     if settings.ENV_STATE != "dev":
         print(

@@ -10,9 +10,8 @@ from src.core.infrastructure.utils import discover_modules, discover_routers
 def register_ui_routers(app: FastAPI) -> None:
     """Discovers and registers all UI routers with the FastAPI application."""
     for module_name in discover_modules(consumer_area="ui"):
-        for discovered in discover_routers(
-            routers_module_path=f"src.ui.{module_name}.infrastructure.routers"
-        ):
+        router_path = f"src.ui.{module_name}.infrastructure.routers"
+        for discovered in discover_routers(routers_module_path=router_path):
             app.include_router(discovered.router)
 
 

@@ -27,4 +27,4 @@ def discover_routers(routers_module_path: str) -> Iterator[DiscoveredRouter]:
                 yield DiscoveredRouter(router=module.router, tag_metadata=tag)
 
     except (ImportError, AttributeError) as e:
-        print(f"Skipping router: {e}")
+        print(f"Skipping router discovery for path '{routers_module_path}': {e}")

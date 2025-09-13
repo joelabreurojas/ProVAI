@@ -15,7 +15,7 @@ def test_lightweight_health_check_succeeds(
     Tests the lightweight /health endpoint. This test does NOT mock the AI
     services, because the endpoint is specifically designed NOT to load them.
     """
-    response = client.get("/health")
+    response = client.get("/api/v1/health")
     assert response.status_code == 200
 
     response_json = response.json()
@@ -37,7 +37,7 @@ def test_comprehensive_status_check_succeeds_when_all_ok(
     mock_embedding_service = mocker.MagicMock()
     app.dependency_overrides[get_embedding_service] = lambda: mock_embedding_service
 
-    response = client.get("/status")
+    response = client.get("/api/v1/status")
     assert response.status_code == 200
 
     response_json = response.json()
@@ -64,7 +64,7 @@ def test_comprehensive_status_check_reports_error_when_llm_fails(
     mock_embedding_service = mocker.MagicMock()
     app.dependency_overrides[get_embedding_service] = lambda: mock_embedding_service
 
-    response = client.get("/status")
+    response = client.get("/api/v1/status")
     assert response.status_code == 200
 
     response_json = response.json()

@@ -2,7 +2,7 @@ import logging
 
 from langsmith import traceable
 
-from src.core.application.exceptions import ChatNotFoundError
+from src.core.application.exceptions import ChatNotFoundError, ChatOwnershipError
 from src.core.application.protocols import (
     ChatRepositoryProtocol,
     ChatServiceProtocol,
@@ -31,6 +31,16 @@ class ChatService(ChatServiceProtocol):
         self.ingestion_service = ingestion_service
         self.tutor_repo = tutor_repo
 
+    def _authorize_chat_owner(self, chat: Chat, user: User) -> None:
+        """
+        A private helper to verify that the user is the owner of the chat.
+        This is a more specific check than just being enrolled in the tutor.
+        """
+        self.tutor_service.verify_user_can_access_tutor(chat.tutor_id, user)
+
+        if chat.user_id != user.id:
+            raise ChatOwnershipError()
+
     @traceable(name="Create Chat")
     def create_new_chat(self, tutor_id: int, user: User, title: str) -> Chat:
         self.tutor_service.verify_user_can_access_tutor(tutor_id, user)
@@ -38,12 +48,10 @@ class ChatService(ChatServiceProtocol):
             tutor_id=tutor_id, user_id=user.id, title=title
         )
 
-    @traceable(name="Add Document")
     def get_chat(self, chat_id: int, user: User) -> Chat:
         chat = self.chat_repo.get_chat_by_id(chat_id=chat_id)
         if not chat:
             raise ChatNotFoundError(chat_id=chat_id)
-        self.tutor_service.verify_user_can_access_tutor(chat.tutor_id, user)
         return chat
 
     def get_chats_for_user_and_tutor(self, tutor_id: int, user: User) -> list[Chat]:
@@ -59,9 +67,11 @@ class ChatService(ChatServiceProtocol):
         return tutor_specific_chats
 
     def get_history(self, chat_id: int, user: User) -> list[Message]:
-        chat = self.get_chat(chat_id, user)  # Authorization happens here
+        chat = self.get_chat(chat_id, user)
+        self._authorize_chat_owner(chat, user)
         return sorted(chat.messages, key=lambda msg: msg.timestamp)
 
+    @traceable(name="Add Document")
     def add_document_to_chat(
         self, chat_id: int, file_bytes: bytes, file_name: str, current_user: User
     ) -> Document:
@@ -77,6 +87,7 @@ class ChatService(ChatServiceProtocol):
     def post_message(self, chat_id: int, query: str, current_user: User) -> str:
         """Orchestrates the full query -> RAG -> response -> log workflow."""
         chat = self.get_chat(chat_id, current_user)
+        self._authorize_chat_owner(chat, current_user)
         self.log_interaction(chat_id, user_query=query, role="user")
 
         valid_chunk_hashes = self.tutor_repo.get_chunk_hashes_for_tutor(chat.tutor_id)

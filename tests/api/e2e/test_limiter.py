@@ -20,11 +20,11 @@ def test_rate_limiting_on_query_endpoint(app: FastAPI, client: TestClient) -> No
 
     # Make 5 successful requests
     for _ in range(5):
-        response = client.get("/test-rate-limit")
+        response = client.get(f"{settings.API_ROOT_PATH}/test-rate-limit")
         assert response.status_code == 200
 
     # The 6th request should fail
-    response = client.get("/test-rate-limit")
+    response = client.get(f"{settings.API_ROOT_PATH}/test-rate-limit")
     assert response.status_code == 429
     assert response.json()["error_code"] == "RATE_LIMIT_EXCEEDED"
 
@@ -32,5 +32,5 @@ def test_rate_limiting_on_query_endpoint(app: FastAPI, client: TestClient) -> No
     time.sleep(1)
 
     # The next request should now succeed
-    response = client.get("/test-rate-limit")
+    response = client.get(f"{settings.API_ROOT_PATH}/test-rate-limit")
     assert response.status_code == 200

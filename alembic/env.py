@@ -3,9 +3,9 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-from src.api.modules import import_models
 from src.core.infrastructure.database import Base
 from src.core.infrastructure.settings import settings
+from src.core.infrastructure.utils import import_core_models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,7 +22,7 @@ config.set_main_option("sqlalchemy.url", settings.DB_URL)
 
 # This ensures that whenever you add a new feature to the `FEATURE_MODULES`
 # list, its tables will be automatically picked up by Alembic.
-import_models()
+import_core_models()
 
 # add your model's MetaData object here
 target_metadata = Base.metadata

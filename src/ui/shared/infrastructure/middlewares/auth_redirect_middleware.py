@@ -4,20 +4,23 @@ from starlette.responses import RedirectResponse
 
 
 class AuthRedirectMiddleware(BaseHTTPMiddleware):
-    """
-    A custom middleware to handle unauthorized access for UI routes.
-    If a 401 Unauthorized response is generated for a non-API route,
-    this middleware intercepts it and transforms it into a redirect
-    to the login page.
-    """
-
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        # First, get the response from the rest of the application
         response = await call_next(request)
-        is_ui_route = not request.url.path.startswith("/api")
 
-        if response.status_code == status.HTTP_401_UNAUTHORIZED and is_ui_route:
-            return RedirectResponse(url="/auth/login")
+        # Now, inspect the response.
+        is_ui_route = not request.url.path.startswith("/api")
+        is_unauthorized = response.status_code == status.HTTP_401_UNAUTHORIZED
+        is_auth_route = request.url.path.startswith("/auth")
+
+        # If it's a 401 on a UI page that isn't already an auth page, redirect.
+        if is_ui_route and is_unauthorized and not is_auth_route:
+            # We will use 303 See Other, which is correct for this action.
+            return RedirectResponse(
+                url=request.url_for("serve_login_page"),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
 
         return response

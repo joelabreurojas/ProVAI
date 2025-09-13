@@ -104,7 +104,5 @@ def client(app: FastAPI) -> Generator[TestClient, None, None]:
     Provides a TestClient that is configured with the correct API base URL.
     This is the definitive client that all E2E tests should use.
     """
-    base_url = f"http://testserver{settings.API_ROOT_PATH}"
-
-    with TestClient(app, base_url=base_url) as test_client:
+    with TestClient(app) as test_client:
         yield test_client

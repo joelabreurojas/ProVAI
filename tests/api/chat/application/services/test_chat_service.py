@@ -60,20 +60,22 @@ def test_create_new_chat_successfully(mocker: MockerFixture) -> None:
     )
 
 
-def test_get_chat_returns_chat_after_authorization(mocker: MockerFixture) -> None:
-    """Tests that the service returns a chat object after authorizing the user."""
+def test_get_chat_retrieves_chat_by_id(mocker: MockerFixture) -> None:
+    """
+    Tests that the get_chat method correctly calls the repository
+    and returns the found chat object. Authorization is handled by its callers.
+    """
     service, mocks = create_mocked_chat_service(mocker)
     mock_user = mocker.MagicMock(spec=User)
-    mock_chat = mocker.MagicMock(spec=Chat, tutor_id=1)
+    mock_chat = mocker.MagicMock(spec=Chat)
     mocks["chat_repo"].get_chat_by_id.return_value = mock_chat
     chat_id = 5
 
     result = service.get_chat(chat_id=chat_id, user=mock_user)
 
     mocks["chat_repo"].get_chat_by_id.assert_called_once_with(chat_id=chat_id)
-    mocks["tutor_service"].verify_user_can_access_tutor.assert_called_once_with(
-        mock_chat.tutor_id, mock_user
-    )
+    mocks["tutor_service"].verify_user_can_access_tutor.assert_not_called()
+
     assert result is mock_chat
 
 
@@ -170,8 +172,8 @@ def test_post_message_orchestration(mocker: MockerFixture) -> None:
     Tests the full orchestration logic for posting a message and getting a RAG response.
     """
     service, mocks = create_mocked_chat_service(mocker)
-    mock_user = mocker.MagicMock(spec=User)
-    mock_chat = mocker.MagicMock(spec=Chat, tutor_id=1)
+    mock_user = mocker.MagicMock(spec=User, id=101)
+    mock_chat = mocker.MagicMock(spec=Chat, tutor_id=1, user_id=101)
     query = "What is RAG?"
     expected_answer = "RAG is..."
     valid_hashes = ["hash1", "hash2"]
@@ -208,13 +210,15 @@ def test_get_history_authorizes_and_returns_sorted(mocker: MockerFixture) -> Non
     Tests that get_history authorizes the user before returning sorted messages.
     """
     service, mocks = create_mocked_chat_service(mocker)
-    mock_user = mocker.MagicMock(spec=User)
+    mock_user = mocker.MagicMock(spec=User, id=101)
 
     msg1 = mocker.MagicMock(spec=Message, timestamp="2025-01-01T12:00:00")
     msg3 = mocker.MagicMock(spec=Message, timestamp="2025-01-01T12:02:00")
     msg2 = mocker.MagicMock(spec=Message, timestamp="2025-01-01T12:01:00")
 
-    mock_chat = mocker.MagicMock(spec=Chat, tutor_id=1, messages=[msg1, msg3, msg2])
+    mock_chat = mocker.MagicMock(
+        spec=Chat, tutor_id=1, messages=[msg1, msg3, msg2], user_id=101
+    )
     mocks["chat_repo"].get_chat_by_id.return_value = mock_chat
 
     result = service.get_history(chat_id=5, user=mock_user)

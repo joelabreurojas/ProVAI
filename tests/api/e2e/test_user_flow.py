@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session as SQLAlchemySession
 from src.api.ai.infrastructure.dependencies import get_llm_service
 from src.api.rag.infrastructure.dependencies import get_rag_vector_store
 from src.core.domain.models import User
+from src.core.infrastructure.settings import settings
 
 VALID_TEACHER_PASSWORD = "TeacherPassword123!"
 VALID_STUDENT_PASSWORD = "StudentPassword456!"
@@ -34,7 +35,7 @@ def test_full_user_flow(
 
     # Register users & manually promote Teacher
     client.post(
-        "/auth/register",
+        f"{settings.API_ROOT_PATH}/auth/register",
         json={
             "name": "E2E Teacher",
             "email": "teacher@e2e.com",
@@ -48,7 +49,7 @@ def test_full_user_flow(
     db_session.refresh(teacher_db)
 
     client.post(
-        "/auth/register",
+        f"{settings.API_ROOT_PATH}/auth/register",
         json={
             "name": "E2E Student",
             "email": "student@e2e.com",
@@ -58,14 +59,14 @@ def test_full_user_flow(
 
     # Both users log in
     teacher_login_res = client.post(
-        "/auth/token",
+        f"{settings.API_ROOT_PATH}/auth/token",
         data={"username": "teacher@e2e.com", "password": VALID_TEACHER_PASSWORD},
     )
     teacher_token = teacher_login_res.json()["access_token"]
     teacher_headers = {"Authorization": f"Bearer {teacher_token}"}
 
     student_login_res = client.post(
-        "/auth/token",
+        f"{settings.API_ROOT_PATH}/auth/token",
         data={"username": "student@e2e.com", "password": VALID_STUDENT_PASSWORD},
     )
     student_token = student_login_res.json()["access_token"]
@@ -73,7 +74,7 @@ def test_full_user_flow(
 
     # Teacher creates a Tutor
     tutor_res = client.post(
-        "/tutors",
+        f"{settings.API_ROOT_PATH}/tutors",
         json={"course_name": "E2E Test Course"},
         headers=teacher_headers,
     )
@@ -91,7 +92,7 @@ def test_full_user_flow(
     doc.close()
 
     upload_res = client.post(
-        f"/tutors/{tutor_id}/documents",
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/documents",
         files={"file": ("test.pdf", pdf_bytes, "application/pdf")},
         headers=teacher_headers,
     )
@@ -99,7 +100,7 @@ def test_full_user_flow(
 
     # Teacher invites Student and Student enrolls
     invitation_res = client.post(
-        "/invitations",
+        f"{settings.API_ROOT_PATH}/invitations",
         json={"tutor_id": tutor_id, "student_emails": ["student@e2e.com"]},
         headers=teacher_headers,
     )
@@ -107,7 +108,7 @@ def test_full_user_flow(
     invitation_token = invitation_res.json()["invitation_token"]
 
     enrollment_res = client.post(
-        "/enrollments",
+        f"{settings.API_ROOT_PATH}/enrollments",
         json={"invitation_token": invitation_token},
         headers=student_headers,
     )
@@ -115,7 +116,7 @@ def test_full_user_flow(
 
     # Student creates a chat with the Tutor
     student_chat_res = client.post(
-        "/chats",
+        f"{settings.API_ROOT_PATH}/chats",
         json={"tutor_id": tutor_id, "title": "My Private Study Chat"},
         headers=student_headers,
     )
@@ -131,7 +132,7 @@ def test_full_user_flow(
     app.dependency_overrides[get_llm_service] = lambda: mock_llm_service
 
     query_res = client.post(
-        f"/chats/{student_chat_id}/query",
+        f"{settings.API_ROOT_PATH}/chats/{student_chat_id}/query",
         json={"query": "What is this document about?"},
         headers=student_headers,
     )

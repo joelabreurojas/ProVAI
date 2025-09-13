@@ -1,5 +1,3 @@
-import importlib
-
 from fastapi import APIRouter, FastAPI
 
 from src.core.infrastructure.settings import settings
@@ -16,25 +14,15 @@ def register_api_routers(app: FastAPI) -> None:
     api_router = APIRouter(prefix=settings.API_ROOT_PATH)
 
     for module_name in discover_modules(consumer_area="api"):
-        for discovered in discover_routers(
-            routers_module_path=f"src.api.{module_name}.infrastructure.routers"
-        ):
+        router_path = f"src.api.{module_name}.infrastructure.routers"
+        for discovered in discover_routers(routers_module_path=router_path):
             api_router.include_router(discovered.router)
             if discovered.tag_metadata:
-                app.openapi_tags = (app.openapi_tags or []) + [discovered.tag_metadata]
+                if app.openapi_tags is None:
+                    app.openapi_tags = []
+                app.openapi_tags.append(discovered.tag_metadata)
 
     app.include_router(api_router)
-
-
-def import_models() -> None:
-    """
-    Dynamically imports all `models` submodules from every API feature module.
-    """
-    for module in discover_modules("api"):
-        try:
-            importlib.import_module(f"src.api.{module}.domain.models")
-        except ImportError:
-            continue  # It's okay if a module doesn't have models
 
 
 def register_api_dependencies(app: FastAPI) -> None:

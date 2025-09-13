@@ -8,6 +8,8 @@ from src.core.application.exceptions import (
     InsufficientPermissionsError,
     InvitationEmailMismatchError,
     InvitationNotFoundError,
+    SelfEnrollmentError,
+    UserAlreadyEnrolledError,
 )
 from src.core.application.protocols import (
     InvitationRepositoryProtocol,
@@ -150,3 +152,65 @@ def test_link_document_to_tutor_calls_repository(mocker: MockerFixture) -> None:
     mocks["tutor_repo"].link_document_to_tutor.assert_called_once_with(
         mock_tutor, mock_document
     )
+
+
+def test_enroll_student_fails_if_already_enrolled(mocker: MockerFixture) -> None:
+    """
+    Tests that UserAlreadyEnrolledError is raised if a student attempts to
+    enroll in a Tutor they are already a member of.
+    """
+    service, mocks = create_mocked_tutor_service(mocker)
+
+    # Simulate a student who is already in the tutor's student list
+    mock_student = mocker.MagicMock(spec=User, id=202, email="student@test.com")
+    mock_tutor = mocker.MagicMock(
+        spec=Tutor, id=1, teacher_id=101, students=[mock_student]
+    )
+
+    # Simulate a valid, pending invitation for that student
+    mock_member = mocker.MagicMock(student_email="student@test.com", status="pending")
+    mock_invitation = mocker.MagicMock(
+        spec=Invitation, id=99, members=[mock_member], tutor_id=1
+    )
+
+    mocks["invitation_repo"].get_by_token.return_value = mock_invitation
+    mocks["tutor_repo"].get_tutor_by_id.return_value = mock_tutor
+
+    with pytest.raises(UserAlreadyEnrolledError):
+        service.enroll_student_from_token("valid_token_for_enrolled_user", mock_student)
+
+    # Also assert that the database was NOT written to again
+    mocks["tutor_repo"].add_student_to_tutor.assert_not_called()
+    mocks["invitation_repo"].update_member_status.assert_not_called()
+
+
+def test_enroll_student_fails_if_user_is_the_teacher(mocker: MockerFixture) -> None:
+    """
+    Tests that SelfEnrollmentError is raised if a user who is the teacher of a
+    Tutor attempts to enroll in it as a student.
+    """
+    service, mocks = create_mocked_tutor_service(mocker)
+
+    # Simulate a user who is the teacher of the course
+    mock_teacher_as_student = mocker.MagicMock(
+        spec=User, id=101, email="teacher@test.com"
+    )
+    mock_tutor = mocker.MagicMock(spec=Tutor, id=1, teacher_id=101, students=[])
+
+    # Simulate a valid invitation that was mistakenly sent to the teacher's email
+    mock_member = mocker.MagicMock(student_email="teacher@test.com", status="pending")
+    mock_invitation = mocker.MagicMock(
+        spec=Invitation, id=99, members=[mock_member], tutor_id=1
+    )
+
+    mocks["invitation_repo"].get_by_token.return_value = mock_invitation
+    mocks["tutor_repo"].get_tutor_by_id.return_value = mock_tutor
+
+    with pytest.raises(SelfEnrollmentError):
+        service.enroll_student_from_token(
+            "valid_token_for_teacher", mock_teacher_as_student
+        )
+
+    # Verify no database writes were attempted
+    mocks["tutor_repo"].add_student_to_tutor.assert_not_called()
+    mocks["invitation_repo"].update_member_status.assert_not_called()

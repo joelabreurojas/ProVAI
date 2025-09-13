@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from slowapi.errors import RateLimitExceeded
 
 from src.api.modules import (
-    import_models,
     register_api_dependencies,
     register_api_routers,
 )
@@ -15,6 +14,7 @@ from src.core.infrastructure.limiter import limiter
 from src.core.infrastructure.logging_config import setup_logging
 from src.core.infrastructure.middlewares import register_middlewares
 from src.core.infrastructure.settings import settings
+from src.core.infrastructure.utils import import_core_models
 from src.ui.modules import (
     mount_static_files,
     register_ui_routers,
@@ -27,7 +27,7 @@ def create_app() -> FastAPI:
     """Application factory, creating and configuring the FastAPI app."""
     setup_logging()
 
-    import_models()
+    import_core_models()
 
     app = FastAPI(
         title=settings.TITLE,

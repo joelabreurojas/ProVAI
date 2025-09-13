@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Form, Request, Response, status
 from fastapi.responses import RedirectResponse
+from fastapi.security import OAuth2PasswordRequestForm
 
 from src.core.application.exceptions import (
     InvalidCredentialsError,
@@ -18,7 +19,7 @@ router = APIRouter(
 )
 
 
-@router.get("/login", response_class=Response)
+@router.get("/login", response_class=Response, name="serve_login_page")
 async def serve_login_page(
     request: Request, user: User | None = Depends(get_optional_current_user_from_cookie)
 ) -> Response:
@@ -55,23 +56,22 @@ async def serve_register_page(
 @router.post("/login")
 async def handle_login_form(
     request: Request,
-    email: str = Form(...),
-    password: str = Form(...),
+    form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthServiceProtocol = Depends(),
 ) -> Response:
     try:
-        user, token = auth_service.authenticate_user(email, password)
-        request.session.update({"user_token": token, "user_role": user.role})
-
-        return Response(
-            status_code=status.HTTP_200_OK, headers={"HX-Redirect": "/dashboard"}
+        user, token = auth_service.authenticate_user(
+            email=form_data.username, password=form_data.password
         )
 
-    except InvalidCredentialsError:
-        context = {"request": request, "error_message": "Invalid email or password."}
-        response: Response = render_template("partials/_login_form.html", context)
+        request.session.update({"user_token": token, "user_role": user.role})
 
+        response = Response()
+        response.headers["HX-Redirect"] = "/dashboard"
         return response
+    except InvalidCredentialsError as e:
+        context = {"request": request, "error_message": e.message}
+        return render_template("partials/_login_form.html", context)
 
 
 @router.post("/register")

@@ -10,7 +10,7 @@ from .auth_exceptions import (
     UserAlreadyExistsError,
     UserNotFoundError,
 )
-from .chat_exceptions import ChatNotFoundError, MessageCreationError
+from .chat_exceptions import ChatNotFoundError, ChatOwnershipError, MessageCreationError
 from .common_exceptions import AppException, DatabaseError
 from .rag_exceptions import (
     DocumentNotFoundError,
@@ -42,6 +42,7 @@ __all__ = [
     "UserAlreadyExistsError",
     "UserNotFoundError",
     "ChatNotFoundError",
+    "ChatOwnershipError",
     "MessageCreationError",
     "AppException",
     "DatabaseError",

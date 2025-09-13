@@ -15,6 +15,14 @@ class ChatNotFoundError(AppException):
         super().__init__(message=self.message)
 
 
+class ChatOwnershipError(AppException):
+    """Raised when a user attempts to access a chat they do not own."""
+
+    status_code = 403  # Forbidden
+    error_code = ErrorCode.CHAT_OWNERSHIP_REQUIRED
+    message = "You are not the owner of this chat."
+
+
 class MessageCreationError(AppException):
     """Raised when a message fails to be created."""
 

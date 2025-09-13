@@ -29,7 +29,6 @@ from src.api.chat.infrastructure.dependencies import (
     get_chat_repository,
     get_chat_service,
 )
-from src.api.modules import import_models
 from src.api.rag.infrastructure.dependencies import (
     get_chunk_repository,
     get_document_repository,
@@ -49,6 +48,7 @@ from src.core.domain.models import User
 from src.core.domain.schemas import TutorCreate
 from src.core.infrastructure.database import SessionLocal
 from src.core.infrastructure.settings import settings
+from src.core.infrastructure.utils import import_core_models
 
 SAMPLE_DOC_PATH = Path("sample_data/attention_is_all_you_need.pdf")
 SAMPLE_QUERY = "What is a multi-head self-attention mechanism?"
@@ -141,7 +141,7 @@ def main() -> None:
     """Runs a full, end-to-end demo of the headless RAG pipeline."""
     load_dotenv()
     logging.basicConfig(level=logging.INFO)
-    import_models()
+    import_core_models()
 
     if settings.ENV_STATE != "dev":
         print(

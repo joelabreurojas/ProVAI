@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("")
 async def serve_dashboard(
     request: Request,
     user: User = Depends(get_current_user_from_cookie),
