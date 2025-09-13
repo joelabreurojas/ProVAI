@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends, Form, Request, Response, status
 from fastapi.responses import RedirectResponse
 
-from src.api.auth.application.exceptions import (
+from src.core.application.exceptions import (
     InvalidCredentialsError,
     InvalidPasswordError,
     UserAlreadyExistsError,
 )
-from src.api.auth.application.protocols import AuthServiceProtocol
-from src.api.auth.domain.models import User
-from src.api.auth.infrastructure.dependencies import get_auth_service
+from src.core.application.protocols import AuthServiceProtocol
+from src.core.domain.models import User
 from src.ui.shared.infrastructure.dependencies import (
     get_optional_current_user_from_cookie,
 )
@@ -58,7 +57,7 @@ async def handle_login_form(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
-    auth_service: AuthServiceProtocol = Depends(get_auth_service),
+    auth_service: AuthServiceProtocol = Depends(),
 ) -> Response:
     try:
         user, token = auth_service.authenticate_user(email, password)
@@ -81,7 +80,7 @@ async def handle_register_form(
     name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
-    auth_service: AuthServiceProtocol = Depends(get_auth_service),
+    auth_service: AuthServiceProtocol = Depends(),
 ) -> Response:
     try:
         auth_service.register_user(name=name, email=email, password=password)

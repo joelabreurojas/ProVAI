@@ -5,11 +5,11 @@ from langchain_core.documents import Document as LangChainDocument
 from pytest_mock import MockerFixture
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.api.rag.application.protocols import (
+from src.api.rag.application.services import IngestionService
+from src.core.application.protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
 )
-from src.api.rag.application.services import IngestionService
 
 FAKE_PDF_BYTES = b"%PDF-1.4..."
 

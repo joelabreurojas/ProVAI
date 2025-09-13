@@ -2,11 +2,11 @@ import hashlib
 
 from sqlalchemy.orm import Session
 
-from src.api.rag.domain.models import Chunk
 from src.api.rag.infrastructure.repositories import (
     SQLAlchemyChunkRepository,
     SQLAlchemyDocumentRepository,
 )
+from src.core.domain.models import Chunk
 
 
 def test_document_and_chunk_linking(db_session: Session) -> None:

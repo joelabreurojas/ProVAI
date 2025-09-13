@@ -8,17 +8,17 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.api.rag.application.exceptions import (
+from src.core.application.exceptions import (
+    DatabaseError,
     IngestionError,
     PDFParsingError,
 )
-from src.api.rag.application.protocols import (
+from src.core.application.protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
     IngestionServiceProtocol,
 )
-from src.api.rag.domain.models import Chunk, Document
-from src.core.application.exceptions import DatabaseError
+from src.core.domain.models import Chunk, Document
 
 logger = logging.getLogger(__name__)
 

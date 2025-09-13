@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
-from src.api.auth.domain.models import User
-from src.api.auth.domain.schemas import UserCreate
 from src.api.auth.infrastructure.repositories import SQLAlchemyUserRepository
+from src.core.domain.models import User
+from src.core.domain.schemas import UserCreate
 
 VALID_PASSWORD = "ValidPassword123!"
 

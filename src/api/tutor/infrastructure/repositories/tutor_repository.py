@@ -1,11 +1,9 @@
 from sqlalchemy.orm import Session as SQLAlchemySession
 from sqlalchemy.orm import joinedload
 
-from src.api.auth.domain.models import User
-from src.api.rag.domain.models import Document
-from src.api.tutor.application.protocols import TutorRepositoryProtocol
-from src.api.tutor.domain.models import Tutor
-from src.api.tutor.domain.schemas import TutorCreate
+from src.core.application.protocols import TutorRepositoryProtocol
+from src.core.domain.models import Document, Tutor, User
+from src.core.domain.schemas import TutorCreate
 
 
 class SQLAlchemyTutorRepository(TutorRepositoryProtocol):

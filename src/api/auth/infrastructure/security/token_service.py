@@ -4,11 +4,11 @@ from typing import Any
 
 from jose import ExpiredSignatureError, JWTError, jwt
 
-from src.api.auth.application.exceptions import (
+from src.core.application.exceptions import (
     TokenExpiredError,
     TokenValidationError,
 )
-from src.api.auth.application.protocols import TokenServiceProtocol
+from src.core.application.protocols import TokenServiceProtocol
 from src.core.infrastructure.settings import settings
 
 

@@ -1,14 +1,13 @@
 from fastapi import Depends, HTTPException, Request, status
 
-from src.api.auth.application.exceptions import TokenValidationError, UserNotFoundError
-from src.api.auth.application.protocols import AuthServiceProtocol
-from src.api.auth.domain.models import User
-from src.api.auth.infrastructure.dependencies import get_auth_service
+from src.core.application.exceptions import TokenValidationError, UserNotFoundError
+from src.core.application.protocols import AuthServiceProtocol
+from src.core.domain.models import User
 
 
 def get_current_user_from_cookie(
     request: Request,
-    auth_service: AuthServiceProtocol = Depends(get_auth_service),
+    auth_service: AuthServiceProtocol = Depends(),
 ) -> User:
     """
     The single dependency for protecting UI routes.
@@ -28,7 +27,7 @@ def get_current_user_from_cookie(
 
 def get_optional_current_user_from_cookie(
     request: Request,
-    auth_service: AuthServiceProtocol = Depends(get_auth_service),
+    auth_service: AuthServiceProtocol = Depends(),
 ) -> User | None:
     """
     A dependency that returns the current user if they are authenticated via
@@ -42,5 +41,5 @@ def get_optional_current_user_from_cookie(
         user = auth_service.get_user_from_token(token)
         return user
     except (UserNotFoundError, TokenValidationError):
-        # If the token is invalid for any reason, treat them as logged out.
+        # If the auth is invalid for any reason, treat them as logged out.
         return None

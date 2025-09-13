@@ -21,7 +21,7 @@ We needed a data model that was efficient, scalable, and reflected the many-to-m
 
 We have implemented a **fully relational, de-duplicated content model** using many-to-many relationships.
 
-1.  **Chunk De-duplication:** A `Chunk` is now identified by a unique `content_hash`. The text content itself is stored in the vector database, keyed by this hash. The relational `chunks` table stores only this unique hash. A `document_chunk_link` association table creates a many-to-many relationship, allowing a single, unique chunk to be linked to multiple documents.
+1.  **Chunk De-duplication:** A `Chunk` is now identified by a unique `content_hash`. The text content itself is stored in the vector database, keyed by this hash. The relational `chunks` table stores only this unique hash. A `document_chunk` association table creates a many-to-many relationship, allowing a single, unique chunk to be linked to multiple documents.
 2.  **Document Sharing:** A `Document` is a standalone entity. A new `assistant_document_link` association table creates a many-to-many relationship between `Assistants` and `Documents`, allowing a single uploaded document to be included in multiple assistants.
 
 ### Rationale

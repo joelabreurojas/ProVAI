@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Depends, Request, status
 
-from src.api.auth.domain.models import User
 from src.api.auth.infrastructure.dependencies import get_current_user
-from src.api.chat.application.protocols import ChatServiceProtocol
-from src.api.chat.domain.schemas import (
+from src.api.chat.infrastructure.dependencies import get_chat_service
+from src.core.application.protocols import ChatServiceProtocol
+from src.core.domain.models import User
+from src.core.domain.schemas import (
     ChatCreate,
     ChatResponse,
     MessageResponse,
     QueryRequest,
     QueryResponse,
 )
-from src.api.chat.infrastructure.dependencies import get_chat_service
 from src.core.infrastructure.limiter import limiter
 
 TAG = {

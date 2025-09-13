@@ -10,7 +10,7 @@ from langchain_core.runnables import Runnable, RunnableParallel, RunnablePassthr
 from langchain_core.vectorstores import VectorStoreRetriever
 from langsmith import traceable
 
-from src.api.rag.application.protocols import RAGServiceProtocol
+from src.core.application.protocols import RAGServiceProtocol
 
 logger = logging.getLogger(__name__)
 

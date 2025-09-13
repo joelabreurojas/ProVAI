@@ -3,7 +3,7 @@ import logging
 from langsmith import traceable
 from pydantic import ValidationError
 
-from src.api.auth.application.exceptions import (
+from src.core.application.exceptions import (
     InvalidCredentialsError,
     InvalidPasswordError,
     TokenMissingDataError,
@@ -11,14 +11,14 @@ from src.api.auth.application.exceptions import (
     UserAlreadyExistsError,
     UserNotFoundError,
 )
-from src.api.auth.application.protocols import (
+from src.core.application.protocols import (
     AuthServiceProtocol,
     PasswordServiceProtocol,
     TokenServiceProtocol,
     UserRepositoryProtocol,
 )
-from src.api.auth.domain.models import User
-from src.api.auth.domain.schemas import UserCreate
+from src.core.domain.models import User
+from src.core.domain.schemas import UserCreate
 
 logger = logging.getLogger(__name__)
 

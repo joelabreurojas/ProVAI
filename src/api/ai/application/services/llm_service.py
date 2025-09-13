@@ -3,12 +3,12 @@ from functools import lru_cache
 
 from langchain_community.llms.llamacpp import LlamaCpp
 
-from src.api.ai.application.exceptions import (
+from src.core.application.exceptions import (
     ModelConfigurationError,
     ModelLoadError,
     ModelNotFoundError,
 )
-from src.api.ai.application.protocols import LLMServiceProtocol
+from src.core.application.protocols import LLMServiceProtocol
 from src.core.application.utils.performance import log_memory_usage
 from src.core.infrastructure.constants import PROJECT_ROOT
 from src.core.infrastructure.dependencies import get_asset_manager_service

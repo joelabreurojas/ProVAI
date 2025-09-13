@@ -1,40 +1,47 @@
 # ProVAI Software Architecture
 
-This document provides a high-level overview of the logical software architecture for the ProVAI project. It explains the core principles that guide how our code is organized and how dependencies are managed.
+This document provides a high-level overview of the software architecture for the ProVAI project. Our architecture is a synthesis of professional patterns designed for maintainability, testability, and scalability.
 
-Our architecture is a synthesis of two key patterns: **Screaming Architecture** for high-level modularity and **Onion Architecture** for implementation-level decoupling.
+It is best understood as a blueprint for a well-built house, using four complementary concepts:
 
----
-
-## 1. High-Level Organization: Screaming Architecture
-
-The primary organizational principle of this project is to structure the codebase around its **business capabilities (features)**, not its technical layers. The top-level directories in the `src/` folder "scream" what the application does.
-
-This feature-based structure ensures that all code related to a single domain concept (e.g., Authentication, RAG, Analytics) is highly cohesive and co-located.
-
-### Core Modules:
-
-- **`src/core/`:** This module is an exception to the feature-first rule. It houses truly cross-cutting concerns that are shared by all other modules, such as the main application factory, global configuration, and the shared database engine.
-- **`src/feature_name/` (e.g., `src/auth/`):** Each additional module represents a distinct business capability. This modular approach makes the system easier to navigate, maintain, and scale.
+1.  **Screaming Architecture** is our **Floor Plan**.
+2.  **Hexagonal Architecture** is our **Utilities Plan**.
+3.  **Onion Architecture** is our **Internal Building Code**.
+4.  **The Composition Root** is our **General Contractor**.
 
 ---
 
-## 2. Module-Level Implementation: Onion Architecture
+### 1. The Floor Plan: Screaming Architecture
 
-Within each high-level feature module, we strictly enforce the principles of **Onion Architecture**. This pattern governs the direction of dependencies and ensures a clean separation of concerns, making our business logic independent of external frameworks and tools.
+The primary organization of our adapters (`api/` and `ui/`) is by business feature. The top-level folders "scream" what the application does. This makes the system easy to navigate and ensures that feature-specific code is highly cohesive.
 
-### The Dependency Rule: All Dependencies Point Inwards
+- `src/api/auth/`
+- `src/api/tutor/`
+- `src/ui/dashboard/`
 
-1.  **`domain` (Innermost Layer):**
-    - **Responsibility:** Contains the core business entities, value objects, and rules that are central to the feature.
-    - **Dependencies:** Has **zero** dependencies on any other layer in the application. It is pure business logic.
+### 2. The Utilities Plan: Hexagonal Architecture (Ports & Adapters)
 
-2.  **`application` (Middle Layer):**
-    - **Responsibility:** Orchestrates the business logic to fulfill application-specific use cases. It defines the abstract interfaces (protocols) for any external operations it needs to perform (e.g., "save a user," "get a document").
-    - **Dependencies:** Depends only on the `domain` layer.
+This pattern ensures our core business logic is independent of the outside world.
 
-3.  **`infrastructure` (Outermost Layer):**
-    - **Responsibility:** Contains the concrete implementations of the interfaces defined in the application layer. This includes all interactions with the "outside world": database connections (SQLAlchemy), API endpoints (FastAPI), third-party libraries, etc.
-    - **Dependencies:** Depends on the `application` and `domain` layers to implement their contracts.
+- **The Hexagon (`src/core`):** The heart of the application. It contains all the pure business logic, entities, and rules. It has zero dependencies on FastAPI or any other web framework.
+- **The Ports (`core/application/protocols` & `exceptions`):** These are the abstract interfaces that define _how_ the outside world can interact with the Core.
+- **The Adapters (`src/api` & `src/ui`):** These are the bridges that connect external technologies (like HTTP requests) to the Ports of the Core. They depend on the Core, but the Core never depends on them.
 
-This layered approach within each feature module makes our codebase highly testable, as the core business logic can be tested in complete isolation from the web server, database, or any other external service.
+### 3. The Internal Building Code: Onion Architecture
+
+Within every module (both in the Core and in the Adapters), we enforce a strict, layered structure to control the flow of dependencies.
+
+- **`domain`:** The innermost layer. Contains our business entities (SQLAlchemy models, Pydantic schemas).
+- **`application`:** The middle layer. Orchestrates the domain entities and defines the use cases and interfaces (Protocols).
+- **`infrastructure`:** The outermost layer. Contains concrete implementations and interactions with external tools (database sessions, API routers).
+
+**The Golden Rule:** Dependencies must only ever point inwards, from `infrastructure` to `application` to `domain`.
+
+### 4. The General Contractor: The Composition Root
+
+This is the single place where the entire application is assembled.
+
+- **Location:** `src/core/infrastructure/app.py`
+- **Responsibility:** The `create_app` factory is the "General Contractor." It is the only part of the application that knows about both the abstract Ports (from `core`) and the concrete Adapters (from `api`). It uses FastAPI's `dependency_overrides` to wire everything together, creating a fully functional application from decoupled parts.
+
+This cohesive architectural strategy ensures ProVAI is robust, maintainable, and ready for future growth.

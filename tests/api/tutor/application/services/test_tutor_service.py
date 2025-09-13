@@ -3,21 +3,19 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from src.api.auth.application.exceptions import InsufficientPermissionsError
-from src.api.auth.domain.models import User
-from src.api.rag.domain.models import Document
-from src.api.tutor.application.exceptions import (
+from src.api.tutor.application.services import TutorService
+from src.core.application.exceptions import (
+    InsufficientPermissionsError,
     InvitationEmailMismatchError,
     InvitationNotFoundError,
 )
-from src.api.tutor.application.protocols import (
+from src.core.application.protocols import (
     InvitationRepositoryProtocol,
     TutorRepositoryProtocol,
     TutorServiceProtocol,
 )
-from src.api.tutor.application.services import TutorService
-from src.api.tutor.domain.models import Invitation, Tutor
-from src.api.tutor.domain.schemas import TutorCreate
+from src.core.domain.models import Document, Invitation, Tutor, User
+from src.core.domain.schemas import TutorCreate
 
 
 def create_mocked_tutor_service(

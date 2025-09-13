@@ -3,20 +3,20 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from src.api.auth.application.exceptions import (
+from src.api.auth.application.services import AuthService
+from src.core.application.exceptions import (
     InvalidCredentialsError,
     TokenExpiredError,
     TokenMissingDataError,
     UserAlreadyExistsError,
     UserNotFoundError,
 )
-from src.api.auth.application.protocols import (
+from src.core.application.protocols import (
     PasswordServiceProtocol,
     TokenServiceProtocol,
     UserRepositoryProtocol,
 )
-from src.api.auth.application.services import AuthService
-from src.api.auth.domain.models import User
+from src.core.domain.models import User
 
 
 def create_mocked_auth_service(

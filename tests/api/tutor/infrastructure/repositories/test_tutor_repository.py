@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
-from src.api.auth.domain.models import User
-from src.api.tutor.domain.schemas import TutorCreate
 from src.api.tutor.infrastructure.repositories import SQLAlchemyTutorRepository
+from src.core.domain.models import User
+from src.core.domain.schemas import TutorCreate
 
 
 def test_create_tutor_successfully(db_session: Session) -> None:

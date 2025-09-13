@@ -19,8 +19,6 @@ from src.api.ai.infrastructure.dependencies import (
     get_embedding_service,
     get_llm_service,
 )
-from src.api.auth.application.protocols import AuthServiceProtocol
-from src.api.auth.domain.models import User
 from src.api.auth.infrastructure.dependencies import (
     get_auth_service,
     get_password_service,
@@ -41,12 +39,14 @@ from src.api.rag.infrastructure.dependencies import (
     get_rag_vector_store,
     get_text_splitter,
 )
-from src.api.tutor.domain.schemas import TutorCreate
 from src.api.tutor.infrastructure.dependencies import (
     get_invitation_repository,
     get_tutor_repository,
     get_tutor_service,
 )
+from src.core.application.protocols import AuthServiceProtocol
+from src.core.domain.models import User
+from src.core.domain.schemas import TutorCreate
 from src.core.infrastructure.database import SessionLocal
 from src.core.infrastructure.settings import settings
 

@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
 
-from src.api.auth.domain.models import User
 from src.api.chat.infrastructure.repositories import SQLAlchemyChatRepository
-from src.api.tutor.domain.models import Tutor
+from src.core.domain.models import Tutor, User
 
 
 def test_create_and_retrieve_chat(db_session: Session) -> None:

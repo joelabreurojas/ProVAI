@@ -2,14 +2,13 @@ import logging
 
 from langchain_chroma import Chroma
 
-from src.api.rag.application.exceptions import DocumentNotFoundError
-from src.api.rag.application.protocols import (
+from src.core.application.exceptions import DocumentNotFoundError, TutorNotFoundError
+from src.core.application.protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
     DocumentServiceProtocol,
+    TutorRepositoryProtocol,
 )
-from src.api.tutor.application.exceptions import TutorNotFoundError
-from src.api.tutor.application.protocols import TutorRepositoryProtocol
 
 logger = logging.getLogger(__name__)
 

@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.api.ai.application.protocols import (
-    EmbeddingServiceProtocol,
-    LLMServiceProtocol,
-)
 from src.api.ai.infrastructure.dependencies import (
     get_embedding_service,
     get_llm_service,
+)
+from src.core.application.protocols import (
+    EmbeddingServiceProtocol,
+    LLMServiceProtocol,
 )
 from src.core.infrastructure.constants import PROJECT_ROOT
 from src.core.infrastructure.database import get_db

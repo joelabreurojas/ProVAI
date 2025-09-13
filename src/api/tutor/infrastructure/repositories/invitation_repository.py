@@ -3,8 +3,9 @@ from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload
 
-from src.api.tutor.application.protocols import InvitationRepositoryProtocol
-from src.api.tutor.domain.models import Invitation, InvitationMember
+from src.core.application.protocols import InvitationRepositoryProtocol
+from src.core.domain.models import Invitation
+from src.core.domain.models.associations import InvitationMember
 
 
 class SQLAlchemyInvitationRepository(InvitationRepositoryProtocol):

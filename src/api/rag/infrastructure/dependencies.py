@@ -4,22 +4,11 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.api.ai.application.protocols import (
-    EmbeddingServiceProtocol,
-    LLMServiceProtocol,
-)
 from src.api.ai.infrastructure.dependencies import (
     get_embedding_service,
     get_llm_service,
 )
 from src.api.rag.application.prompts import get_rag_prompt
-from src.api.rag.application.protocols import (
-    ChunkRepositoryProtocol,
-    DocumentRepositoryProtocol,
-    DocumentServiceProtocol,
-    IngestionServiceProtocol,
-    RAGServiceProtocol,
-)
 from src.api.rag.application.services import (
     DocumentService,
     IngestionService,
@@ -30,24 +19,22 @@ from src.api.rag.infrastructure.repositories import (
     SQLAlchemyDocumentRepository,
 )
 from src.api.rag.infrastructure.vector_store import get_vector_store
-from src.api.tutor.application.protocols import TutorRepositoryProtocol
 from src.api.tutor.infrastructure.dependencies import get_tutor_repository
+from src.core.application.protocols import (
+    ChunkRepositoryProtocol,
+    DocumentRepositoryProtocol,
+    DocumentServiceProtocol,
+    EmbeddingServiceProtocol,
+    IngestionServiceProtocol,
+    LLMServiceProtocol,
+    RAGServiceProtocol,
+    TutorRepositoryProtocol,
+)
 from src.core.infrastructure.database import get_db
+from src.core.infrastructure.utils import provides
 
 
-# --- Protocol Implementations ---
-def get_chunk_repository(
-    db: SQLAlchemySession = Depends(get_db),
-) -> ChunkRepositoryProtocol:
-    return SQLAlchemyChunkRepository(db)
-
-
-def get_document_repository(
-    db: SQLAlchemySession = Depends(get_db),
-) -> DocumentRepositoryProtocol:
-    return SQLAlchemyDocumentRepository(db)
-
-
+# --- Internal Providers ---
 def get_rag_vector_store(
     embedding_service: EmbeddingServiceProtocol = Depends(get_embedding_service),
 ) -> Chroma:
@@ -65,6 +52,22 @@ def get_text_splitter() -> RecursiveCharacterTextSplitter:
     )
 
 
+# --- Protocol Implementations ---
+@provides(IngestionServiceProtocol)
+def get_chunk_repository(
+    db: SQLAlchemySession = Depends(get_db),
+) -> ChunkRepositoryProtocol:
+    return SQLAlchemyChunkRepository(db)
+
+
+@provides(DocumentRepositoryProtocol)
+def get_document_repository(
+    db: SQLAlchemySession = Depends(get_db),
+) -> DocumentRepositoryProtocol:
+    return SQLAlchemyDocumentRepository(db)
+
+
+@provides(DocumentServiceProtocol)
 def get_document_service(
     doc_repo: DocumentRepositoryProtocol = Depends(get_document_repository),
     chunk_repo: ChunkRepositoryProtocol = Depends(get_chunk_repository),
@@ -80,6 +83,7 @@ def get_document_service(
 
 
 # --- Service Assemblers ---
+@provides(IngestionServiceProtocol)
 def get_ingestion_service(
     db: SQLAlchemySession = Depends(get_db),
     vector_store: Chroma = Depends(get_rag_vector_store),
@@ -96,6 +100,7 @@ def get_ingestion_service(
     )
 
 
+@provides(RAGServiceProtocol)
 def get_rag_service(
     llm_service: LLMServiceProtocol = Depends(get_llm_service),
     vector_store: Chroma = Depends(get_rag_vector_store),

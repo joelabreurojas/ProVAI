@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Response, status
 from starlette.responses import RedirectResponse
 
-from src.api.auth.domain.models import User
+from src.core.domain.models import User
 from src.ui.shared.infrastructure.dependencies import (
     get_optional_current_user_from_cookie,
 )

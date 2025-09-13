@@ -5,8 +5,8 @@ from fastembed import TextEmbedding
 from langchain_core.embeddings import Embeddings
 from langsmith import traceable
 
-from src.api.ai.application.exceptions import ModelConfigurationError, ModelLoadError
-from src.api.ai.application.protocols import EmbeddingServiceProtocol
+from src.core.application.exceptions import ModelConfigurationError, ModelLoadError
+from src.core.application.protocols import EmbeddingServiceProtocol
 from src.core.application.utils.performance import log_memory_usage
 from src.core.infrastructure.dependencies import get_asset_manager_service
 

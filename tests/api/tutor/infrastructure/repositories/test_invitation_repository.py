@@ -1,11 +1,11 @@
 from sqlalchemy.orm import Session as SQLAlchemySesison
 
-from src.api.auth.domain.models import User
-from src.api.tutor.domain.schemas import TutorCreate
 from src.api.tutor.infrastructure.repositories import (
     SQLAlchemyInvitationRepository,
     SQLAlchemyTutorRepository,
 )
+from src.core.domain.models import User
+from src.core.domain.schemas import TutorCreate
 
 
 def test_create_and_retrieve_invitation(db_session: SQLAlchemySesison) -> None:

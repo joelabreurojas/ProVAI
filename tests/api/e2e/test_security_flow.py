@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.api.auth.domain.models import User
+from src.core.domain.models import User
 
 VALID_TEACHER_PASSWORD = "TeacherPassword123!"
 VALID_STUDENT_A_PASSWORD = "StudentAPassword123!"

@@ -2,11 +2,10 @@ import time
 
 from fastapi import APIRouter, Depends, Form, Request, Response
 
-from src.api.auth.application.exceptions import InsufficientPermissionsError
-from src.api.auth.domain.models import User
-from src.api.tutor.application.protocols import TutorServiceProtocol
-from src.api.tutor.domain.schemas import TutorCreate
-from src.api.tutor.infrastructure.dependencies import get_tutor_service
+from src.core.application.exceptions import InsufficientPermissionsError
+from src.core.application.protocols import TutorServiceProtocol
+from src.core.domain.models import User
+from src.core.domain.schemas import TutorCreate
 from src.ui.shared.infrastructure.dependencies import get_current_user_from_cookie
 from src.ui.shared.infrastructure.utils import render_template
 
@@ -19,7 +18,7 @@ router = APIRouter(
 async def serve_dashboard(
     request: Request,
     user: User = Depends(get_current_user_from_cookie),
-    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
+    tutor_service: TutorServiceProtocol = Depends(),
 ) -> Response:
     tutors = tutor_service.get_tutors_for_user(user)
 
@@ -40,7 +39,7 @@ async def serve_dashboard(
 async def serve_tutor_list(
     request: Request,
     user: User = Depends(get_current_user_from_cookie),
-    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
+    tutor_service: TutorServiceProtocol = Depends(),
 ) -> Response:
     """
     Fetches the list of tutors for the current user and renders them
@@ -59,7 +58,7 @@ async def handle_create_tutor(
     request: Request,
     course_name: str = Form(...),
     user: User = Depends(get_current_user_from_cookie),
-    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
+    tutor_service: TutorServiceProtocol = Depends(),
 ) -> Response:
     """Handles creating a new Tutor via HTMX with professional error handling."""
     try:

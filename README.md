@@ -95,7 +95,7 @@ ProVAI is built on a foundation of modern, high-performance technologies, guided
 
 | Category | Technology | Rationale |
 | :--- | :--- | :--- |
-| **Backend** | **FastAPI** & **Python 3.11** | High-performance, async-first API development. |
+| **Backend** | **FastAPI** & **Python 3.13** | High-performance, async-first API development. |
 | **Architecture**| **Screaming + Onion** | Professional, decoupled, and scalable feature-based design. |
 | **Frontend** | **Jinja2, Tailwind CSS, HTMX, Alpine.js** | A modern, high-performance stack for server-rendered interactivity. |
 | **AI Engine** | **LangChain** & **`llama-cpp`** | Robust orchestration with direct, efficient local model inference. |

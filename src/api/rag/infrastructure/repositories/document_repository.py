@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.api.rag.application.protocols import DocumentRepositoryProtocol
-from src.api.rag.domain.models import Chunk, Document
+from src.core.application.protocols import DocumentRepositoryProtocol
+from src.core.domain.models import Chunk, Document
 
 
 class SQLAlchemyDocumentRepository(DocumentRepositoryProtocol):

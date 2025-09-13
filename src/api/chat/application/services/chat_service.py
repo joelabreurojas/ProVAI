@@ -2,22 +2,16 @@ import logging
 
 from langsmith import traceable
 
-from src.api.auth.domain.models import User
-from src.api.chat.application.exceptions import ChatNotFoundError
-from src.api.chat.application.protocols import (
+from src.core.application.exceptions import ChatNotFoundError
+from src.core.application.protocols import (
     ChatRepositoryProtocol,
     ChatServiceProtocol,
-)
-from src.api.chat.domain.models import Chat, Message
-from src.api.rag.application.protocols import (
     IngestionServiceProtocol,
     RAGServiceProtocol,
-)
-from src.api.rag.domain.models import Document
-from src.api.tutor.application.protocols import (
     TutorRepositoryProtocol,
     TutorServiceProtocol,
 )
+from src.core.domain.models import Chat, Document, Message, User
 
 logger = logging.getLogger(__name__)
 

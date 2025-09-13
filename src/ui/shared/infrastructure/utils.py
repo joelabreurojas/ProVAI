@@ -5,9 +5,9 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
 
-from src.ui.modules import discover_templates
+from src.ui.modules import discover_ui_templates
 
-templates = Jinja2Templates(directory=discover_templates())
+templates = Jinja2Templates(directory=discover_ui_templates())
 
 
 def global_context(request: Request) -> dict[str, Any]:

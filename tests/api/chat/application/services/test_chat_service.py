@@ -3,22 +3,16 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from src.api.auth.domain.models import User
-from src.api.chat.application.exceptions import ChatNotFoundError
-from src.api.chat.application.protocols import ChatRepositoryProtocol
 from src.api.chat.application.services import ChatService
-from src.api.chat.domain.models import Chat, Message
-from src.api.rag.application.protocols import (
+from src.core.application.exceptions import ChatNotFoundError, UserNotEnrolledError
+from src.core.application.protocols import (
+    ChatRepositoryProtocol,
     IngestionServiceProtocol,
     RAGServiceProtocol,
-)
-from src.api.rag.domain.models import Document
-from src.api.tutor.application.exceptions import UserNotEnrolledError
-from src.api.tutor.application.protocols import (
     TutorRepositoryProtocol,
     TutorServiceProtocol,
 )
-from src.api.tutor.domain.models import Tutor
+from src.core.domain.models import Chat, Document, Message, Tutor, User
 
 
 def create_mocked_chat_service(

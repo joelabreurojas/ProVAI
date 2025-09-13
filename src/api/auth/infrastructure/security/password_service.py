@@ -1,6 +1,6 @@
 import bcrypt
 
-from src.api.auth.application.protocols import PasswordServiceProtocol
+from src.core.application.protocols import PasswordServiceProtocol
 
 
 class PasswordService(PasswordServiceProtocol):

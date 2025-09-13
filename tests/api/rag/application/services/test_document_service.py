@@ -2,12 +2,12 @@ from unittest.mock import MagicMock
 
 from pytest_mock import MockerFixture
 
-from src.api.rag.application.protocols import (
+from src.api.rag.application.services import DocumentService
+from src.core.application.protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
+    TutorRepositoryProtocol,
 )
-from src.api.rag.application.services import DocumentService
-from src.api.tutor.application.protocols import TutorRepositoryProtocol
 
 
 def test_delete_document_garbage_collects_orphans(mocker: MockerFixture) -> None:

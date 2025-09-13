@@ -2,10 +2,8 @@ import logging
 
 from langsmith import traceable
 
-from src.api.auth.application.exceptions import InsufficientPermissionsError
-from src.api.auth.domain.models import User
-from src.api.rag.domain.models import Document
-from src.api.tutor.application.exceptions import (
+from src.core.application.exceptions import (
+    InsufficientPermissionsError,
     InvitationEmailMismatchError,
     InvitationNotFoundError,
     SelfEnrollmentError,
@@ -14,13 +12,13 @@ from src.api.tutor.application.exceptions import (
     UserAlreadyEnrolledError,
     UserNotEnrolledError,
 )
-from src.api.tutor.application.protocols import (
+from src.core.application.protocols import (
     InvitationRepositoryProtocol,
     TutorRepositoryProtocol,
     TutorServiceProtocol,
 )
-from src.api.tutor.domain.models import Invitation, Tutor
-from src.api.tutor.domain.schemas import TutorCreate, TutorInvitationResponse
+from src.core.domain.models import Document, Invitation, Tutor, User
+from src.core.domain.schemas import TutorCreate, TutorInvitationResponse
 
 logger = logging.getLogger(__name__)
 

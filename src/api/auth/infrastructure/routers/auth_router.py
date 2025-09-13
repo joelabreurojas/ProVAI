@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.exceptions import HTTPException
 
-from src.api.auth.application.exceptions import (
+from src.api.auth.infrastructure.dependencies import get_auth_service
+from src.core.application.exceptions import (
     InvalidPasswordError,
     UserAlreadyExistsError,
 )
-from src.api.auth.application.protocols import AuthServiceProtocol
-from src.api.auth.domain.schemas import Token, UserCreate, UserResponse
-from src.api.auth.infrastructure.dependencies import get_auth_service
+from src.core.application.protocols import AuthServiceProtocol
+from src.core.domain.schemas import Token, UserCreate, UserResponse
 
 TAG = {"name": "Auth", "description": "User authentication and registration"}
 
