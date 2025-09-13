@@ -1,6 +1,6 @@
 # ADR-006: Adopt Screaming Architecture
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-021](./021-hexagon-and-composition-architecture.md)
 - **Date:** 2025-07-12
 - **Authors:** Joel Abreu Rojas
 
@@ -24,9 +24,9 @@ A `core` module will house truly cross-cutting concerns like the main applicatio
 
 This approach provides the best of both worlds:
 
--   **High Cohesion & Loose Coupling:** All code related to a single feature is co-located in one place, making it easier to develop and maintain. Changes to the `auth` module are less likely to impact the future `rag` module.
--   **Clarity & Scalability:** The project's structure "screams" what it does. This makes navigation intuitive and provides a clear path for scaling, as each feature folder is a "proto-microservice" that could be extracted in the future.
--   **Architectural Purity:** It allows us to maintain the strict, inward-pointing dependency rules of Onion Architecture within the clean, high-level boundaries of each feature.
+- **High Cohesion & Loose Coupling:** All code related to a single feature is co-located in one place, making it easier to develop and maintain. Changes to the `auth` module are less likely to impact the future `rag` module.
+- **Clarity & Scalability:** The project's structure "screams" what it does. This makes navigation intuitive and provides a clear path for scaling, as each feature folder is a "proto-microservice" that could be extracted in the future.
+- **Architectural Purity:** It allows us to maintain the strict, inward-pointing dependency rules of Onion Architecture within the clean, high-level boundaries of each feature.
 
 ---
 
@@ -34,10 +34,10 @@ This approach provides the best of both worlds:
 
 ### Positive Consequences
 
--   The codebase will be significantly more modular and easier to navigate.
--   The risk of creating unintended dependencies between features is reduced.
--   The project is architecturally prepared for future growth and potential migration to microservices.
+- The codebase will be significantly more modular and easier to navigate.
+- The risk of creating unintended dependencies between features is reduced.
+- The project is architecturally prepared for future growth and potential migration to microservices.
 
 ### Negative Consequences
 
--   There is a slight increase in the number of directories and initial boilerplate. This is an accepted trade-off for long-term maintainability.
+- There is a slight increase in the number of directories and initial boilerplate. This is an accepted trade-off for long-term maintainability.

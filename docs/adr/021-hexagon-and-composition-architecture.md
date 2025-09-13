@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2025-09-15
-- **Authors:** @joelabreurojas
+- **Authors:** [@joelabreurojas](https://github.com/joelabreurojas)
 
 ---
 
