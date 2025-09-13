@@ -6,7 +6,10 @@ from src.core.application.exceptions import InsufficientPermissionsError
 from src.core.application.protocols import TutorServiceProtocol
 from src.core.domain.models import User
 from src.core.domain.schemas import TutorCreate
-from src.ui.shared.infrastructure.dependencies import get_current_user_from_cookie
+from src.ui.shared.infrastructure.dependencies import (
+    get_current_user_from_cookie,
+    validate_csrf_token,
+)
 from src.ui.shared.infrastructure.utils import render_template
 
 router = APIRouter(
@@ -59,6 +62,7 @@ async def handle_create_tutor(
     course_name: str = Form(...),
     user: User = Depends(get_current_user_from_cookie),
     tutor_service: TutorServiceProtocol = Depends(),
+    _csrf_token: None = Depends(validate_csrf_token),
 ) -> Response:
     """Handles creating a new Tutor via HTMX with professional error handling."""
     try:

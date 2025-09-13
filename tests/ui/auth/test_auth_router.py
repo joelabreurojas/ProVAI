@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session as SQLAlchemySession
 
 from src.core.infrastructure.settings import settings
+from tests.helpers import get_csrf_token_from_response
 
 
 def test_unauthenticated_user_is_redirected_from_dashboard(client: TestClient) -> None:
@@ -34,10 +35,18 @@ def test_full_ui_login_and_redirect_flow(
         },
     )
 
+    get_response = client.get("/auth/login")
+    assert get_response.status_code == 200
+    csrf_token = get_csrf_token_from_response(get_response.text)
+
     # Log in via the UI endpoint.
     login_response = client.post(
         "/auth/login",
-        data={"username": "ui-login@test.com", "password": "ValidPassword123!"},
+        data={
+            "username": "ui-login@test.com",
+            "password": "ValidPassword123!",
+            "csrf_token": csrf_token,
+        },
         follow_redirects=False,  # We want to inspect the redirect itself
     )
 
@@ -63,6 +72,12 @@ def test_ui_registration_flow(client: TestClient) -> None:
         "email": "new-ui-user@test.com",
         "password": "ValidPassword123!",
     }
+
+    get_response = client.get("/auth/register")
+    assert get_response.status_code == 200
+    csrf_token = get_csrf_token_from_response(get_response.text)
+
+    new_user_data["csrf_token"] = csrf_token
 
     # We use the `data` parameter for form submissions.
     register_response = client.post(

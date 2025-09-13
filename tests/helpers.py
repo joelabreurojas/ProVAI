@@ -1,3 +1,4 @@
+import re
 from typing import Any
 
 from fastapi.testclient import TestClient
@@ -12,6 +13,13 @@ VALID_STUDENT_B_PASSWORD = "StudentBPassword123!"
 TEACHER_EMAIL = "security-teacher@e2e.com"
 STUDENT_A_EMAIL = "student-a@e2e.com"
 STUDENT_B_EMAIL = "student-b@e2e.com"
+
+
+def get_csrf_token_from_response(response_text: str) -> str:
+    """Extracts the CSRF token from a login form's HTML."""
+    match = re.search(r'name="csrf_token" value="([^"]+)"', response_text)
+    assert match is not None, "CSRF token not found in form HTML"
+    return match.group(1)
 
 
 def setup_users_and_tutor(

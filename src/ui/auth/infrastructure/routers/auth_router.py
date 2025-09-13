@@ -11,6 +11,7 @@ from src.core.application.protocols import AuthServiceProtocol
 from src.core.domain.models import User
 from src.ui.shared.infrastructure.dependencies import (
     get_optional_current_user_from_cookie,
+    validate_csrf_token,
 )
 from src.ui.shared.infrastructure.utils import render_template
 
@@ -58,6 +59,7 @@ async def handle_login_form(
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthServiceProtocol = Depends(),
+    _csrf_token: None = Depends(validate_csrf_token),
 ) -> Response:
     try:
         user, token = auth_service.authenticate_user(
@@ -81,6 +83,7 @@ async def handle_register_form(
     email: str = Form(...),
     password: str = Form(...),
     auth_service: AuthServiceProtocol = Depends(),
+    _csrf_token: None = Depends(validate_csrf_token),
 ) -> Response:
     try:
         auth_service.register_user(name=name, email=email, password=password)
