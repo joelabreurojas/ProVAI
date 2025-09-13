@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
 
     register_api_dependencies(app)
 
+    limiter.enabled = settings.ENV_STATE != "test"
     app.state.limiter = limiter
     register_middlewares(app, extra=[(AuthRedirectMiddleware, {})])
 

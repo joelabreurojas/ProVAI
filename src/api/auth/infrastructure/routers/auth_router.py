@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.exceptions import HTTPException
 
@@ -9,6 +9,7 @@ from src.core.application.exceptions import (
 )
 from src.core.application.protocols import AuthServiceProtocol
 from src.core.domain.schemas import Token, UserCreate, UserResponse
+from src.core.infrastructure.limiter import limiter
 
 TAG = {"name": "Auth", "description": "User authentication and registration"}
 
@@ -21,7 +22,9 @@ router = APIRouter(prefix="/auth", tags=[TAG["name"]])
     response_model=UserResponse,
     summary="Register a new user",
 )
+@limiter.limit("10/minute")
 async def register_user(
+    request: Request,
     user_data: UserCreate,
     auth_service: AuthServiceProtocol = Depends(get_auth_service),
 ) -> UserResponse:
@@ -46,7 +49,9 @@ async def register_user(
     response_model=Token,
     summary="User login to get an access token",
 )
+@limiter.limit("10/minute")
 async def login_for_access_token(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthServiceProtocol = Depends(get_auth_service),
 ) -> Token:
