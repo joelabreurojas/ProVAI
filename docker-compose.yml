@@ -1,8 +1,8 @@
 services:
-  backend:
+  app:
     build:
       context: .
-      dockerfile: ./docker/backend.Dockerfile
+      dockerfile: ./docker/app.Dockerfile
       target: development
     ports:
       - "8000:8000"
@@ -10,11 +10,11 @@ services:
       - .env
     volumes:
       # Data persistence
+      - ./databases:/app/databases
+      - ./vector_store:/app/vector_store
       - ./assets:/app/assets:ro
       - ./models:/app/models:ro
       - ./sample_data:/app/sample_data:ro
-      - ./databases:/app/databases
-      - ./vector_store:/app/vector_store
     develop:
       watch:
         # Sync all our source code changes instantly
@@ -27,6 +27,12 @@ services:
         - action: sync
           path: ./scripts
           target: /app/scripts
+        - action: sync
+          path: ./alembic
+          target: /app/alembic
+        - action: sync
+          path: ./alembic.ini
+          target: /app/alembic.ini
 
         # Rebuild the image automatically if dependencies change
         - action: rebuild
@@ -34,3 +40,32 @@ services:
         - action: rebuild
           path: ./uv.lock
     restart: unless-stopped
+    networks:
+      - provai_net
+
+  live_server:
+    build:
+      context: .
+      dockerfile: ./docker/app.Dockerfile
+      target: frontend_builder
+    command: npm run dev
+    ports:
+      - "3000:3000" # BrowserSync Proxy Port
+      - "3001:3001" # BrowserSync UI Port
+    volumes:
+      - ./src/ui:/app/src/ui
+    develop:
+      watch:
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./tailwind.config.js
+    restart: unless-stopped
+    networks:
+      - provai_net
+    depends_on:
+      - app
+
+networks:
+  provai_net:
+    driver: bridge

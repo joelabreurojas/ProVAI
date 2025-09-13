@@ -93,19 +93,14 @@ ProVAI is built on a foundation of modern, high-performance technologies, guided
 
 <div align="center">
 
-|      Category       |              Tool              |        Notes         |
-| :-----------------: | :----------------------------: | :------------------: |
-|  Core Architecture  | Screaming + Onion Architecture |                      |
-|  Backend Framework  |            FastAPI             |                      |
-|      Frontend       |           Streamlit            |      _for MVP_       |
-| Relational Database |             SQLite             |      _for MVP_       |
-|   Vector Database   |            ChromaDB            | _file-based for MVP_ |
-|  AI Orchestration   |           LangChain            |                      |
-|     LLM Serving     |        llama-cpp-python        |                      |
-|      LLM Model      |         Qwen1.5-1.8B           |      _for MVP_       |
-|   Embedding Model   |  all-MiniLM-L6-v2 (fastembed)  |      _for MVP_       |
-|   Dev Environment   |          Docker & uv           |                      |
-|  Quality Assurance  |    tox, pytest, ruff, mypy     |                      |
+| Category         | Technology                                | Rationale                                                                                                      |
+| :--------------- | :---------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| **Backend**      | **FastAPI** & **Python 3.13**             | High-performance, async-first API development.                                                                 |
+| **Architecture** | **Hexagonal (Ports & Adapters)**          | A clean, decoupled architecture with a central `core` business domain and independent `api` and `ui` adapters. |
+| **Frontend**     | **Jinja2, Tailwind CSS, HTMX, Alpine.js** | A modern, high-performance stack for server-rendered interactivity.                                            |
+| **AI Engine**    | **LangChain** & **`llama-cpp`**           | Robust orchestration with direct, efficient local model inference.                                             |
+| **Database**     | **SQLite** & **ChromaDB**                 | Lightweight, file-based storage for the MVP, managed by **SQLAlchemy** and **Alembic**.                        |
+| **DevOps**       | **Docker, `tox`, `pytest`, Ruff, Mypy**   | A fully containerized, quality-gated development environment with a comprehensive, multi-layered test suite.   |
 
 </div>
 
@@ -120,13 +115,15 @@ This is a high-level overview of our development milestones, focusing on the pat
 - [x] Establish professional project structure, tooling, and CI/CD foundation.
 
 **Milestone 2: The Core Engine (Completed)**
+
 - [x] Implement secure, headless User Authentication.
 - [x] Integrate local LLM and Embedding models.
 - [x] Build the Document Ingestion and core RAG services.
 - [x] Implement the **Chat** and **Message** service for conversation persistence.
 
 **Milestone 3: The Minimum Viable Interface (In Progress)**
-- [ ] Build the Streamlit UI for user interaction, login, and document upload.
+
+- [ ] Build the UI for user interaction, login, and document upload.
 - [ ] Implement "Teacher" and "Student" role-based access control.
 - [ ] Deploy the complete MVP to a public platform.
 

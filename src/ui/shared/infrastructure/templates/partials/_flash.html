@@ -1,0 +1,30 @@
+{#
+  A reusable, discreet flash message component.
+  It expects a 'flash_message' and a 'flash_category' ('success' or 'error').
+#}
+
+{% set colors = {
+    'error': {
+        'bg': 'bg-red-900/50',
+        'border': 'border-red-700',
+        'text': 'text-red-200'
+    },
+    'success': {
+        'bg': 'bg-green-900/50',
+        'border': 'border-green-700',
+        'text': 'text-green-200'
+    }
+} %}
+
+{% set color_scheme = colors.get(flash_category, colors.error) %}
+
+<div class="border-l-4 {{ color_scheme.border }} {{ color_scheme.bg }} p-4 mb-6" role="alert">
+    <div class="flex">
+          <svg class="h-5 w-5 {{ color_scheme.text }} mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+        <div>
+            <p class="text-sm {{ color_scheme.text }}">{{ flash_message }}</p>
+        </div>
+    </div>
+</div>

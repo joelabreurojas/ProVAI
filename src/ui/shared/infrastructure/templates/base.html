@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title | default("ProVAI - Your Personalized AI Tutor") }}</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/output.css') }}">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='/favicon/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='/favicon/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='/favicon/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', path='/favicon/site.webmanifest') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', path='/favicon/favicon.ico') }}">
+    
+   <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js" integrity="sha384-ZBXiYtYQ6hJ2Y0ZNoYuI+Nq5MqWBr+chMrS/RkXpNzQCApHEhOt2aY8EJgqwHLkJ" crossorigin="anonymous"></script>
+    
+    <script defer src="https://unpkg.com/alpinejs-intersect-class@1.x.x/dist/cdn.min.js"></script>
+
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    {% block head_scripts %}{% endblock %}
+</head>
+<body class="bg-nord-bg text-nord-text font-sans antialiased">
+    <header>
+        {% if navbar_type == 'public' %}
+            {% include "partials/_public-navbar.html" %}
+        {% elif navbar_type == 'app' %}
+            {% include "partials/_app-navbar.html" %}
+        {% endif %}
+    </header>
+
+    <main>
+        {% if toast_message %}
+            {% include "partials/_toast.html" %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        {% include "partials/_footer.html" %}
+        {% block footer_scripts %}{% endblock %}
+    </footer>
+</body>
+</html>

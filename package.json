@@ -1,0 +1,19 @@
+{
+	"name": "provai-frontend",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"build:css": "npx @tailwindcss/cli  -i ./src/ui/shared/infrastructure/static/css/input.css -o ./src/ui/shared/infrastructure/static/css/output.css --minify",
+		"watch:css": "npx @tailwindcss/cli -i ./src/ui/shared/infrastructure/static/css/input.css -o ./src/ui/shared/infrastructure/static/css/output.css --watch --pull",
+		"dev": "concurrently \"npm:watch:css\" \"npm:live-reload\"",
+		"live-reload": "browser-sync start --proxy 'app:8000' --files 'src/ui/shared/infrastructure/static/css/output.css, src/ui/*/infrastructure/templates/**/*.html' --no-notify"
+	},
+	"devDependencies": {
+		"browser-sync": "^3.0.4",
+		"concurrently": "^9.2.1",
+		"tailwindcss": "^4.1.13"
+	},
+	"dependencies": {
+		"@tailwindcss/cli": "^4.1.13"
+	}
+}

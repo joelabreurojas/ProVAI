@@ -87,4 +87,4 @@ We use a two-part field system to categorize every issue. This helps us filter t
 - `module:learning` - Related to the Learning Support Module (e.g., quizzes).
 - `module:observability` - Related to logging, metrics, or analytics.
 - `module:rag` - Related to the core RAG pipeline (ingestion, retrieval, generation).
-- `module:ui` - Related to the Streamlit frontend.
+- `module:ui` - Related to the frontend.

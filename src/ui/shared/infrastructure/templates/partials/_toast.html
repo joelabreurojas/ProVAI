@@ -1,0 +1,30 @@
+{#
+  A reusable, self-managing toast notification component.
+  Renders a transient, out-of-context message.
+  Expects: 'message' and 'category' ('success' or 'error').
+#}
+
+{% set colors = {
+    'error': { 'bg': 'bg-red-900/80', 'border': 'border-red-700', 'text': 'text-red-200', 'title': 'text-white' },
+    'success': { 'bg': 'bg-green-900/80', 'border': 'border-green-700', 'text': 'text-green-200', 'title': 'text-white' }
+} %}
+{% set color_scheme = colors.get(toast_category, colors.error) %}
+{% set title = "Success!" if toast_category == 'success' else "Error!" %}
+
+<div id="toast-notification" 
+     class="fixed top-20 right-5 z-50 max-w-xs {{ color_scheme.bg }} border {{ color_scheme.border }} text-sm rounded-xl shadow-lg backdrop-blur-sm" 
+     role="alert"
+     x-data="{ show: true }"
+     x-show="show"
+     x-init="setTimeout(() => show = false, 5000)"
+     x-transition:leave="transition ease-in duration-300"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0">
+    
+    <div class="flex p-4">
+        <div class="ml-3">
+            <p class="font-bold {{ color_scheme.title }}">{{ title }}</p>
+            <p class="text-sm {{ color_scheme.text }}">{{ toast_message }}</p>
+        </div>
+    </div>
+</div>

@@ -49,7 +49,7 @@ flowchart TD
 
 **Purpose:** To provide a seamless, intuitive, and real-time interface for all user interactions. This pillar encompasses both the visual frontend and the backend API that powers it, acting as the user's window into the system.
 
-- **Crawl (M3):** A clean, two-panel UI built **exclusively with Streamlit**. A secure FastAPI backend provides all necessary endpoints for authentication, chat management, and document uploads.
+- **Crawl (M3):** A clean, two-panel UI. A secure FastAPI backend provides all necessary endpoints for authentication, chat management, and document uploads.
 - **Walk (M4):** The UI will be enhanced with full multi-session management, allowing users to create, switch, and delete multiple private chats.
 - **Run (M4):** Advanced power-user features like multi-message selection and data portability will be implemented.
 

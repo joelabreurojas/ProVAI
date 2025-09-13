@@ -15,21 +15,21 @@ from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-from src.ai.dependencies import get_embedding_service, get_llm_service
-from src.auth.application.protocols import AuthServiceProtocol
-from src.auth.dependencies import (
+from src.api.ai.infrastructure.dependencies import (
+    get_embedding_service,
+    get_llm_service,
+)
+from src.api.auth.infrastructure.dependencies import (
     get_auth_service,
     get_password_service,
     get_token_service,
     get_user_repository,
 )
-from src.auth.domain.models import User
-from src.auth.domain.schemas import UserCreate
-from src.chat.dependencies import get_chat_repository, get_chat_service
-from src.core.infrastructure.database import SessionLocal
-from src.core.infrastructure.settings import settings
-from src.core.modules import import_models
-from src.rag.dependencies import (
+from src.api.chat.infrastructure.dependencies import (
+    get_chat_repository,
+    get_chat_service,
+)
+from src.api.rag.infrastructure.dependencies import (
     get_chunk_repository,
     get_document_repository,
     get_ingestion_service,
@@ -38,12 +38,17 @@ from src.rag.dependencies import (
     get_rag_vector_store,
     get_text_splitter,
 )
-from src.tutor.dependencies import (
+from src.api.tutor.infrastructure.dependencies import (
     get_invitation_repository,
     get_tutor_repository,
     get_tutor_service,
 )
-from src.tutor.domain.schemas import TutorCreate
+from src.core.application.protocols import AuthServiceProtocol
+from src.core.domain.models import User
+from src.core.domain.schemas import TutorCreate
+from src.core.infrastructure.database import SessionLocal
+from src.core.infrastructure.settings import settings
+from src.core.infrastructure.utils import import_core_models
 
 SAMPLE_DOC_PATH = Path("sample_data/attention_is_all_you_need.pdf")
 SAMPLE_QUERY = "What is a multi-head self-attention mechanism?"
@@ -124,9 +129,7 @@ def get_or_create_user(
         return user
 
     print(f"Creating new user: '{email}'...")
-    new_user = auth_service.register_user(
-        UserCreate(name=name, email=email, password=password)
-    )
+    new_user = auth_service.register_user(name=name, email=email, password=password)
     if role:
         new_user.role = role
         db_session.commit()
@@ -138,7 +141,7 @@ def main() -> None:
     """Runs a full, end-to-end demo of the headless RAG pipeline."""
     load_dotenv()
     logging.basicConfig(level=logging.INFO)
-    import_models()
+    import_core_models()
 
     if settings.ENV_STATE != "dev":
         print(

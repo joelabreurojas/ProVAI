@@ -50,4 +50,4 @@ We use `tox` as the single source of truth for all quality checks. Run `tox` loc
 
 ### Architecture
 
-This project follows the principles of **Screaming Architecture** and **Onion Architecture**. Please refer to the [Architecture Overview](docs/ARCHITECTURE.md) for a detailed explanation.
+This project follows a decoupled architecture based on Hexagonal (Ports & Adapters) and Onion principles. Before contributing, please familiarize yourself with the high-level overview in the [Architecture Document](/docs/ARCHITECTURE.md). The core principle is that all business logic lives in `src/core`, and the `src/api` and `src/ui` modules are independent adapters that consume it.

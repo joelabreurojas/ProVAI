@@ -2,6 +2,7 @@
 .vscode/
 .idea/
 .DS_Store
+*.swp
 
 # Local Environment & Secrets
 .env*
@@ -18,13 +19,16 @@ ENV/
 build/
 dist/
 *.egg-info/
+src/ui/shared/infrastructure/static/css/output.css
+node_modules/
 
 # Testing & Tool Caches
-.pytest_cache/
-.coverage
 htmlcov/
-.ruff_cache/
 .mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.tox
 
 # Databases
 *.db
