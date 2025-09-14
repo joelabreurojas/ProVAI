@@ -1,0 +1,58 @@
+{# A modal for students to enroll in a new Tutor using an invitation token.
+Controlled by Alpine.js. #}
+<div
+  x-show="showEnrollModal"
+  x-cloak
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+  @click.away="showEnrollModal = false"
+  x-transition:enter="transition ease-out duration-300"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  x-transition:leave="transition ease-in duration-200"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0"
+>
+  <div
+    class="w-full max-w-md bg-nord-bg-2 border border-nord-border p-6 rounded-lg shadow-2xl"
+    @click.stop
+  >
+    <div
+      class="flex justify-between items-center border-b border-nord-border pb-3"
+    >
+      <h3 class="text-lg font-bold text-white">Enroll in a New Tutor</h3>
+      <button
+        @click="showEnrollModal = false"
+        class="text-gray-400 hover:text-white"
+      >
+        &times;
+      </button>
+    </div>
+
+    <form
+      class="mt-4 space-y-4"
+      hx-post="/dashboard/enrollments"
+      hx-swap="none"
+    >
+      {% include "partials/_csrf_token_input.html" %}
+      <div>
+        <label
+          for="invitation_token"
+          class="block text-sm font-medium text-nord-text"
+          >Invitation Token</label
+        >
+        <input
+          id="invitation_token"
+          name="invitation_token"
+          type="text"
+          required
+          placeholder="Enter the token provided by your teacher"
+          class="mt-1 w-full bg-nord-bg border border-nord-border rounded-md p-2"
+        />
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button type="submit" class="btn btn-primary">Enroll</button>
+      </div>
+    </form>
+  </div>
+</div>
