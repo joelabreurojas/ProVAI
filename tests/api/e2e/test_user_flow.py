@@ -83,7 +83,9 @@ def test_full_user_flow(
 
     # Teacher uploads a document to the Tutor
     mock_vector_store = mocker.MagicMock()
+    mock_llm = mocker.MagicMock()
     app.dependency_overrides[get_rag_vector_store] = lambda: mock_vector_store
+    app.dependency_overrides[get_llm_service] = lambda: mock_llm
 
     doc = fitz.open()
     page = doc.new_page()
