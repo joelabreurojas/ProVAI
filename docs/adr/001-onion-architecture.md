@@ -1,6 +1,6 @@
 # ADR-001: Adopt Onion Architecture
 
-- **Status:** Superseded by [ADR-021](./021-hexagon-and-composition-architecture.md)
+- **Status:** Superseded by [ADR-022](./022-hexagon-and-composition-architecture.md)
 - **Date:** 2025-07-06
 - **Authors:** Joel Abreu Rojas
 
