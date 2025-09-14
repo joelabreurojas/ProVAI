@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 
 from src.api.auth.infrastructure.dependencies import get_current_user
 from src.api.rag.infrastructure.dependencies import get_ingestion_service
@@ -15,6 +15,7 @@ from src.core.domain.schemas import (
     TutorResponse,
 )
 from src.core.infrastructure.limiter import limiter
+from src.core.infrastructure.settings import settings
 
 TAG = {
     "name": "Tutor",
@@ -69,6 +70,18 @@ async def upload_document_to_tutor(
     tutor = tutor_service.verify_user_is_tutor_owner(
         tutor_id=tutor_id, user=current_user
     )
+
+    max_size_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+    file.file.seek(0)  # Reset the file pointer to the beginning
+
+    if file_size > max_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File size exceeds the limit of {settings.MAX_UPLOAD_SIZE_MB} MB.",
+        )
 
     file_bytes = await file.read()
     new_document = ingestion_service.ingest_document(

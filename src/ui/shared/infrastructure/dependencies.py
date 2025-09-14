@@ -1,8 +1,42 @@
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Form, HTTPException, Request, status
 
 from src.core.application.exceptions import TokenValidationError, UserNotFoundError
 from src.core.application.protocols import AuthServiceProtocol, TutorServiceProtocol
 from src.core.domain.models import User
+from src.ui.shared.infrastructure.security import csrf_service
+
+
+def get_csrf_token(request: Request) -> str:
+    """
+    Generates a CSRF token and stores it in the session if it doesn't exist.
+    Returns the token. This should be used when rendering forms.
+    """
+    if "csrf_token" not in request.session:
+        token = csrf_service.generate_token()
+        request.session["csrf_token"] = token
+    else:
+        token = request.session["csrf_token"]
+    return token
+
+
+async def validate_csrf_token(
+    request: Request,
+    csrf_token: str = Form(..., alias="csrf_token"),
+) -> None:
+    """
+    A dependency that validates the CSRF token from a form submission against
+    the one stored in the session.
+    """
+    stored_token = request.session.get("csrf_token")
+    if (
+        not stored_token
+        or not csrf_service.validate_token(csrf_token)
+        or csrf_token != stored_token
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or missing CSRF token.",
+        )
 
 
 def get_current_user_from_cookie(

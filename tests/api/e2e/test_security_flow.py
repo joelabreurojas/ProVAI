@@ -1,4 +1,8 @@
+import io
+from typing import Generator
+
 import fitz
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session as SQLAlchemySession
@@ -246,3 +250,61 @@ def test_teacher_cannot_post_message_in_students_private_chat(
 
     assert error_details["error_code"] == "CHAT_OWNERSHIP_REQUIRED"
     assert "You are not the owner of this chat" in error_details["message"]
+
+
+def test_upload_fails_for_file_exceeding_size_limit(
+    client: TestClient,
+    db_session: SQLAlchemySession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Tests that the API correctly rejects a file that is larger than the
+    configured maximum upload size.
+    """
+    context = setup_users_and_tutor(client, db_session)
+    tutor_id = context["tutor_id"]
+    teacher_headers = context["teacher_headers"]
+
+    monkeypatch.setattr(settings, "MAX_UPLOAD_SIZE_MB", 1)
+
+    large_file_content = b"a" * (2 * 1024 * 1024)
+    large_file = ("large.pdf", io.BytesIO(large_file_content), "application/pdf")
+
+    response = client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/documents",
+        files={"file": large_file},
+        headers=teacher_headers,
+    )
+    assert response.status_code == 413
+    assert "File size exceeds the limit of 1 MB" in response.json()["detail"]
+
+
+def test_upload_succeeds_for_valid_file_within_size_limit(
+    fresh_ai_services: Generator[None, None, None],
+    client: TestClient,
+    db_session: SQLAlchemySession,
+) -> None:
+    """
+    Tests that a valid PDF file under the size limit can be successfully
+    uploaded and ingested.
+    """
+    context = setup_users_and_tutor(client, db_session)
+    tutor_id = context["tutor_id"]
+    teacher_headers = context["teacher_headers"]
+
+    # Create a valid PDF that is large enough to produce chunks
+    doc = fitz.open()
+    page = doc.new_page()
+    long_text = "This is a test sentence for our valid PDF. " * 50
+    page.insert_text((50, 72), long_text)
+    pdf_bytes = doc.write()
+    doc.close()
+
+    valid_file = ("valid_doc.pdf", pdf_bytes, "application/pdf")
+
+    response = client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/documents",
+        files={"file": valid_file},
+        headers=teacher_headers,
+    )
+    assert response.status_code == 201

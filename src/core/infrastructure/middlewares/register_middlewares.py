@@ -9,8 +9,15 @@ from src.core.infrastructure.settings import settings
 
 from .logging_middleware import logging_middleware
 
+is_prod = settings.ENV_STATE == "prod"
+session_middleware_options = {
+    "secret_key": settings.SECRET_KEY,
+    "https_only": is_prod,  # Only send cookie over HTTPS in production
+    "same_site": "lax",  # Recommended setting for most apps
+}
+
 _MIDDLEWARE_STACK: list[Tuple[Any, dict[str, Any]]] = [
-    (SessionMiddleware, {"secret_key": settings.SECRET_KEY}),
+    (SessionMiddleware, session_middleware_options),
     (SlowAPIMiddleware, {}),
     (BaseHTTPMiddleware, {"dispatch": logging_middleware}),
 ]

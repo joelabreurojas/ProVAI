@@ -1,6 +1,7 @@
 import os
-from collections.abc import Generator
+import shutil
 from pathlib import Path
+from typing import Generator
 
 import pytest
 from fastapi import FastAPI
@@ -13,6 +14,10 @@ from sqlalchemy.orm import sessionmaker
 os.environ["ENV_STATE"] = "test"
 
 from src.api.ai.application.services import EmbeddingService
+from src.api.ai.application.services.embedding_service import (
+    _load_embedding_model_singleton,
+)
+from src.api.ai.application.services.llm_service import _load_llm_singleton
 from src.api.rag.infrastructure.dependencies import get_rag_vector_store
 from src.core.infrastructure.app import create_app
 from src.core.infrastructure.database import Base, get_db
@@ -56,13 +61,18 @@ def embedding_service() -> EmbeddingService:
 
 
 @pytest.fixture(scope="function")
-def test_vector_store(embedding_service: EmbeddingService) -> Chroma:
+def test_vector_store(
+    embedding_service: EmbeddingService,
+) -> Generator[Chroma, None, None]:
     """
-    It creates a ChromaDB instance in a temporary directory that is automatically
-    cleaned up by pytest after the test runs.
+    Provides a clean, isolated ChromaDB instance for each test.
+    It creates a ChromaDB instance in a temporary directory and, crucially,
+    deletes the entire directory after the test runs to prevent pollution.
     """
     tmp_dir = Path(f"/tmp/pytest-of-{os.getuid()}/pytest-current")
-    test_store_path = tmp_dir / "test_vector_store"
+    test_store_path = tmp_dir / f"test_vector_store_{os.urandom(8).hex()}"
+
+    test_store_path.parent.mkdir(parents=True, exist_ok=True)
 
     embedding_model = embedding_service.get_embedding_model()
 
@@ -70,7 +80,12 @@ def test_vector_store(embedding_service: EmbeddingService) -> Chroma:
         persist_directory=str(test_store_path),
         embedding_function=embedding_model,
     )
-    return vector_store
+
+    try:
+        yield vector_store
+    finally:
+        if test_store_path.exists():
+            shutil.rmtree(test_store_path)
 
 
 @pytest.fixture(scope="function")
@@ -106,3 +121,15 @@ def client(app: FastAPI) -> Generator[TestClient, None, None]:
     """
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture()
+def fresh_ai_services() -> Generator[None, None, None]:
+    """
+    A fixture that automatically clears the singleton caches for the AI services
+    before every test runs. This is the definitive solution to test pollution
+    from the session-scoped AI models.
+    """
+    _load_llm_singleton.cache_clear()
+    _load_embedding_model_singleton.cache_clear()
+    yield
