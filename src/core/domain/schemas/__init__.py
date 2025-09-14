@@ -16,7 +16,7 @@ from .tutor_schemas import (
     TutorInvitationResponse,
     TutorResponse,
 )
-from .user_schemas import UserBase, UserCreate, UserResponse
+from .user_schemas import PasswordUpdate, UserBase, UserCreate, UserResponse, UserUpdate
 
 __all__ = [
     "ChatBase",
@@ -33,7 +33,9 @@ __all__ = [
     "TutorInvitationResponse",
     "StudentEnrollmentCreate",
     "StudentEnrollmentResponse",
+    "PasswordUpdate",
     "UserBase",
     "UserCreate",
+    "UserUpdate",
     "UserResponse",
 ]

@@ -75,6 +75,43 @@ class UserCreate(UserBase):
         return value
 
 
+class UserUpdate(UserBase):
+    """Schema for updating a user's profile information."""
+
+    pass
+
+
+class PasswordUpdate(BaseModel):
+    """Schema for updating a user's password."""
+
+    current_password: str
+    new_password: str = Field(..., alias="new_password")  # Use alias to match form name
+    confirm_password: str
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_complexity(cls, value: str) -> str:
+        """
+        Validates that the password meets complexity requirements:
+        - At least 8 characters
+        - At least one uppercase letter
+        - At least one lowercase letter
+        - At least one number
+        - At least one special character
+        """
+        if len(value) < 8:
+            raise ValueError("Password must be at least 8 characters long.")
+        if not re.search(r"[A-Z]", value):
+            raise ValueError("Password must contain at least one uppercase letter.")
+        if not re.search(r"[a-z]", value):
+            raise ValueError("Password must contain at least one lowercase letter.")
+        if not re.search(r"\d", value):
+            raise ValueError("Password must contain at least one number.")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
+            raise ValueError("Password must contain at least one special character.")
+        return value
+
+
 class UserResponse(UserBase):
     """
     Schema for returning user data to the client.
