@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, Request, status
 
 from src.core.application.exceptions import TokenValidationError, UserNotFoundError
-from src.core.application.protocols import AuthServiceProtocol
+from src.core.application.protocols import AuthServiceProtocol, TutorServiceProtocol
 from src.core.domain.models import User
 
 
@@ -43,3 +43,15 @@ def get_optional_current_user_from_cookie(
     except (UserNotFoundError, TokenValidationError):
         # If the auth is invalid for any reason, treat them as logged out.
         return None
+
+
+def get_sidebar_context(
+    user: User = Depends(get_current_user_from_cookie),
+    tutor_service: TutorServiceProtocol = Depends(),
+) -> dict:
+    """
+    A dependency that provides all necessary context for rendering the
+    shared application layout, including the user and their tutors.
+    """
+    tutors = tutor_service.get_tutors_for_user(user)
+    return {"user": user, "tutors": tutors}

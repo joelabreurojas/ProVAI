@@ -6,7 +6,10 @@ from src.core.application.exceptions import InsufficientPermissionsError
 from src.core.application.protocols import TutorServiceProtocol
 from src.core.domain.models import User
 from src.core.domain.schemas import TutorCreate
-from src.ui.shared.infrastructure.dependencies import get_current_user_from_cookie
+from src.ui.shared.infrastructure.dependencies import (
+    get_current_user_from_cookie,
+    get_sidebar_context,
+)
 from src.ui.shared.infrastructure.utils import render_template
 
 router = APIRouter(
@@ -17,17 +20,16 @@ router = APIRouter(
 @router.get("")
 async def serve_dashboard(
     request: Request,
-    user: User = Depends(get_current_user_from_cookie),
-    tutor_service: TutorServiceProtocol = Depends(),
+    sidebar_context: dict = Depends(get_sidebar_context),
 ) -> Response:
-    tutors = tutor_service.get_tutors_for_user(user)
-
+    """
+    Serves the main dashboard page for the authenticated user.
+    """
     context = {
         "request": request,
         "navbar_type": "app",
-        "user": user,
-        "tutors": tutors,
         "title": "Your Learning Hub",
+        **sidebar_context,
     }
 
     response: Response = render_template("dashboard.html", context)
@@ -38,18 +40,14 @@ async def serve_dashboard(
 @router.get("/tutors", response_class=Response)
 async def serve_tutor_list(
     request: Request,
-    user: User = Depends(get_current_user_from_cookie),
-    tutor_service: TutorServiceProtocol = Depends(),
+    sidebar_context: dict = Depends(get_sidebar_context),
 ) -> Response:
     """
     Fetches the list of tutors for the current user and renders them
-    as an HTML partial. This is called by HTMX.
+    as an HTML partial. This is intended for HTMX swaps.
     """
-    tutors = tutor_service.get_tutors_for_user(user)
-    context = {"request": request, "tutors": tutors, "user": user}
-
-    response: Response = render_template("partials/_tutor_list.html", context)
-
+    context = {"request": request, **sidebar_context}
+    response: Response = render_template("partials/_app_sidebar.html", context)
     return response
 
 
@@ -57,6 +55,7 @@ async def serve_tutor_list(
 async def handle_create_tutor(
     request: Request,
     course_name: str = Form(...),
+    # We still need the raw user object for the service call
     user: User = Depends(get_current_user_from_cookie),
     tutor_service: TutorServiceProtocol = Depends(),
 ) -> Response:
@@ -64,26 +63,24 @@ async def handle_create_tutor(
     try:
         tutor_service.create_tutor(TutorCreate(course_name=course_name), teacher=user)
 
-        tutors = tutor_service.get_tutors_for_user(user)
-        context = {"request": request, "tutors": tutors, "user": user}
+        # After creation, fetch the fresh context to re-render the sidebar
+        fresh_sidebar_context = {
+            "user": user,
+            "tutors": tutor_service.get_tutors_for_user(user),
+        }
+        context = {"request": request, **fresh_sidebar_context}
 
-        response: Response = render_template("partials/_tutor_list.html", context)
-
+        response: Response = render_template("partials/_app_sidebar.html", context)
+        # Use HX-Trigger to also send an event that other parts of the UI can listen to
+        response.headers["HX-Trigger"] = "tutorListChanged"
         return response
 
     except InsufficientPermissionsError:
         context = {
             "request": request,
-            "toast_id": f"toast-error-{int(time.time())}",
-            "toast_type": "error",
-            "title": "Authorization Error",
-            "message": "Only teachers can create new Tutors.",
+            "toast_category": "error",
+            "toast_message": "Only teachers can create new Tutors.",
         }
-
-        response = render_template(
-            "partials/_toast.html",
-            context,
-            headers={"HX-Reswap": "beforeend", "HX-Retarget": "#toast-container"},
-        )
-
+        # This will render the toast and swap it into the body
+        response = render_template("partials/_toast.html", context)
         return response
