@@ -45,9 +45,9 @@ This decision is implemented through the following definitive principles:
 
 This RESTful approach was chosen because it is architecturally and conceptually superior:
 
--   **Professional and Predictable:** It is the industry standard. Any developer, on any team, can immediately understand the structure and purpose of our API.
--   **Scalable and Future-Proof:** This design makes it trivial to add new resources in the future without breaking existing ones. It is the perfect foundation for API versioning.
--   **Perfect Architectural Alignment:** The resource-oriented nature of the API is a beautiful and direct reflection of our feature-based Screaming Architecture on the backend. The code "screams" the API, and the API "screams" the code.
+- **Professional and Predictable:** It is the industry standard. Any developer, on any team, can immediately understand the structure and purpose of our API.
+- **Scalable and Future-Proof:** This design makes it trivial to add new resources in the future without breaking existing ones. It is the perfect foundation for API versioning.
+- **Perfect Architectural Alignment:** The resource-oriented nature of the API is a beautiful and direct reflection of our feature-based Screaming Architecture on the backend. The code "screams" the API, and the API "screams" the code.
 
 ---
 

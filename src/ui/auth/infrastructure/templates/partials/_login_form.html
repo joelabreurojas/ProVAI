@@ -4,6 +4,8 @@
       hx-target="this"
       hx-swap="outerHTML">
 
+    {% include "partials/_csrf_token_input.html" %}
+
     {% if error_message %}
         {% include "partials/_form_error.html" %}
     {% endif %}

@@ -7,6 +7,8 @@
       @htmx:before-request="isSubmitting = true"
       @htmx:after-request="isSubmitting = false">
 
+    {% include "partials/_csrf_token_input.html" %}
+
     {% if error_message %}
         {% include "partials/_form_error.html" %}
     {% endif %}

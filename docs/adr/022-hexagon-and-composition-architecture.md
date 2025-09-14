@@ -1,4 +1,4 @@
-# ADR-021: Adopt a Hexagonal Architecture with a Composition Root
+# ADR-022: Adopt a Hexagonal Architecture with a Composition Root
 
 - **Status:** Accepted
 - **Date:** 2025-09-15
