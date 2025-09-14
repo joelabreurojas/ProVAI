@@ -56,7 +56,6 @@ class IngestionService(IngestionServiceProtocol):
 
         try:
             db_document = self.doc_repo.create_document(file_name=file_name)
-
             chunks = self._split_documents(langchain_docs)
 
             all_hashes = [
