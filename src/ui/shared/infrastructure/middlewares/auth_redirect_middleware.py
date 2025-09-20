@@ -7,10 +7,8 @@ class AuthRedirectMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
-        # First, get the response from the rest of the application
         response = await call_next(request)
 
-        # Now, inspect the response.
         is_ui_route = not request.url.path.startswith("/api")
         is_unauthorized = response.status_code == status.HTTP_401_UNAUTHORIZED
         is_auth_route = request.url.path.startswith("/auth")

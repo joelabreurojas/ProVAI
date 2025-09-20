@@ -77,15 +77,15 @@ def setup_users_and_tutor(
     # Log in all users to get tokens
     teacher_login_res = client.post(
         f"{api_prefix}/auth/token",
-        data={"username": TEACHER_EMAIL, "password": VALID_TEACHER_PASSWORD},
+        data={"email": TEACHER_EMAIL, "password": VALID_TEACHER_PASSWORD},
     )
     student_a_login_res = client.post(
         f"{api_prefix}/auth/token",
-        data={"username": STUDENT_A_EMAIL, "password": VALID_STUDENT_A_PASSWORD},
+        data={"email": STUDENT_A_EMAIL, "password": VALID_STUDENT_A_PASSWORD},
     )
     student_b_login_res = client.post(
         f"{api_prefix}/auth/token",
-        data={"username": STUDENT_B_EMAIL, "password": VALID_STUDENT_B_PASSWORD},
+        data={"email": STUDENT_B_EMAIL, "password": VALID_STUDENT_B_PASSWORD},
     )
 
     context = {

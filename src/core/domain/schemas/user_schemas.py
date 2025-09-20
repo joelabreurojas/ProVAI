@@ -70,7 +70,7 @@ class UserCreate(UserBase):
             raise ValueError("Password must contain at least one lowercase letter.")
         if not re.search(r"\d", value):
             raise ValueError("Password must contain at least one number.")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
+        if not re.search(r"[!@#$%_^&*(),.?\":{}|<>]", value):
             raise ValueError("Password must contain at least one special character.")
         return value
 
@@ -88,7 +88,7 @@ class PasswordUpdate(BaseModel):
     new_password: str = Field(..., alias="new_password")  # Use alias to match form name
     confirm_password: str
 
-    @field_validator("password")
+    @field_validator("new_password")
     @classmethod
     def validate_password_complexity(cls, value: str) -> str:
         """
@@ -107,7 +107,7 @@ class PasswordUpdate(BaseModel):
             raise ValueError("Password must contain at least one lowercase letter.")
         if not re.search(r"\d", value):
             raise ValueError("Password must contain at least one number.")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
+        if not re.search(r"[!@#$%_^&*(),.?\":{}|<>]", value):
             raise ValueError("Password must contain at least one special character.")
         return value
 

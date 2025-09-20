@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, Request, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, Form, Request, status
 from starlette.exceptions import HTTPException
 
 from src.api.auth.infrastructure.dependencies import get_auth_service
@@ -52,17 +51,14 @@ async def register_user(
 @limiter.limit("10/minute")
 async def login_for_access_token(
     request: Request,
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    email: str = Form(...),
+    password: str = Form(...),
     auth_service: AuthServiceProtocol = Depends(get_auth_service),
 ) -> Token:
     """
-    Handles user login using the OAuth2 password flow.
-
+    Handles user login using email and password.
     - Authenticates the user with their email and password.
     - Returns a JWT access token upon successful authentication.
     """
-
-    _, access_token = auth_service.authenticate_user(
-        email=form_data.username, password=form_data.password
-    )
+    _, access_token = auth_service.authenticate_user(email=email, password=password)
     return Token(access_token=access_token, token_type="bearer")

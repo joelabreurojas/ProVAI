@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.api.account.application.services.account_service import AccountServiceProtocol
 from src.api.account.infrastructure.dependencies import get_account_service
 from src.api.auth.infrastructure.dependencies import get_current_user
 from src.core.application.exceptions import (
     InvalidCredentialsError,
     InvalidPasswordError,
 )
+from src.core.application.protocols import AccountServiceProtocol
 from src.core.domain.models import User
 from src.core.domain.schemas import PasswordUpdate, UserResponse, UserUpdate
 

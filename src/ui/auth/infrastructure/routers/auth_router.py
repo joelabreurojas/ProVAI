@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form, Request, Response, status
 from fastapi.responses import RedirectResponse
-from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import ValidationError
 
 from src.core.application.exceptions import (
     InvalidCredentialsError,
@@ -9,6 +9,7 @@ from src.core.application.exceptions import (
 )
 from src.core.application.protocols import AuthServiceProtocol
 from src.core.domain.models import User
+from src.core.domain.schemas import UserCreate
 from src.ui.shared.infrastructure.dependencies import (
     get_optional_current_user_from_cookie,
     validate_csrf_token,
@@ -20,7 +21,7 @@ router = APIRouter(
 )
 
 
-@router.get("/login", response_class=Response, name="serve_login_page")
+@router.get("/login", response_class=Response)
 async def serve_login_page(
     request: Request, user: User | None = Depends(get_optional_current_user_from_cookie)
 ) -> Response:
@@ -57,17 +58,14 @@ async def serve_register_page(
 @router.post("/login")
 async def handle_login_form(
     request: Request,
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    email: str = Form(...),
+    password: str = Form(...),
     auth_service: AuthServiceProtocol = Depends(),
     _csrf_token: None = Depends(validate_csrf_token),
 ) -> Response:
     try:
-        user, token = auth_service.authenticate_user(
-            email=form_data.username, password=form_data.password
-        )
-
+        user, token = auth_service.authenticate_user(email=email, password=password)
         request.session.update({"user_token": token, "user_role": user.role})
-
         response = Response()
         response.headers["HX-Redirect"] = "/dashboard"
         return response
@@ -86,20 +84,28 @@ async def handle_register_form(
     _csrf_token: None = Depends(validate_csrf_token),
 ) -> Response:
     try:
-        auth_service.register_user(name=name, email=email, password=password)
+        user_data = UserCreate(name=name, email=email, password=password)
 
-        request.session["toast_message"] = "Registration successful!"
+        auth_service.register_user(
+            name=user_data.name, email=user_data.email, password=user_data.password
+        )
+
+        request.session["toast_message"] = "Registration successful! Please log in."
         request.session["toast_category"] = "success"
 
         return Response(
             status_code=status.HTTP_200_OK, headers={"HX-Redirect": "/auth/login"}
         )
 
-    except (UserAlreadyExistsError, InvalidPasswordError) as e:
-        context = {"request": request, "error_message": e.message}
-        response: Response = render_template("partials/_register_form.html", context)
+    except ValidationError as e:
+        error_message = e.errors()[0]["msg"]
+        context = {"request": request, "error_message": error_message}
+        return render_template("partials/_register_form.html", context)
 
-        return response
+    except (UserAlreadyExistsError, InvalidPasswordError) as e:
+        # This catches business logic errors from the service.
+        context = {"request": request, "error_message": e.message}
+        return render_template("partials/_register_form.html", context)
 
 
 @router.post("/logout")

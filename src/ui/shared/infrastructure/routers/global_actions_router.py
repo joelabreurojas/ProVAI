@@ -65,7 +65,7 @@ async def handle_create_tutor(
         # Return just the updated sidebar to be swapped in by HTMX
         return render_template("partials/_app_sidebar.html", context)
     except InsufficientPermissionsError:
-        # This case is less likely due to the UI hiding the button, but it's good practice
+        # This case is less likely due to the UI hiding the button
         context = {
             "request": request,
             "toast_category": "error",
