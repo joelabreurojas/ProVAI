@@ -4,11 +4,7 @@
 <div class="bg-nord-bg-2 border border-nord-border rounded-lg shadow-lg p-8 h-full flex items-center justify-center">
     <div class="text-center">
         <h1 class="text-3xl font-bold tracking-tight text-white">
-            {% if user.role == 'teacher' %}
-                Welcome back, Dr. {{ user.name.split()[-1] }}!
-            {% else %}
-                Welcome back, {{ user.name.split()[0] }}!
-            {% endif %}
+            Welcome back, {{ user.name.split()[0] }}!
         </h1>
         <p class="mt-4 text-lg text-gray-400">
             {% if user.role == 'teacher' %}

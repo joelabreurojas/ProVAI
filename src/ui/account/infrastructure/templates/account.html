@@ -29,8 +29,7 @@
                 <input id="email" name="email" type="email" value="{{ user.email }}" required class="mt-1 w-full bg-nord-bg border border-nord-border rounded-md p-2">
             </div>
             <div class="flex justify-end items-center">
-                <span id="profile-spinner" class="htmx-indicator text-sm text-gray-400 mr-4">Saving...</span>
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="submit" class="btn btn-primary btn-normal">Save Changes</button>
             </div>
         </form>
     </div>
@@ -85,7 +84,7 @@
                 </div>
             </div>
             <div class="flex justify-end">
-                <button type="submit" class="btn btn-primary">Update Password</button>
+                <button type="submit" class="btn btn-primary btn-normal">Update Password</button>
             </div>
         </form>
     </div>
@@ -96,25 +95,22 @@
             <h2 class="text-xl font-semibold text-white">Delete Account</h2>
             <p class="mt-1 text-sm text-red-200">Once you delete your account, there is no going back. Please be certain.</p>
             <div x-data="{ open: false }" class="mt-4">
-                <button @click="open = true" type="button" class="btn btn-danger">Delete Account</button>
+                <button @click="open = true" type="button" class="btn btn-danger btn-normal">Delete Account</button>
                 <!-- Confirmation Modal -->
                 <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" @click.away="open = false">
                     <div class="w-full max-w-md bg-nord-bg-2 border border-nord-border p-6 rounded-lg shadow-2xl">
                         <h3 class="text-lg font-bold text-white">Are you absolutely sure?</h3>
                         <p class="mt-2 text-sm text-gray-400">This action cannot be undone. This will permanently delete your account and all associated data.</p>
                         <div class="mt-6 flex justify-end space-x-4">
-                            <button @click="open = false" type="button" class="btn btn-secondary">Cancel</button>
-                            <button 
-                                type="button" 
-                                class="btn btn-danger"
-                                hx-delete="/api/v1/account"
-                                hx-trigger="click"
+                            <button @click="open = false" type="button" class="btn btn-secondary btn-normal">Cancel</button>
+                            <form
+                                hx-post="/account/delete"
                                 hx-target="body"
                                 hx-push-url="/"
-                                hx-confirm="false"
                             >
-                                Yes, Delete My Account
-                            </button>
+                                {% include "partials/_csrf_token_input.html" %}
+                                <button type="submit" class="btn btn-danger btn-normal">Yes, Delete My Account</button>
+                            </form>
                         </div>
                     </div>
                 </div>

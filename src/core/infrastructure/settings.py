@@ -1,6 +1,15 @@
+from typing import TypedDict
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core.domain.config import DevConfig, ProdConfig, TestConfig
+
+
+class _ConfigKwargs(TypedDict):
+    """Defines the shape of the keyword arguments for config classes."""
+
+    SECRET_KEY: str
+    ENV_STATE: str
 
 
 class _EnvironmentSettings(BaseSettings):
@@ -36,21 +45,22 @@ def _load_settings() -> DevConfig | TestConfig | ProdConfig:
     env = _EnvironmentSettings()
     _validate_settings(env)
 
-    config_class: DevConfig | TestConfig | ProdConfig = DevConfig
+    config_args: _ConfigKwargs = {
+        "SECRET_KEY": env.SECRET_KEY,
+        "ENV_STATE": env.ENV_STATE,
+    }
 
-    if env.ENV_STATE == "test":
-        config_class = TestConfig
+    config: DevConfig | TestConfig | ProdConfig
 
-    elif env.ENV_STATE == "prod":
-        config_class = ProdConfig
-
-    config = config_class(SECRET_KEY=env.SECRET_KEY, ENV_STATE=env.ENV_STATE)
+    if env.ENV_STATE == "dev":
+        config = DevConfig(**config_args)
+    elif env.ENV_STATE == "test":
+        config = TestConfig(**config_args)
+    else:  # prod
+        config = ProdConfig(DB_URL=env.DB_URL, **config_args)
 
     if env.INTERNAL_API_URL:
         config.INTERNAL_API_URL = env.INTERNAL_API_URL
-
-    if env.DB_URL and env.ENV_STATE == "prod":
-        config.DB_URL = env.DB_URL
 
     return config
 

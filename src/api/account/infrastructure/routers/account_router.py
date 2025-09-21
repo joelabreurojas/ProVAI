@@ -29,7 +29,7 @@ async def update_user_password(
     password_data: PasswordUpdate,
     current_user: User = Depends(get_current_user),
     account_service: AccountServiceProtocol = Depends(get_account_service),
-):
+) -> None:
     if password_data.new_password != password_data.confirm_password:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -47,5 +47,5 @@ async def update_user_password(
 async def delete_user_account(
     current_user: User = Depends(get_current_user),
     account_service: AccountServiceProtocol = Depends(get_account_service),
-):
+) -> None:
     account_service.delete_account(current_user)

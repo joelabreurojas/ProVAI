@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, Request, Response
 
 from src.ui.shared.infrastructure.dependencies import get_sidebar_context
@@ -11,7 +13,7 @@ router = APIRouter(
 @router.get("")
 async def serve_dashboard(
     request: Request,
-    sidebar_context: dict = Depends(get_sidebar_context),
+    sidebar_context: dict[str, Any] = Depends(get_sidebar_context),
 ) -> Response:
     """
     Serves the main dashboard page for the authenticated user.

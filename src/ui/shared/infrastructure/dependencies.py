@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 import httpx
 from fastapi import Depends, Form, HTTPException, Request, status
@@ -53,7 +54,7 @@ def get_optional_current_user_from_cookie(
 def get_sidebar_context(
     user: User = Depends(get_current_user_from_cookie),
     tutor_service: TutorServiceProtocol = Depends(),
-) -> dict:
+) -> dict[str, Any]:
     """
     A dependency that provides all necessary context for rendering the
     shared application layout, including the user and their tutors.

@@ -1,10 +1,12 @@
 import os
 import shutil
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Generator
+from typing import AsyncGenerator, Generator
 
+import httpx
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from langchain_chroma import Chroma
 from sqlalchemy import create_engine
@@ -22,6 +24,10 @@ from src.api.rag.infrastructure.dependencies import get_rag_vector_store
 from src.core.infrastructure.app import create_app
 from src.core.infrastructure.database import Base, get_db
 from src.core.infrastructure.settings import settings
+from src.ui.shared.infrastructure.dependencies import (
+    get_authenticated_bff_api_client,
+    get_unauthenticated_bff_api_client,
+)
 
 # The connect_args is specific to SQLite and is necessary
 # to allow the database connection to be shared across different threads.
@@ -98,14 +104,40 @@ def app(
     """
     app = create_app()
 
-    def override_get_db() -> Generator[SQLAlchemySession, None, None]:
-        yield db_session
+    transport = httpx.ASGITransport(app=app)
 
-    def override_get_vector_store() -> Chroma:
-        return test_vector_store
+    # The base_url includes the API prefix for correct routing
+    api_base_url = f"http://testserver{settings.API_ROOT_PATH}"
 
-    app.dependency_overrides[get_db] = override_get_db
-    app.dependency_overrides[get_rag_vector_store] = override_get_vector_store
+    @asynccontextmanager
+    async def override_get_unauthenticated_bff_api_client() -> AsyncGenerator[
+        httpx.AsyncClient, None
+    ]:
+        async with httpx.AsyncClient(
+            transport=transport, base_url=api_base_url
+        ) as client:
+            yield client
+
+    @asynccontextmanager
+    async def override_get_authenticated_bff_api_client(
+        request: Request,
+    ) -> AsyncGenerator[httpx.AsyncClient, None]:
+        token = request.session.get("user_token")
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        async with httpx.AsyncClient(
+            transport=transport, base_url=api_base_url, headers=headers
+        ) as client:
+            yield client
+
+    app.dependency_overrides[get_unauthenticated_bff_api_client] = (
+        override_get_unauthenticated_bff_api_client
+    )
+    app.dependency_overrides[get_authenticated_bff_api_client] = (
+        override_get_authenticated_bff_api_client
+    )
+
+    app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[get_rag_vector_store] = lambda: test_vector_store
 
     yield app
 

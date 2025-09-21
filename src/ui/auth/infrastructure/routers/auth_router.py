@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, Form, Request, Response, status
 from fastapi.responses import RedirectResponse
 
 from src.core.domain.models import User
-from src.core.infrastructure.settings import settings
 from src.ui.shared.infrastructure.dependencies import (
+    get_authenticated_bff_api_client,
     get_optional_current_user_from_cookie,
     get_unauthenticated_bff_api_client,
     validate_csrf_token,
@@ -59,26 +59,31 @@ async def handle_login_form(
     unauthenticated_client_manager: httpx.AsyncClient = Depends(
         get_unauthenticated_bff_api_client
     ),
+    authenticated_client_manager: httpx.AsyncClient = Depends(
+        get_authenticated_bff_api_client
+    ),
 ) -> Response:
+    # Use 'async with' to get the actual client from the context manager
     async with unauthenticated_client_manager as client:
-        client_response = await client.post(
+        api_response = await client.post(
             "/auth/token", data={"email": email, "password": password}
         )
 
-    if client_response.status_code != status.HTTP_200_OK:
-        error_message = client_response.json().get("message", "Login failed.")
+    if api_response.status_code != status.HTTP_200_OK:
+        error_message = api_response.json().get(
+            "message", "Incorrect email or password."
+        )
         context = {"request": request, "error_message": error_message}
         return render_template("partials/_login_form.html", context)
 
-    token_data = client_response.json()
+    token_data = api_response.json()
     token = token_data.get("access_token")
 
-    # Temporary client to fetch the user's profile.
-    headers = {"Authorization": f"Bearer {token}"}
-    async with httpx.AsyncClient(
-        base_url=f"{settings.INTERNAL_API_URL}{settings.API_ROOT_PATH}",
-        headers=headers,
-    ) as authenticated_client:
+    # This is a temporary measure to update the session for the next dependency
+    request.session["user_token"] = token
+
+    # Use the dependency-injected authenticated client to fetch the user profile
+    async with authenticated_client_manager as authenticated_client:
         me_response = await authenticated_client.get("/users/me")
 
     if me_response.status_code != status.HTTP_200_OK:
@@ -86,13 +91,11 @@ async def handle_login_form(
             "request": request,
             "error_message": "Could not retrieve user profile after login.",
         }
-        response: Response = render_template("partials/_login_form.html", context)
-
-        return response
+        return render_template("partials/_login_form.html", context)
 
     user_data = me_response.json()
 
-    # Populate the session with data from the /users/me endpoint.
+    # Finalize the session with all required user data
     request.session.update({"user_token": token, "user_role": user_data.get("role")})
 
     response = Response()
@@ -113,9 +116,9 @@ async def handle_register_form(
 ) -> Response:
     user_data = {"name": name, "email": email, "password": password}
     async with unauthenticated_client_manager as client:
-        client_response = await client.post("/auth/register", json=user_data)
+        api_response = await client.post("/auth/register", json=user_data)
 
-    if client_response.status_code == status.HTTP_201_CREATED:
+    if api_response.status_code == status.HTTP_201_CREATED:
         request.session["toast_message"] = "Registration successful! Please log in."
         request.session["toast_category"] = "success"
         return Response(
@@ -124,7 +127,7 @@ async def handle_register_form(
     else:
         error_message = "An unknown registration error occurred."
         try:
-            error_json = client_response.json()
+            error_json = api_response.json()
             # Handle Pydantic's detailed validation errors (422)
             if "detail" in error_json and isinstance(error_json["detail"], list):
                 # Get the message from the first error object

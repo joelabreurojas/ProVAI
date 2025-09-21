@@ -8,7 +8,7 @@ def test_form_submission_fails_without_csrf_token(client: TestClient) -> None:
     """
     response = client.post(
         "/auth/login",
-        data={"username": "test@test.com", "password": "password"},
+        data={"email": "test@test.com", "password": "password"},
     )
     # FastAPI returns 422 if form field is missing, which is expected here.
     # A more advanced test could simulate a session but omit the form field.
@@ -42,7 +42,7 @@ def test_form_submission_succeeds_with_valid_csrf_token(client: TestClient) -> N
     post_response = client.post(
         "/auth/login",
         data={
-            "username": "no-such-user@test.com",
+            "email": "no-such-user@test.com",
             "password": "password",
             "csrf_token": csrf_token,
         },

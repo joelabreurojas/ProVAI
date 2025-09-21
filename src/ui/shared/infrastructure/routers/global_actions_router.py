@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, Form, Request, Response
 
 from src.core.application.exceptions import (
@@ -51,7 +53,7 @@ async def handle_create_tutor(
     course_name: str = Form(...),
     user: User = Depends(get_current_user_from_cookie),
     tutor_service: TutorServiceProtocol = Depends(),
-    sidebar_context: dict = Depends(get_sidebar_context),
+    sidebar_context: dict[str, Any] = Depends(get_sidebar_context),
 ) -> Response:
     """Handles a teacher's request to create a new tutor from the sidebar."""
     try:

@@ -1,3 +1,5 @@
+from typing import Any
+
 import httpx
 from fastapi import APIRouter, Depends, Form, Request, Response, status
 
@@ -14,7 +16,7 @@ router = APIRouter(prefix="/account", tags=["UI - Account"], include_in_schema=F
 @router.get("")
 async def serve_account_page(
     request: Request,
-    sidebar_context: dict = Depends(get_sidebar_context),
+    sidebar_context: dict[str, Any] = Depends(get_sidebar_context),
 ) -> Response:
     """
     Serves the main account management page, inheriting the shared app layout.
@@ -42,11 +44,11 @@ async def handle_update_profile(
 ) -> Response:
     """BFF endpoint to handle profile update form submission."""
     async with authenticated_client_manager as client:
-        client_response = await client.patch(
+        api_response = await client.patch(
             "/account/profile", json={"name": name, "email": email}
         )
 
-    if client_response.status_code == status.HTTP_200_OK:
+    if api_response.status_code == status.HTTP_200_OK:
         context = {
             "request": request,
             "toast_category": "success",
@@ -56,20 +58,16 @@ async def handle_update_profile(
             render_template("partials/_toast.html", context), request
         )
 
-        return response
-
     else:
-        error_message = client_response.json().get(
-            "detail", "Failed to update profile."
-        )
+        error_message = api_response.json().get("detail", "Failed to update profile.")
         context = {
             "request": request,
             "toast_category": "error",
             "toast_message": error_message,
         }
-        response: Response = render_template("partials/_toast.html", context)
+        response = render_template("partials/_toast.html", context)
 
-        return response
+    return response
 
 
 @router.post("/password")
@@ -90,9 +88,9 @@ async def handle_update_password(
         "confirm_password": confirm_password,
     }
     async with authenticated_client_manager as client:
-        client_response = await client.patch("/account/password", json=payload)
+        api_response = await client.patch("/account/password", json=payload)
 
-    if client_response.status_code == status.HTTP_204_NO_CONTENT:
+    if api_response.status_code == status.HTTP_204_NO_CONTENT:
         context = {
             "request": request,
             "toast_category": "success",
@@ -102,20 +100,16 @@ async def handle_update_password(
             render_template("partials/_toast.html", context), request
         )
 
-        return response
-
     else:
-        error_message = client_response.json().get(
-            "detail", "Failed to update password."
-        )
+        error_message = api_response.json().get("detail", "Failed to update password.")
         context = {
             "request": request,
             "toast_category": "error",
             "toast_message": error_message,
         }
-        response: Response = render_template("partials/_toast.html", context)
+        response = render_template("partials/_toast.html", context)
 
-        return response
+    return response
 
 
 @router.post("/delete")
@@ -128,23 +122,20 @@ async def handle_delete_account(
 ) -> Response:
     """BFF endpoint to handle the account deletion confirmation."""
     async with authenticated_client_manager as client:
-        client_response = await client.delete("/account")
+        api_response = await client.delete("/account")
 
-    if client_response.status_code == status.HTTP_204_NO_CONTENT:
+    if api_response.status_code == status.HTTP_204_NO_CONTENT:
         request.session.clear()
         response = Response()
         response.headers["HX-Redirect"] = "/"
 
-        return response
     else:
-        error_message = client_response.json().get(
-            "detail", "Failed to delete account."
-        )
+        error_message = api_response.json().get("detail", "Failed to delete account.")
         context = {
             "request": request,
             "toast_category": "error",
             "toast_message": error_message,
         }
-        response: Response = render_template("partials/_toast.html", context)
+        response = render_template("partials/_toast.html", context)
 
-        return response
+    return response
