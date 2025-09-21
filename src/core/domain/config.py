@@ -9,6 +9,7 @@ class _BaseConfig(BaseModel):
     DESCRIPTION: str = "A RAG-powered educational tutor."
     VERSION: str = "0.1.0"
     API_ROOT_PATH: str = "/api/v1"
+    INTERNAL_API_URL: str = "http://localhost:8000"
 
     # General information
     CONTACT: dict[str, str] = {

@@ -12,6 +12,8 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='/favicon/favicon-16x16.png') }}">
     <link rel="manifest" href="{{ url_for('static', path='/favicon/site.webmanifest') }}">
     <link rel="shortcut icon" href="{{ url_for('static', path='/favicon/favicon.ico') }}">
+
+    <style>[x-cloak] { display: none !important; }</style>
     
    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js" integrity="sha384-ZBXiYtYQ6hJ2Y0ZNoYuI+Nq5MqWBr+chMrS/RkXpNzQCApHEhOt2aY8EJgqwHLkJ" crossorigin="anonymous"></script>
     
@@ -39,7 +41,17 @@
 
     <footer>
         {% include "partials/_footer.html" %}
-        {% block footer_scripts %}{% endblock %}
+        {% block footer_scripts %}
+        <script>
+            // This script listens for our custom 'refreshCSRF' event triggered by HTMX
+            document.body.addEventListener('refreshCSRF', function(evt) {
+                const csrfInputs = document.querySelectorAll('input[name="csrf_token"]');
+                csrfInputs.forEach(input => {
+                    input.value = evt.detail.value;
+                });
+            });
+        </script>
+        {% endblock %}
     </footer>
 </body>
 </html>

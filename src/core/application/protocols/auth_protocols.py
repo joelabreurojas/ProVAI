@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Optional, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from src.core.domain.models import User
-    from src.core.domain.schemas import UserCreate
+    from src.core.domain.schemas import UserCreate, UserUpdate
 
 
 @runtime_checkable
@@ -43,8 +43,14 @@ class TokenServiceProtocol(Protocol):
 class UserRepositoryProtocol(Protocol):
     """Defines the contract for the user data repository."""
 
+    def add(self, user_create: "UserCreate", hashed_password: str) -> "User": ...
+
     def get_by_email(self, email: str) -> Optional["User"]: ...
 
     def get_by_id(self, user_id: int) -> Optional["User"]: ...
 
-    def add(self, user_create: "UserCreate", hashed_password: str) -> "User": ...
+    def update(self, user: "User", user_update: "UserUpdate") -> "User": ...
+
+    def update_password(self, user: "User", new_hashed_password: str) -> None: ...
+
+    def delete(self, user: "User") -> None: ...

@@ -43,7 +43,7 @@ def test_full_ui_login_and_redirect_flow(
     login_response = client.post(
         "/auth/login",
         data={
-            "username": "ui-login@test.com",
+            "email": "ui-login@test.com",
             "password": "ValidPassword123!",
             "csrf_token": csrf_token,
         },

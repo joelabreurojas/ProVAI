@@ -19,7 +19,7 @@
 
     {% if user.role == 'teacher' %}
     <div class="border-2 border-dashed border-nord-border rounded-lg p-6 text-center hover:border-nord-accent transition-colors">
-        <form hx-post="/dashboard/tutors" hx-target="#tutor-list-container" hx-swap="outerHTML">
+        <form hx-post="/actions/create-tutor" hx-target="#tutor-list-container" hx-swap="outerHTML">
             <h3 class="mt-2 text-sm font-medium text-white">Create New Tutor</h3>
             <div class="mt-4">
                 <input type="text" name="course_name" required

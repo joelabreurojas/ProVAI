@@ -12,7 +12,7 @@
         >
       </div>
       <div class="hidden md:flex items-center space-x-4">
-        <a href="/account" class="btn btn-secondary">Account</a>
+        <a href="/account" class="btn btn-secondary btn-normal">Account</a>
         <form hx-post="/auth/logout" hx-target="body" hx-push-url="true">
           <button type="submit" class="btn btn-secondary btn-normal">
             Logout
@@ -64,7 +64,7 @@
     </div>
   </div>
   <!-- Mobile Menu - shown/hidden based on Alpine.js state -->
-  <div x-show="open" class="md:hidden">
+  <div x-show="open" x-cloak class="md:hidden">
     <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
       <a
         href="/account"

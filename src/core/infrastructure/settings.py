@@ -1,6 +1,15 @@
+from typing import TypedDict
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core.domain.config import DevConfig, ProdConfig, TestConfig
+
+
+class _ConfigKwargs(TypedDict):
+    """Defines the shape of the keyword arguments for config classes."""
+
+    SECRET_KEY: str
+    ENV_STATE: str
 
 
 class _EnvironmentSettings(BaseSettings):
@@ -9,6 +18,7 @@ class _EnvironmentSettings(BaseSettings):
     SECRET_KEY: str = ""
     ENV_STATE: str = ""
     DB_URL: str = ""
+    INTERNAL_API_URL: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -33,19 +43,26 @@ def _validate_settings(env: _EnvironmentSettings) -> None:
 def _load_settings() -> DevConfig | TestConfig | ProdConfig:
     """Returns the application settings object."""
     env = _EnvironmentSettings()
-
     _validate_settings(env)
 
+    config_args: _ConfigKwargs = {
+        "SECRET_KEY": env.SECRET_KEY,
+        "ENV_STATE": env.ENV_STATE,
+    }
+
+    config: DevConfig | TestConfig | ProdConfig
+
     if env.ENV_STATE == "dev":
-        return DevConfig(SECRET_KEY=env.SECRET_KEY, ENV_STATE=env.ENV_STATE)
+        config = DevConfig(**config_args)
+    elif env.ENV_STATE == "test":
+        config = TestConfig(**config_args)
+    else:  # prod
+        config = ProdConfig(DB_URL=env.DB_URL, **config_args)
 
-    if env.ENV_STATE == "test":
-        return TestConfig(SECRET_KEY=env.SECRET_KEY, ENV_STATE=env.ENV_STATE)
+    if env.INTERNAL_API_URL:
+        config.INTERNAL_API_URL = env.INTERNAL_API_URL
 
-    assert env.DB_URL is not None
-    return ProdConfig(
-        SECRET_KEY=env.SECRET_KEY, DB_URL=env.DB_URL, ENV_STATE=env.ENV_STATE
-    )
+    return config
 
 
 settings = _load_settings()

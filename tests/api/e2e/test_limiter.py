@@ -57,14 +57,14 @@ def test_rate_limiting_on_auth_token_endpoint(
     for i in range(10):
         response = client.post(
             f"{settings.API_ROOT_PATH}/auth/token",
-            data={"username": test_email, "password": f"wrong-password-{i}"},
+            data={"email": test_email, "password": f"wrong-password-{i}"},
         )
         assert response.status_code == 401  # Unauthorized, not rate-limited
 
     # The 11th request within the same minute should be blocked.
     response = client.post(
         f"{settings.API_ROOT_PATH}/auth/token",
-        data={"username": test_email, "password": "wrong-password-11"},
+        data={"email": test_email, "password": "wrong-password-11"},
     )
     assert response.status_code == 429
     assert response.json()["error_code"] == "RATE_LIMIT_EXCEEDED"

@@ -60,14 +60,14 @@ def test_full_user_flow(
     # Both users log in
     teacher_login_res = client.post(
         f"{settings.API_ROOT_PATH}/auth/token",
-        data={"username": "teacher@e2e.com", "password": VALID_TEACHER_PASSWORD},
+        data={"email": "teacher@e2e.com", "password": VALID_TEACHER_PASSWORD},
     )
     teacher_token = teacher_login_res.json()["access_token"]
     teacher_headers = {"Authorization": f"Bearer {teacher_token}"}
 
     student_login_res = client.post(
         f"{settings.API_ROOT_PATH}/auth/token",
-        data={"username": "student@e2e.com", "password": VALID_STUDENT_PASSWORD},
+        data={"email": "student@e2e.com", "password": VALID_STUDENT_PASSWORD},
     )
     student_token = student_login_res.json()["access_token"]
     student_headers = {"Authorization": f"Bearer {student_token}"}

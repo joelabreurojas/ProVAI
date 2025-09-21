@@ -1,0 +1,51 @@
+<div
+  x-show="showCreateModal"
+  x-cloak
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+  @click.away="showCreateModal = false"
+  x-transition
+>
+  <div
+    class="w-full max-w-md bg-nord-bg-2 border border-nord-border p-6 rounded-lg shadow-2xl"
+    @click.stop
+  >
+    <div
+      class="flex justify-between items-center border-b border-nord-border pb-3"
+    >
+      <h3 class="text-lg font-bold text-white">Create a New Tutor</h3>
+      <button
+        @click="showCreateModal = false"
+        class="text-gray-400 hover:text-white"
+      >
+        &times;
+      </button>
+    </div>
+
+    <form
+      class="mt-4 space-y-4"
+      hx-post="/actions/create-tutor"
+      hx-target="#app-sidebar"
+      hx-swap="outerHTML"
+    >
+      {% include "partials/_csrf_token_input.html" %}
+      <div>
+        <label
+          for="course_name"
+          class="block text-sm font-medium text-nord-text"
+          >Course Name</label
+        >
+        <input
+          id="course_name"
+          name="course_name"
+          type="text"
+          required
+          placeholder="e.g., Quantum Physics 101"
+          class="mt-1 w-full bg-nord-bg border border-nord-border rounded-md p-2"
+        />
+      </div>
+      <div class="flex justify-end pt-2">
+        <button type="submit" class="btn btn-primary">Create Tutor</button>
+      </div>
+    </form>
+  </div>
+</div>
