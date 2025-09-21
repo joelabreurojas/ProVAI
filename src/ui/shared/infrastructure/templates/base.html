@@ -39,7 +39,17 @@
 
     <footer>
         {% include "partials/_footer.html" %}
-        {% block footer_scripts %}{% endblock %}
+        {% block footer_scripts %}
+        <script>
+            // This script listens for our custom 'refreshCSRF' event triggered by HTMX
+            document.body.addEventListener('refreshCSRF', function(evt) {
+                const csrfInputs = document.querySelectorAll('input[name="csrf_token"]');
+                csrfInputs.forEach(input => {
+                    input.value = evt.detail.value;
+                });
+            });
+        </script>
+        {% endblock %}
     </footer>
 </body>
 </html>

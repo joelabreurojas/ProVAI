@@ -9,6 +9,7 @@ class _EnvironmentSettings(BaseSettings):
     SECRET_KEY: str = ""
     ENV_STATE: str = ""
     DB_URL: str = ""
+    INTERNAL_API_URL: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -33,19 +34,25 @@ def _validate_settings(env: _EnvironmentSettings) -> None:
 def _load_settings() -> DevConfig | TestConfig | ProdConfig:
     """Returns the application settings object."""
     env = _EnvironmentSettings()
-
     _validate_settings(env)
 
-    if env.ENV_STATE == "dev":
-        return DevConfig(SECRET_KEY=env.SECRET_KEY, ENV_STATE=env.ENV_STATE)
+    config_class: DevConfig | TestConfig | ProdConfig = DevConfig
 
     if env.ENV_STATE == "test":
-        return TestConfig(SECRET_KEY=env.SECRET_KEY, ENV_STATE=env.ENV_STATE)
+        config_class = TestConfig
 
-    assert env.DB_URL is not None
-    return ProdConfig(
-        SECRET_KEY=env.SECRET_KEY, DB_URL=env.DB_URL, ENV_STATE=env.ENV_STATE
-    )
+    elif env.ENV_STATE == "prod":
+        config_class = ProdConfig
+
+    config = config_class(SECRET_KEY=env.SECRET_KEY, ENV_STATE=env.ENV_STATE)
+
+    if env.INTERNAL_API_URL:
+        config.INTERNAL_API_URL = env.INTERNAL_API_URL
+
+    if env.DB_URL and env.ENV_STATE == "prod":
+        config.DB_URL = env.DB_URL
+
+    return config
 
 
 settings = _load_settings()

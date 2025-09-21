@@ -1,8 +1,13 @@
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
+import httpx
 from fastapi import Depends, Form, HTTPException, Request, status
 
 from src.core.application.exceptions import TokenValidationError, UserNotFoundError
 from src.core.application.protocols import AuthServiceProtocol, TutorServiceProtocol
 from src.core.domain.models import User
+from src.core.infrastructure.settings import settings
 from src.ui.shared.infrastructure.security import csrf_service
 
 
@@ -75,3 +80,37 @@ async def validate_csrf_token(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid or missing CSRF token.",
         )
+
+
+@asynccontextmanager
+async def get_unauthenticated_bff_api_client() -> AsyncGenerator[
+    httpx.AsyncClient, None
+]:
+    """
+    A dependency that provides a pre-configured httpx.AsyncClient for making
+    unauthenticated internal API calls (e.g., for login and registration).
+    """
+    base_url = f"{settings.INTERNAL_API_URL}{settings.API_ROOT_PATH}"
+    async with httpx.AsyncClient(base_url=base_url) as client:
+        yield client
+
+
+@asynccontextmanager
+async def get_authenticated_bff_api_client(
+    request: Request,
+) -> AsyncGenerator[httpx.AsyncClient, None]:
+    """
+    A dependency that provides a pre-configured httpx.AsyncClient for
+    UI routers to make internal, server-to-server API calls.
+
+    It automatically includes the user's authorization token from the session.
+    """
+    token = request.session.get("user_token")
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    base_url = f"{settings.INTERNAL_API_URL}{settings.API_ROOT_PATH}"
+
+    async with httpx.AsyncClient(base_url=base_url, headers=headers) as client:
+        yield client

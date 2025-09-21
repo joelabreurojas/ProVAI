@@ -1,17 +1,12 @@
+import httpx
 from fastapi import APIRouter, Depends, Form, Request, Response, status
 from fastapi.responses import RedirectResponse
-from pydantic import ValidationError
 
-from src.core.application.exceptions import (
-    InvalidCredentialsError,
-    InvalidPasswordError,
-    UserAlreadyExistsError,
-)
-from src.core.application.protocols import AuthServiceProtocol
 from src.core.domain.models import User
-from src.core.domain.schemas import UserCreate
+from src.core.infrastructure.settings import settings
 from src.ui.shared.infrastructure.dependencies import (
     get_optional_current_user_from_cookie,
+    get_unauthenticated_bff_api_client,
     validate_csrf_token,
 )
 from src.ui.shared.infrastructure.utils import render_template
@@ -60,18 +55,49 @@ async def handle_login_form(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
-    auth_service: AuthServiceProtocol = Depends(),
     _csrf_token: None = Depends(validate_csrf_token),
+    unauthenticated_client_manager: httpx.AsyncClient = Depends(
+        get_unauthenticated_bff_api_client
+    ),
 ) -> Response:
-    try:
-        user, token = auth_service.authenticate_user(email=email, password=password)
-        request.session.update({"user_token": token, "user_role": user.role})
-        response = Response()
-        response.headers["HX-Redirect"] = "/dashboard"
-        return response
-    except InvalidCredentialsError as e:
-        context = {"request": request, "error_message": e.message}
+    async with unauthenticated_client_manager as client:
+        client_response = await client.post(
+            "/auth/token", data={"email": email, "password": password}
+        )
+
+    if client_response.status_code != status.HTTP_200_OK:
+        error_message = client_response.json().get("message", "Login failed.")
+        context = {"request": request, "error_message": error_message}
         return render_template("partials/_login_form.html", context)
+
+    token_data = client_response.json()
+    token = token_data.get("access_token")
+
+    # Temporary client to fetch the user's profile.
+    headers = {"Authorization": f"Bearer {token}"}
+    async with httpx.AsyncClient(
+        base_url=f"{settings.INTERNAL_API_URL}{settings.API_ROOT_PATH}",
+        headers=headers,
+    ) as authenticated_client:
+        me_response = await authenticated_client.get("/users/me")
+
+    if me_response.status_code != status.HTTP_200_OK:
+        context = {
+            "request": request,
+            "error_message": "Could not retrieve user profile after login.",
+        }
+        response: Response = render_template("partials/_login_form.html", context)
+
+        return response
+
+    user_data = me_response.json()
+
+    # Populate the session with data from the /users/me endpoint.
+    request.session.update({"user_token": token, "user_role": user_data.get("role")})
+
+    response = Response()
+    response.headers["HX-Redirect"] = "/dashboard"
+    return response
 
 
 @router.post("/register")
@@ -80,32 +106,49 @@ async def handle_register_form(
     name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
-    auth_service: AuthServiceProtocol = Depends(),
     _csrf_token: None = Depends(validate_csrf_token),
+    unauthenticated_client_manager: httpx.AsyncClient = Depends(
+        get_unauthenticated_bff_api_client
+    ),
 ) -> Response:
-    try:
-        user_data = UserCreate(name=name, email=email, password=password)
+    user_data = {"name": name, "email": email, "password": password}
+    async with unauthenticated_client_manager as client:
+        client_response = await client.post("/auth/register", json=user_data)
 
-        auth_service.register_user(
-            name=user_data.name, email=user_data.email, password=user_data.password
-        )
-
+    if client_response.status_code == status.HTTP_201_CREATED:
         request.session["toast_message"] = "Registration successful! Please log in."
         request.session["toast_category"] = "success"
-
         return Response(
             status_code=status.HTTP_200_OK, headers={"HX-Redirect": "/auth/login"}
         )
+    else:
+        error_message = "An unknown registration error occurred."
+        try:
+            error_json = client_response.json()
+            # Handle Pydantic's detailed validation errors (422)
+            if "detail" in error_json and isinstance(error_json["detail"], list):
+                # Get the message from the first error object
+                raw_msg = error_json["detail"][0].get("msg", "Invalid input.")
+                # Clean up the "Value error, " prefix if Pydantic adds it
+                if raw_msg.startswith("Value error, "):
+                    error_message = raw_msg.split(", ", 1)[1]
+                else:
+                    error_message = raw_msg
+            # Handle our custom application exceptions (e.g., 409 Conflict)
+            elif "message" in error_json:
+                error_message = error_json["message"]
+            # Fallback for other FastAPI errors
+            elif "detail" in error_json:
+                error_message = error_json["detail"]
 
-    except ValidationError as e:
-        error_message = e.errors()[0]["msg"]
+        except (KeyError, IndexError, AttributeError, TypeError):
+            # If the JSON structure is unexpected, use a generic message
+            error_message = "An unexpected error occurred during registration."
+
         context = {"request": request, "error_message": error_message}
-        return render_template("partials/_register_form.html", context)
+        response: Response = render_template("partials/_register_form.html", context)
 
-    except (UserAlreadyExistsError, InvalidPasswordError) as e:
-        # This catches business logic errors from the service.
-        context = {"request": request, "error_message": e.message}
-        return render_template("partials/_register_form.html", context)
+        return response
 
 
 @router.post("/logout")
