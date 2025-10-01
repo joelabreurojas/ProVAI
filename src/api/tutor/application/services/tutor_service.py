@@ -130,13 +130,33 @@ class TutorService(TutorServiceProtocol):
             raise UserNotEnrolledError()
         return tutor
 
-    @traceable(name="Delete Tutor")
-    def delete_tutor(self, tutor_id: int, requesting_user: User) -> list[int]:
+    @traceable(name="Remove Student Access")
+    def remove_student_access(
+        self, tutor_id: int, student_email: str, requesting_user: User
+    ) -> None:
+        """
+        Orchestrates the removal of a student's access by calling the repository
+        to handle all database operations atomically.
+        """
         tutor = self.verify_user_is_tutor_owner(tutor_id, requesting_user)
 
+        self.tutor_repo.remove_student_by_email(tutor, student_email)
+
+        logger.info(
+            f"Revoked access for email '{student_email}' from Tutor {tutor_id} "
+            f"by Teacher {requesting_user.id}."
+        )
+
+    @traceable(name="Delete Tutor")
+    def delete_tutor(self, tutor_id: int, requesting_user: User) -> list[int]:
+        """
+        Orchestrates the deletion of a Tutor and returns a list of its
+        previously associated document IDs.
+        """
+        tutor = self.verify_user_is_tutor_owner(tutor_id, requesting_user)
         doc_ids_to_check = [doc.id for doc in tutor.documents]
 
-        self.tutor_repo.delete_tutor(tutor)
+        self.tutor_repo.delete_tutor(tutor.id)
         logger.info(f"Deleted Tutor {tutor_id} by Teacher {requesting_user.id}.")
 
         return doc_ids_to_check

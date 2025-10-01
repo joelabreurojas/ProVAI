@@ -177,6 +177,33 @@ async def upload_document_to_tutor(
     }
 
 
+@router.delete(
+    "/{tutor_id}/authorized-emails/{student_email}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Remove a student's access to a Tutor",
+)
+async def remove_student_from_tutor(
+    tutor_id: int,
+    student_email: EmailStr,
+    current_user: User = Depends(get_current_user),
+    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
+) -> None:
+    """
+    Revokes a student's access to a Tutor.
+
+    This action performs two operations:
+    1. Removes the student's email from the invitation whitelist.
+    2. Unenrolls the student from the Tutor if they were already a member.
+
+    Only the owner (teacher) of the Tutor can perform this action.
+    """
+    tutor_service.remove_student_access(
+        tutor_id=tutor_id,
+        student_email=student_email,
+        requesting_user=current_user,
+    )
+
+
 @router.delete("/{tutor_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tutor(
     tutor_id: int,

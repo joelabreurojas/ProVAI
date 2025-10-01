@@ -92,12 +92,6 @@ class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
             tutor.documents.append(document)
             self.db.commit()
 
-    def remove_document_from_tutor(self, tutor: Tutor, document: Document) -> None:
-        """Removes the many-to-many link between a tutor and a document."""
-        if document in tutor.documents:
-            tutor.documents.remove(document)
-            self.db.commit()
-
     def get_chunk_hashes_for_tutor(self, tutor_id: int) -> list[str]:
         """
         Performs an efficient query to get all unique chunk hashes for all
@@ -119,7 +113,54 @@ class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
         }
         return list(unique_chunk_hashes)
 
-    def delete_tutor(self, tutor: Tutor) -> None:
-        """Deletes a tutor record from the database."""
-        self.db.delete(tutor)
+    def remove_authorized_email(self, tutor: Tutor, email: str) -> None:
+        """Removes a single email from the tutor's invitation whitelist."""
+        auth_entry = (
+            self.db.query(Invitation)
+            .filter_by(tutor_id=tutor.id, student_email=email)
+            .first()
+        )
+        if auth_entry:
+            self.db.delete(auth_entry)
+            self.db.commit()
+
+    def remove_student_by_email(self, tutor: Tutor, email: str) -> None:
+        """
+        Atomically removes a student's access by email. It deletes the entry
+        from the invitation whitelist and, if a corresponding user is enrolled,
+        removes them from the tutor's student roster.
+        """
+        # Remove from the whitelist
+        auth_entry = (
+            self.db.query(Invitation)
+            .filter_by(tutor_id=tutor.id, student_email=email)
+            .first()
+        )
+        if auth_entry:
+            self.db.delete(auth_entry)
+
+        # Find the user and remove from the roster
+        user_to_remove = self.db.query(User).filter_by(email=email).first()
+        if user_to_remove and user_to_remove in tutor.students:
+            tutor.students.remove(user_to_remove)
+
         self.db.commit()
+
+    def remove_student_from_tutor(self, tutor: Tutor, student: User) -> None:
+        """Removes the many-to-many link to unenroll a student from a tutor."""
+        if student in tutor.students:
+            tutor.students.remove(student)
+            self.db.commit()
+
+    def remove_document_from_tutor(self, tutor: Tutor, document: Document) -> None:
+        """Removes the many-to-many link between a tutor and a document."""
+        if document in tutor.documents:
+            tutor.documents.remove(document)
+            self.db.commit()
+
+    def delete_tutor(self, tutor_id: int) -> None:
+        """Finds a tutor by ID and deletes it from the database."""
+        tutor = self.db.get(Tutor, tutor_id)  # efficient way to fetch by PK
+        if tutor:
+            self.db.delete(tutor)
+            self.db.commit()

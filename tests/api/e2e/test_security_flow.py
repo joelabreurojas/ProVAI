@@ -396,3 +396,53 @@ def test_teacher_can_delete_their_own_tutor(
         headers=teacher_headers,
     )
     assert get_response.status_code == 404  # Not Found
+
+
+def test_teacher_can_remove_student_access(
+    client: TestClient, db_session: SQLAlchemySession
+) -> None:
+    """Tests that a teacher can fully revoke a student's access to a tutor."""
+    context = setup_users_and_tutor(client, db_session)
+    tutor_id = context["tutor_id"]
+    teacher_headers = context["teacher_headers"]
+    student_a_headers = context["student_a_headers"]
+
+    # Enroll the student
+    tutor_details_res = client.get(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}", headers=teacher_headers
+    )
+    invitation_token = tutor_details_res.json()["token"]
+    client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/authorized-emails",
+        json={"emails": [STUDENT_A_EMAIL]},
+        headers=teacher_headers,
+    )
+    client.post(
+        f"{settings.API_ROOT_PATH}/enrollments",
+        json={"invitation_token": invitation_token},
+        headers=student_a_headers,
+    )
+
+    # Verify student can access a resource (create a chat)
+    create_chat_res = client.post(
+        f"{settings.API_ROOT_PATH}/chats",
+        json={"tutor_id": tutor_id, "title": "Test Chat"},
+        headers=student_a_headers,
+    )
+    assert create_chat_res.status_code == 201
+
+    # Teacher removes the student's access
+    remove_res = client.delete(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/authorized-emails/{STUDENT_A_EMAIL}",
+        headers=teacher_headers,
+    )
+    assert remove_res.status_code == 204
+
+    # Verify student can NO LONGER access the resource
+    create_chat_again_res = client.post(
+        f"{settings.API_ROOT_PATH}/chats",
+        json={"tutor_id": tutor_id, "title": "Another Chat"},
+        headers=student_a_headers,
+    )
+    assert create_chat_again_res.status_code == 403
+    assert create_chat_again_res.json()["error_code"] == "USER_NOT_ENROLLED"
