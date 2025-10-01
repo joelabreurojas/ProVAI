@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Any, Optional
+import secrets
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import JSON, Column, ForeignKey, Integer, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -31,6 +32,9 @@ class Tutor(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     course_name: Mapped[str] = mapped_column(index=True)
+    token: Mapped[str] = mapped_column(
+        unique=True, index=True, default=lambda: secrets.token_urlsafe(32)
+    )
     description: Mapped[str | None]
     roadmap: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     teacher_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
@@ -44,6 +48,6 @@ class Tutor(Base):
         secondary=tutor_document, back_populates="tutors"
     )
     chats: Mapped[list["Chat"]] = relationship(back_populates="tutor")
-    invitation: Mapped[Optional["Invitation"]] = relationship(
-        back_populates="tutor", uselist=False, cascade="all, delete-orphan"
+    authorized_students: Mapped[list["Invitation"]] = relationship(
+        back_populates="tutor", cascade="all, delete-orphan"
     )

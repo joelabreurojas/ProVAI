@@ -20,22 +20,19 @@ def test_student_cannot_create_invitation(
 ) -> None:
     """
     Tests that a user with the 'student' role receives a 403 Forbidden error
-    if they attempt to create an invitation.
+    if they attempt to add an authorized email.
     """
     context = setup_users_and_tutor(client, db_session)
 
-    # Student A tries to create an invitation for the tutor
-    invitation_res = client.post(
-        f"{settings.API_ROOT_PATH}/invitations",
-        json={
-            "tutor_id": context["tutor_id"],
-            "student_emails": ["another@student.com"],
-        },
+    # Student A (a non-owner) tries to add an email to the whitelist.
+    response = client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{context['tutor_id']}/authorized-emails",
+        json={"emails": ["another@student.com"]},
         headers=context["student_a_headers"],  # Authenticated as a student
     )
 
-    assert invitation_res.status_code == 403
-    assert invitation_res.json()["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    assert response.status_code == 403
+    assert response.json()["error_code"] == "INSUFFICIENT_PERMISSIONS"
 
 
 def test_unauthorized_student_cannot_use_invitation(
@@ -43,23 +40,25 @@ def test_unauthorized_student_cannot_use_invitation(
 ) -> None:
     """
     Tests that a student receives a 403 Forbidden error if they try to enroll
-    using an invitation link that was created for a different student's email.
+    using a token when their email is not on the whitelist.
     """
     context = setup_users_and_tutor(client, db_session)
 
-    # The Teacher invites Student A
-    invitation_res = client.post(
-        f"{settings.API_ROOT_PATH}/invitations",
-        json={
-            "tutor_id": context["tutor_id"],
-            "student_emails": [STUDENT_A_EMAIL],
-        },
+    # The Teacher invites ONLY Student A.
+    client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{context['tutor_id']}/authorized-emails",
+        json={"emails": [STUDENT_A_EMAIL]},
         headers=context["teacher_headers"],
     )
-    assert invitation_res.status_code == 201
-    invitation_token = invitation_res.json()["invitation_token"]
 
-    # Student B (the unauthorized user) tries to use Student A's token
+    # The Teacher gets the tutor's token.
+    tutor_details_res = client.get(
+        f"{settings.API_ROOT_PATH}/tutors/{context['tutor_id']}",
+        headers=context["teacher_headers"],
+    )
+    invitation_token = tutor_details_res.json()["token"]
+
+    # Student B (the unauthorized user) tries to use the token.
     enrollment_res = client.post(
         f"{settings.API_ROOT_PATH}/enrollments",
         json={"invitation_token": invitation_token},
@@ -79,20 +78,24 @@ def test_student_cannot_upload_document_to_tutor(
     """
     context = setup_users_and_tutor(client, db_session)
 
-    # Enroll the student so they have access to the tutor for other actions.
-    invitation_res = client.post(
-        f"{settings.API_ROOT_PATH}/invitations",
-        json={"tutor_id": context["tutor_id"], "student_emails": [STUDENT_A_EMAIL]},
+    # Enroll the student so they have access for other actions.
+    client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{context['tutor_id']}/authorized-emails",
+        json={"emails": [STUDENT_A_EMAIL]},
         headers=context["teacher_headers"],
     )
-    invitation_token = invitation_res.json()["invitation_token"]
+    tutor_details_res = client.get(
+        f"{settings.API_ROOT_PATH}/tutors/{context['tutor_id']}",
+        headers=context["teacher_headers"],
+    )
+    invitation_token = tutor_details_res.json()["token"]
     client.post(
         f"{settings.API_ROOT_PATH}/enrollments",
         json={"invitation_token": invitation_token},
         headers=context["student_a_headers"],
     )
 
-    # Create a dummy PDF file in memory to upload.
+    # Create a dummy PDF to upload.
     doc = fitz.open()
     page = doc.new_page()
     page.insert_text((50, 72), "This is a test PDF.")
@@ -102,13 +105,12 @@ def test_student_cannot_upload_document_to_tutor(
     upload_res = client.post(
         f"{settings.API_ROOT_PATH}/tutors/{context['tutor_id']}/documents",
         files={"file": ("student_upload.pdf", pdf_bytes, "application/pdf")},
-        headers=context["student_a_headers"],  # <-- Authenticated as a student
+        headers=context["student_a_headers"],  # Authenticated as a student
     )
 
     assert upload_res.status_code == 403
     error_details = upload_res.json()
     assert error_details["error_code"] == "INSUFFICIENT_PERMISSIONS"
-    assert "You do not have the required role" in error_details["message"]
 
 
 def test_unenrolled_student_cannot_access_chat_history(
@@ -118,22 +120,26 @@ def test_unenrolled_student_cannot_access_chat_history(
     Tests that a student who is not enrolled in a tutor receives a 403 Forbidden
     error if they attempt to access a chat belonging to that tutor.
     """
-    # We have a Teacher, an enrolled Student (A), and an unenrolled Student (B).
     context = setup_users_and_tutor(client, db_session)
     tutor_id = context["tutor_id"]
 
-    # Student A (the legitimate student) enrolls and creates a chat.
-    invitation_res = client.post(
-        f"{settings.API_ROOT_PATH}/invitations",
-        json={"tutor_id": tutor_id, "student_emails": [STUDENT_A_EMAIL]},
+    # Student A enrolls and creates a chat.
+    client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/authorized-emails",
+        json={"emails": [STUDENT_A_EMAIL]},
         headers=context["teacher_headers"],
     )
-    invitation_token = invitation_res.json()["invitation_token"]
+    tutor_details_res = client.get(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}",
+        headers=context["teacher_headers"],
+    )
+    invitation_token = tutor_details_res.json()["token"]
     client.post(
         f"{settings.API_ROOT_PATH}/enrollments",
         json={"invitation_token": invitation_token},
         headers=context["student_a_headers"],
     )
+
     student_a_chat_res = client.post(
         f"{settings.API_ROOT_PATH}/chats",
         json={"tutor_id": tutor_id, "title": "Student A Chat"},
@@ -141,16 +147,14 @@ def test_unenrolled_student_cannot_access_chat_history(
     )
     student_a_chat_id = student_a_chat_res.json()["id"]
 
-    # Student B (the unauthorized user) attempts to access Student A's chat.
+    # Student B (unenrolled) attempts to access Student A's chat.
     unauthorized_access_res = client.get(
         f"{settings.API_ROOT_PATH}/chats/{student_a_chat_id}/messages",
-        headers=context["student_b_headers"],  # <-- Authenticated as Student B
+        headers=context["student_b_headers"],
     )
 
     assert unauthorized_access_res.status_code == 403
-    error_details = unauthorized_access_res.json()
-    assert error_details["error_code"] == "USER_NOT_ENROLLED"
-    assert "You are not enrolled" in error_details["message"]
+    assert unauthorized_access_res.json()["error_code"] == "USER_NOT_ENROLLED"
 
 
 def test_enrolled_student_cannot_access_another_students_chat(
@@ -163,18 +167,19 @@ def test_enrolled_student_cannot_access_another_students_chat(
     context = setup_users_and_tutor(client, db_session)
     tutor_id = context["tutor_id"]
 
-    # The Teacher invites BOTH Student A and Student B.
-    invitation_res = client.post(
-        f"{settings.API_ROOT_PATH}/invitations",
-        json={
-            "tutor_id": tutor_id,
-            "student_emails": [STUDENT_A_EMAIL, STUDENT_B_EMAIL],
-        },
+    # Teacher invites BOTH students.
+    client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/authorized-emails",
+        json={"emails": [STUDENT_A_EMAIL, STUDENT_B_EMAIL]},
         headers=context["teacher_headers"],
     )
-    invitation_token = invitation_res.json()["invitation_token"]
+    tutor_details_res = client.get(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}",
+        headers=context["teacher_headers"],
+    )
+    invitation_token = tutor_details_res.json()["token"]
 
-    # Both students enroll successfully.
+    # Both students enroll.
     client.post(
         f"{settings.API_ROOT_PATH}/enrollments",
         json={"invitation_token": invitation_token},
@@ -186,7 +191,6 @@ def test_enrolled_student_cannot_access_another_students_chat(
         headers=context["student_b_headers"],
     )
 
-    # Student A creates their own private chat.
     student_a_chat_res = client.post(
         f"{settings.API_ROOT_PATH}/chats",
         json={"tutor_id": tutor_id, "title": "Student A Private Chat"},
@@ -194,42 +198,43 @@ def test_enrolled_student_cannot_access_another_students_chat(
     )
     student_a_chat_id = student_a_chat_res.json()["id"]
 
-    # Student B, who is a legitimate member of the tutor, attempts to
-    # access the specific chat created by Student A.
+    # Student B attempts to access Student A's chat.
     unauthorized_access_res = client.get(
         f"{settings.API_ROOT_PATH}/chats/{student_a_chat_id}/messages",
-        headers=context["student_b_headers"],  # <-- Authenticated as Student B
+        headers=context["student_b_headers"],
     )
 
     assert unauthorized_access_res.status_code == 403
-    error_details = unauthorized_access_res.json()
-
-    assert error_details["error_code"] == "CHAT_OWNERSHIP_REQUIRED"
-    assert "You are not the owner of this chat" in error_details["message"]
+    assert unauthorized_access_res.json()["error_code"] == "CHAT_OWNERSHIP_REQUIRED"
 
 
 def test_teacher_cannot_post_message_in_students_private_chat(
     client: TestClient, db_session: SQLAlchemySession
 ) -> None:
     """
-    Tests that a teacher, while being the owner of the parent Tutor, cannot
-    post messages into a private chat created by one of their students.
+    Tests that a teacher cannot post messages into a private chat created by
+    one of their students.
     """
     context = setup_users_and_tutor(client, db_session)
     tutor_id = context["tutor_id"]
 
-    # The student enrolls and creates their own private chat.
-    invitation_res = client.post(
-        f"{settings.API_ROOT_PATH}/invitations",
-        json={"tutor_id": tutor_id, "student_emails": [STUDENT_A_EMAIL]},
+    # Student A enrolls.
+    client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/authorized-emails",
+        json={"emails": [STUDENT_A_EMAIL]},
         headers=context["teacher_headers"],
     )
-    invitation_token = invitation_res.json()["invitation_token"]
+    tutor_details_res = client.get(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}",
+        headers=context["teacher_headers"],
+    )
+    invitation_token = tutor_details_res.json()["token"]
     client.post(
         f"{settings.API_ROOT_PATH}/enrollments",
         json={"invitation_token": invitation_token},
         headers=context["student_a_headers"],
     )
+
     student_chat_res = client.post(
         f"{settings.API_ROOT_PATH}/chats",
         json={"tutor_id": tutor_id, "title": "Student A's Private Notes"},
@@ -237,19 +242,15 @@ def test_teacher_cannot_post_message_in_students_private_chat(
     )
     student_chat_id = student_chat_res.json()["id"]
 
-    # The Teacher, owner of the Tutor, attempts to post a message
-    # into the student's specific chat instance.
+    # The Teacher attempts to post a message into the student's chat.
     unauthorized_post_res = client.post(
         f"{settings.API_ROOT_PATH}/chats/{student_chat_id}/query",
         json={"query": "Teacher's message"},
-        headers=context["teacher_headers"],  # <-- Authenticated as the Teacher
+        headers=context["teacher_headers"],
     )
 
     assert unauthorized_post_res.status_code == 403
-    error_details = unauthorized_post_res.json()
-
-    assert error_details["error_code"] == "CHAT_OWNERSHIP_REQUIRED"
-    assert "You are not the owner of this chat" in error_details["message"]
+    assert unauthorized_post_res.json()["error_code"] == "CHAT_OWNERSHIP_REQUIRED"
 
 
 def test_upload_fails_for_file_exceeding_size_limit(

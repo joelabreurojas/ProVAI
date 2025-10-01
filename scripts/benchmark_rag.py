@@ -44,7 +44,6 @@ from src.api.rag.infrastructure.dependencies import (
     get_text_splitter,
 )
 from src.api.tutor.infrastructure.dependencies import (
-    get_invitation_repository,
     get_tutor_repository,
     get_tutor_service,
 )
@@ -91,7 +90,6 @@ class AppContainer:
         # Repositories ---
         self.user_repo = get_user_repository(db_session)
         self.tutor_repo = get_tutor_repository(db_session)
-        self.invitation_repo = get_invitation_repository(db_session)
         self.chat_repo = get_chat_repository(db_session)
         self.doc_repo = get_document_repository(db_session)
         self.chunk_repo = get_chunk_repository(db_session)
@@ -113,7 +111,6 @@ class AppContainer:
         )
         self.tutor_service = get_tutor_service(
             tutor_repo=self.tutor_repo,
-            invitation_repo=self.invitation_repo,
         )
         self.ingestion_service = get_ingestion_service(
             db=db_session,

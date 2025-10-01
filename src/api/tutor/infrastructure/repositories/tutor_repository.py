@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session as SQLAlchemySession
 from sqlalchemy.orm import joinedload
 
 from src.core.application.protocols import TutorRepositoryProtocol
-from src.core.domain.models import Document, Tutor, User
+from src.core.domain.models import Document, Invitation, Tutor, User
 from src.core.domain.schemas import TutorCreate
 
 
@@ -31,6 +31,23 @@ class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
             .first()
         )
 
+    def get_tutor_by_token(self, token: str) -> Tutor | None:
+        """Retrieves a single tutor by its unique invitation token."""
+        return self.db.query(Tutor).filter(Tutor.token == token).first()
+
+    def add_authorized_emails(self, tutor: Tutor, emails: list[str]) -> None:
+        """Adds new, unique emails to the tutor's invitation whitelist."""
+        existing_emails = {auth.student_email for auth in tutor.authorized_students}
+        for email in set(emails):  # De-duplicate input list
+            if email not in existing_emails:
+                new_auth = Invitation(tutor_id=tutor.id, student_email=email)
+                self.db.add(new_auth)
+        self.db.commit()
+
+    def get_authorized_emails(self, tutor: Tutor) -> list[str]:
+        """Retrieves the list of emails authorized to enroll in the tutor."""
+        return [auth.student_email for auth in tutor.authorized_students]
+
     def get_tutors_for_user(self, user: User) -> list[Tutor]:
         """
         Retrieves all tutors a user is associated with, either as a
@@ -40,7 +57,7 @@ class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
             # Teachers see all tutors they've created
             return self.db.query(Tutor).filter(Tutor.teacher_id == user.id).all()
 
-        # Students see tutors they are enrolled in (requires loading the relationship)
+        # Students see tutors they are enrolled in
         user_with_tutors = (
             self.db.query(User)
             .filter(User.id == user.id)

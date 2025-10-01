@@ -1,30 +1,8 @@
 from typing import TYPE_CHECKING, Optional, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from src.core.domain.models import Document, Invitation, Tutor, User
-    from src.core.domain.schemas import TutorCreate, TutorInvitationResponse
-
-
-@runtime_checkable
-class InvitationRepositoryProtocol(Protocol):
-    """
-    Defines the contract for the Invitation data repository. This is the sole
-    interface for all database operations related to the Invitation entity.
-    """
-
-    def get_by_tutor_id(self, tutor_id: int) -> Optional["Invitation"]: ...
-
-    def get_by_token(self, token: str) -> Optional["Invitation"]: ...
-
-    def create_for_tutor(self, tutor_id: int) -> "Invitation": ...
-
-    def add_members(
-        self, invitation: "Invitation", student_emails: list[str]
-    ) -> None: ...
-
-    def update_member_status(
-        self, invitation: "Invitation", student_email: str, status: str
-    ) -> None: ...
+    from src.core.domain.models import Document, Tutor, User
+    from src.core.domain.schemas import TutorCreate
 
 
 @runtime_checkable
@@ -38,7 +16,13 @@ class TutorRepositoryProtocol(Protocol):
 
     def get_tutor_by_id(self, tutor_id: int) -> Optional["Tutor"]: ...
 
+    def get_tutor_by_token(self, token: str) -> Optional["Tutor"]: ...
+
     def get_tutors_for_user(self, user: "User") -> list["Tutor"]: ...
+
+    def add_authorized_emails(self, tutor: "Tutor", emails: list[str]) -> None: ...
+
+    def get_authorized_emails(self, tutor: "Tutor") -> list[str]: ...
 
     def add_student_to_tutor(self, tutor: "Tutor", student: "User") -> None: ...
 
@@ -63,13 +47,9 @@ class TutorServiceProtocol(Protocol):
 
     def get_tutors_for_user(self, user: "User") -> list["Tutor"]: ...
 
-    def get_or_create_invitation(
-        self, tutor_id: int, requesting_user: "User"
-    ) -> "Invitation": ...
-
-    def add_students_to_invitation(
+    def add_authorized_students(
         self, tutor_id: int, requesting_user: "User", student_emails: list[str]
-    ) -> "TutorInvitationResponse": ...
+    ) -> None: ...
 
     def enroll_student_from_token(
         self, token: str, student_user: "User"

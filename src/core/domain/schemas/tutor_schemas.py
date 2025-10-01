@@ -25,6 +25,15 @@ class TutorResponse(TutorBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TutorResponseWithToken(TutorResponse):
+    """
+    Extends TutorResponse to include the invitation token.
+    This should only be returned to the tutor's owner.
+    """
+
+    token: str
+
+
 class TutorInvitationCreate(BaseModel):
     """Schema for inviting a batch of students to a tutor."""
 
