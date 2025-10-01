@@ -39,7 +39,6 @@ from src.api.rag.infrastructure.dependencies import (
     get_text_splitter,
 )
 from src.api.tutor.infrastructure.dependencies import (
-    get_invitation_repository,
     get_tutor_repository,
     get_tutor_service,
 )
@@ -62,7 +61,6 @@ class AppContainer:
         # Repositories ---
         self.user_repo = get_user_repository(db_session)
         self.tutor_repo = get_tutor_repository(db_session)
-        self.invitation_repo = get_invitation_repository(db_session)
         self.chat_repo = get_chat_repository(db_session)
         self.doc_repo = get_document_repository(db_session)
         self.chunk_repo = get_chunk_repository(db_session)
@@ -84,7 +82,6 @@ class AppContainer:
         )
         self.tutor_service = get_tutor_service(
             tutor_repo=self.tutor_repo,
-            invitation_repo=self.invitation_repo,
         )
         self.ingestion_service = get_ingestion_service(
             db=db_session,
@@ -187,13 +184,13 @@ def main() -> None:
         )
         print(f"Tutor '{tutor.course_name}' created with ID: {tutor.id}.")
 
-        invitation_response = container.tutor_service.add_students_to_invitation(
+        container.tutor_service.add_authorized_students(
             tutor_id=tutor.id,
             requesting_user=teacher,
             student_emails=["student@demo.com"],
         )
-        invitation_token = invitation_response.invitation_token
 
+        invitation_token = tutor.token
         if not invitation_token:
             raise ValueError("Failed to create a valid invitation token.")
         print("Invitation token generated.")

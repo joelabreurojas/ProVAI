@@ -9,17 +9,17 @@ import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from langchain_chroma import Chroma
+from pytest_mock import MockerFixture
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session as SQLAlchemySession
 from sqlalchemy.orm import sessionmaker
 
 os.environ["ENV_STATE"] = "test"
 
-from src.api.ai.application.services import EmbeddingService
-from src.api.ai.application.services.embedding_service import (
-    _load_embedding_model_singleton,
+from src.api.ai.infrastructure.dependencies import (
+    get_embedding_service,
+    get_llm_service,
 )
-from src.api.ai.application.services.llm_service import _load_llm_singleton
 from src.api.rag.infrastructure.dependencies import get_rag_vector_store
 from src.core.infrastructure.app import create_app
 from src.core.infrastructure.database import Base, get_db
@@ -29,10 +29,8 @@ from src.ui.shared.infrastructure.dependencies import (
     get_unauthenticated_bff_api_client,
 )
 
-# The connect_args is specific to SQLite and is necessary
-# to allow the database connection to be shared across different threads.
+# The connect_args is specific to SQLite for multithreaded access in tests.
 engine = create_engine(settings.DB_URL, connect_args={"check_same_thread": False})
-
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -42,71 +40,78 @@ def db_session() -> Generator[SQLAlchemySession, None, None]:
     Provides a clean, transactional relational database session for each test.
     It creates and drops all tables for perfect isolation.
     """
-    # Create all tables required by the models.
     Base.metadata.create_all(bind=engine)
-
     connection = engine.connect()
     transaction = connection.begin()
     db = TestingSessionLocal(bind=connection)
-
     try:
         yield db
     finally:
         db.close()
         transaction.rollback()
         connection.close()
-
-        # Drop all tables to ensure a clean state for the next test.
         Base.metadata.drop_all(bind=engine)
 
 
-@pytest.fixture(scope="session")
-def embedding_service() -> EmbeddingService:
-    """Provides a single, session-scoped embedding service instance."""
-    return EmbeddingService()
-
-
 @pytest.fixture(scope="function")
-def test_vector_store(
-    embedding_service: EmbeddingService,
-) -> Generator[Chroma, None, None]:
+def test_vector_store() -> Generator[Chroma, None, None]:
     """
-    Provides a clean, isolated ChromaDB instance for each test.
-    It creates a ChromaDB instance in a temporary directory and, crucially,
-    deletes the entire directory after the test runs to prevent pollution.
+    Provides a clean, isolated ChromaDB instance for each test in a temporary
+    directory that is automatically cleaned up.
     """
+    # This path is robust for different OS and user environments
     tmp_dir = Path(f"/tmp/pytest-of-{os.getuid()}/pytest-current")
     test_store_path = tmp_dir / f"test_vector_store_{os.urandom(8).hex()}"
-
     test_store_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # We need a real embedding model to initialize ChromaDB, but it's session-scoped
+    # so it's only loaded once per test run.
+    from src.api.ai.application.services import EmbeddingService
+
+    embedding_service = EmbeddingService()
     embedding_model = embedding_service.get_embedding_model()
 
     vector_store = Chroma(
         persist_directory=str(test_store_path),
         embedding_function=embedding_model,
     )
-
     try:
         yield vector_store
     finally:
+        # Cleanup the temporary directory
         if test_store_path.exists():
             shutil.rmtree(test_store_path)
 
 
 @pytest.fixture(scope="function")
 def app(
-    db_session: SQLAlchemySession, test_vector_store: Chroma
+    db_session: SQLAlchemySession,
+    test_vector_store: Chroma,
+    mocker: MockerFixture,
 ) -> Generator[FastAPI, None, None]:
     """
-    Provides a fully configured application instance for testing,
-    with all dependencies overridden.
+    The single, definitive application fixture. It creates one app instance per
+    test and applies all necessary overrides for a fully isolated E2E test
+    environment. AI services are mocked by default for speed.
     """
+    # Clear singleton caches to ensure test isolation
+    from src.api.ai.application.services.embedding_service import (
+        _load_embedding_model_singleton,
+    )
+    from src.api.ai.application.services.llm_service import _load_llm_singleton
+
+    _load_llm_singleton.cache_clear()
+    _load_embedding_model_singleton.cache_clear()
+
+    # Create the FastAPI app instance
     app = create_app()
 
-    transport = httpx.ASGITransport(app=app)
+    # Override database and vector store dependencies
+    app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[get_rag_vector_store] = lambda: test_vector_store
 
-    # The base_url includes the API prefix for correct routing
+    # Override BFF clients to use the in-memory TestClient transport
+    transport = httpx.ASGITransport(app=app)
     api_base_url = f"http://testserver{settings.API_ROOT_PATH}"
 
     @asynccontextmanager
@@ -136,32 +141,23 @@ def app(
         override_get_authenticated_bff_api_client
     )
 
-    app.dependency_overrides[get_db] = lambda: db_session
-    app.dependency_overrides[get_rag_vector_store] = lambda: test_vector_store
+    # Mock AI services by default for fast, isolated tests
+    mock_llm_service = mocker.MagicMock()
+    mock_embedding_service = mocker.MagicMock()
+    app.dependency_overrides[get_llm_service] = lambda: mock_llm_service
+    app.dependency_overrides[get_embedding_service] = lambda: mock_embedding_service
 
     yield app
 
-    # Idempotent cleanup of all potential overrides
+    # Cleanup is handled automatically by the fixture's teardown
     app.dependency_overrides.clear()
 
 
 @pytest.fixture(scope="function")
 def client(app: FastAPI) -> Generator[TestClient, None, None]:
     """
-    Provides a TestClient that is configured with the correct API base URL.
-    This is the definitive client that all E2E tests should use.
+    The single, definitive TestClient fixture. All E2E tests should use this.
+    It automatically uses the configured `app` fixture for the current test.
     """
     with TestClient(app) as test_client:
         yield test_client
-
-
-@pytest.fixture()
-def fresh_ai_services() -> Generator[None, None, None]:
-    """
-    A fixture that automatically clears the singleton caches for the AI services
-    before every test runs. This is the definitive solution to test pollution
-    from the session-scoped AI models.
-    """
-    _load_llm_singleton.cache_clear()
-    _load_embedding_model_singleton.cache_clear()
-    yield

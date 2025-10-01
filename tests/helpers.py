@@ -110,3 +110,35 @@ def setup_users_and_tutor(
     context["tutor_id"] = tutor_res.json()["id"]
 
     return context
+
+
+def enroll_student(
+    client: TestClient,
+    tutor_id: int,
+    student_email: str,
+    teacher_headers: dict[str, str],
+    student_headers: dict[str, str],
+) -> None:
+    """Helper function to perform the full student enrollment flow."""
+    # Teacher gets the tutor's token.
+    tutor_details_res = client.get(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}", headers=teacher_headers
+    )
+    assert tutor_details_res.status_code == 200, "Helper failed to get tutor details."
+    invitation_token = tutor_details_res.json()["token"]
+
+    # Teacher authorizes the student's email.
+    auth_email_res = client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/authorized-emails",
+        json={"emails": [student_email]},
+        headers=teacher_headers,
+    )
+    assert auth_email_res.status_code == 200, "Helper failed to authorize email."
+
+    # Student uses the token to enroll.
+    enrollment_res = client.post(
+        f"{settings.API_ROOT_PATH}/enrollments",
+        json={"invitation_token": invitation_token},
+        headers=student_headers,
+    )
+    assert enrollment_res.status_code == 201, "Helper failed to enroll student."

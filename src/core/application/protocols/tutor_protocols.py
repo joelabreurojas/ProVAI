@@ -1,30 +1,8 @@
 from typing import TYPE_CHECKING, Optional, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from src.core.domain.models import Document, Invitation, Tutor, User
-    from src.core.domain.schemas import TutorCreate, TutorInvitationResponse
-
-
-@runtime_checkable
-class InvitationRepositoryProtocol(Protocol):
-    """
-    Defines the contract for the Invitation data repository. This is the sole
-    interface for all database operations related to the Invitation entity.
-    """
-
-    def get_by_tutor_id(self, tutor_id: int) -> Optional["Invitation"]: ...
-
-    def get_by_token(self, token: str) -> Optional["Invitation"]: ...
-
-    def create_for_tutor(self, tutor_id: int) -> "Invitation": ...
-
-    def add_members(
-        self, invitation: "Invitation", student_emails: list[str]
-    ) -> None: ...
-
-    def update_member_status(
-        self, invitation: "Invitation", student_email: str, status: str
-    ) -> None: ...
+    from src.core.domain.models import Document, Tutor, User
+    from src.core.domain.schemas import TutorCreate, TutorUpdate
 
 
 @runtime_checkable
@@ -38,17 +16,31 @@ class TutorRepositoryProtocol(Protocol):
 
     def get_tutor_by_id(self, tutor_id: int) -> Optional["Tutor"]: ...
 
+    def get_tutor_by_token(self, token: str) -> Optional["Tutor"]: ...
+
     def get_tutors_for_user(self, user: "User") -> list["Tutor"]: ...
+
+    def update_tutor(self, tutor: "Tutor", tutor_update: "TutorUpdate") -> "Tutor": ...
+
+    def add_authorized_emails(self, tutor: "Tutor", emails: list[str]) -> None: ...
+
+    def get_authorized_emails(self, tutor: "Tutor") -> list[str]: ...
 
     def add_student_to_tutor(self, tutor: "Tutor", student: "User") -> None: ...
 
     def link_document_to_tutor(self, tutor: "Tutor", document: "Document") -> None: ...
 
+    def get_chunk_hashes_for_tutor(self, tutor_id: int) -> list[str]: ...
+
+    def remove_authorized_email(self, tutor: "Tutor", email: str) -> None: ...
+
+    def remove_student_by_email(self, tutor: "Tutor", email: str) -> None: ...
+
     def remove_document_from_tutor(
         self, tutor: "Tutor", document: "Document"
     ) -> None: ...
 
-    def get_chunk_hashes_for_tutor(self, tutor_id: int) -> list[str]: ...
+    def delete_tutor(self, tutor_id: int) -> None: ...
 
 
 @runtime_checkable
@@ -63,13 +55,13 @@ class TutorServiceProtocol(Protocol):
 
     def get_tutors_for_user(self, user: "User") -> list["Tutor"]: ...
 
-    def get_or_create_invitation(
-        self, tutor_id: int, requesting_user: "User"
-    ) -> "Invitation": ...
+    def update_tutor(
+        self, tutor_id: int, tutor_update: "TutorUpdate", requesting_user: "User"
+    ) -> "Tutor": ...
 
-    def add_students_to_invitation(
+    def add_authorized_students(
         self, tutor_id: int, requesting_user: "User", student_emails: list[str]
-    ) -> "TutorInvitationResponse": ...
+    ) -> None: ...
 
     def enroll_student_from_token(
         self, token: str, student_user: "User"
@@ -80,3 +72,9 @@ class TutorServiceProtocol(Protocol):
     def verify_user_is_tutor_owner(self, tutor_id: int, user: "User") -> "Tutor": ...
 
     def verify_user_can_access_tutor(self, tutor_id: int, user: "User") -> "Tutor": ...
+
+    def remove_student_access(
+        self, tutor_id: int, student_email: str, requesting_user: "User"
+    ) -> None: ...
+
+    def delete_tutor(self, tutor_id: int, requesting_user: "User") -> list[int]: ...

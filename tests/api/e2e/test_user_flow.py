@@ -100,15 +100,22 @@ def test_full_user_flow(
     )
     assert upload_res.status_code == 201, f"Document upload failed: {upload_res.json()}"
 
-    # Teacher invites Student and Student enrolls
-    invitation_res = client.post(
-        f"{settings.API_ROOT_PATH}/invitations",
-        json={"tutor_id": tutor_id, "student_emails": ["student@e2e.com"]},
+    # Teacher adds student's email to the whitelist.
+    add_email_res = client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/authorized-emails",
+        json={"emails": ["student@e2e.com"]},
         headers=teacher_headers,
     )
-    assert invitation_res.status_code == 201
-    invitation_token = invitation_res.json()["invitation_token"]
+    assert add_email_res.status_code == 200
 
+    # Teacher retrieves the tutor's unique invitation token.
+    tutor_details_res = client.get(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}", headers=teacher_headers
+    )
+    assert tutor_details_res.status_code == 200
+    invitation_token = tutor_details_res.json()["token"]
+
+    # Student uses the token to enroll.
     enrollment_res = client.post(
         f"{settings.API_ROOT_PATH}/enrollments",
         json={"invitation_token": invitation_token},

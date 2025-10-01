@@ -1,31 +1,23 @@
-import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.core.infrastructure.database import Base
 
 if TYPE_CHECKING:
-    from .associations import InvitationMember
-    from .tutor import Tutor
+    from src.core.domain.models import Tutor
 
 
 class Invitation(Base):
+    """
+    The whitelist of emails authorized to enroll in a specific Tutor.
+    It is a simple association table.
+    """
+
     __tablename__ = "invitations"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    token: Mapped[str] = mapped_column(unique=True, index=True)
+    tutor_id: Mapped[int] = mapped_column(ForeignKey("tutors.id"), primary_key=True)
+    student_email: Mapped[str] = mapped_column(primary_key=True)
 
-    tutor_id: Mapped[int] = mapped_column(ForeignKey("tutors.id"), unique=True)
-
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        default=lambda: datetime.datetime.now(datetime.UTC)
-    )
-
-    tutor: Mapped["Tutor"] = relationship(back_populates="invitation")
-    members: Mapped[list["InvitationMember"]] = relationship(
-        back_populates="invitation", cascade="all, delete-orphan"
-    )
-
-    __table_args__ = (UniqueConstraint("tutor_id", name="uq_invitation_tutor_id"),)
+    tutor: Mapped["Tutor"] = relationship(back_populates="authorized_students")

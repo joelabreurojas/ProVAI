@@ -42,6 +42,8 @@ class DocumentServiceProtocol(Protocol):
 
     def delete_document_from_tutor(self, document_id: int, tutor_id: int) -> None: ...
 
+    def handle_potential_orphan(self, document_id: int) -> None: ...
+
 
 @runtime_checkable
 class IngestionServiceProtocol(Protocol):

@@ -15,7 +15,6 @@ from .rag_protocols import (
     RAGServiceProtocol,
 )
 from .tutor_protocols import (
-    InvitationRepositoryProtocol,
     TutorRepositoryProtocol,
     TutorServiceProtocol,
 )
@@ -35,7 +34,6 @@ __all__ = [
     "DocumentServiceProtocol",
     "IngestionServiceProtocol",
     "RAGServiceProtocol",
-    "InvitationRepositoryProtocol",
     "TutorRepositoryProtocol",
     "TutorServiceProtocol",
 ]

@@ -13,12 +13,11 @@ from src.core.application.exceptions import (
     UserNotEnrolledError,
 )
 from src.core.application.protocols import (
-    InvitationRepositoryProtocol,
     TutorRepositoryProtocol,
     TutorServiceProtocol,
 )
-from src.core.domain.models import Document, Invitation, Tutor, User
-from src.core.domain.schemas import TutorCreate, TutorInvitationResponse
+from src.core.domain.models import Document, Tutor, User
+from src.core.domain.schemas import TutorCreate, TutorUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +28,8 @@ class TutorService(TutorServiceProtocol):
     related to Tutors, including creation, authorization, and student management.
     """
 
-    def __init__(
-        self,
-        tutor_repo: TutorRepositoryProtocol,
-        invitation_repo: InvitationRepositoryProtocol,
-    ):
+    def __init__(self, tutor_repo: TutorRepositoryProtocol):
         self.tutor_repo = tutor_repo
-        self.invitation_repo = invitation_repo
 
     @traceable(name="Create Tutor")
     def create_tutor(self, tutor_create: TutorCreate, teacher: User) -> Tutor:
@@ -57,59 +51,49 @@ class TutorService(TutorServiceProtocol):
         """Pass-through method to get all tutors for a given user."""
         return self.tutor_repo.get_tutors_for_user(user)
 
-    @traceable(name="Get or Create Invitation")
-    def get_or_create_invitation(
-        self, tutor_id: int, requesting_user: User
-    ) -> Invitation:
+    @traceable(name="Update Tutor")
+    def update_tutor(
+        self, tutor_id: int, tutor_update: TutorUpdate, requesting_user: User
+    ) -> Tutor:
         """
-        Gets the single, living invitation for a tutor, or creates it if it
-        doesn't exist. This is a teacher-only action.
+        Updates a tutor's details after verifying the requesting user is the owner.
         """
         tutor = self.verify_user_is_tutor_owner(tutor_id, requesting_user)
-        invitation = self.invitation_repo.get_by_tutor_id(tutor.id)
-        if not invitation:
-            invitation = self.invitation_repo.create_for_tutor(tutor.id)
-        return invitation
 
-    @traceable(name="Add Students to Invitation")
-    def add_students_to_invitation(
+        return self.tutor_repo.update_tutor(tutor, tutor_update)
+
+    @traceable(name="Add Authorized Students")
+    def add_authorized_students(
         self, tutor_id: int, requesting_user: User, student_emails: list[str]
-    ) -> TutorInvitationResponse:
+    ) -> None:
         """
-        Adds a list of students to a tutor's permanent invitation list and
-        returns the single, shareable invitation.
+        Authorizes the requesting user and adds a list of student emails to
+        the tutor's invitation whitelist.
         """
-        invitation = self.get_or_create_invitation(tutor_id, requesting_user)
-        self.invitation_repo.add_members(invitation, student_emails)
+        tutor = self.verify_user_is_tutor_owner(tutor_id, requesting_user)
 
-        return TutorInvitationResponse(
-            tutor_id=invitation.tutor_id,
-            invitation_token=invitation.token,
-            status=f"Added/Updated invitation for {len(set(student_emails))} students.",
+        self.tutor_repo.add_authorized_emails(tutor, student_emails)
+
+        logger.info(
+            f"Updated authorized emails for Tutor {tutor_id} "
+            f"by Teacher {requesting_user.id}."
         )
 
     @traceable(name="Enroll Student")
     def enroll_student_from_token(self, token: str, student_user: User) -> Tutor:
         """
-        Enrolls a student by consuming a valid invitation token, implementing
-        all necessary security checks with specific error handling.
+        Enrolls a student by consuming a valid tutor token.
         """
-        invitation = self.invitation_repo.get_by_token(token)
-        if not invitation:
+        tutor = self.tutor_repo.get_tutor_by_token(token)
+
+        if not tutor:
             raise InvitationNotFoundError()
 
-        authorized_member = next(
-            (m for m in invitation.members if m.student_email == student_user.email),
-            None,
-        )
-        if not authorized_member:
+        authorized_emails = self.tutor_repo.get_authorized_emails(tutor)
+        if student_user.email not in authorized_emails:
             raise InvitationEmailMismatchError()
 
-        if authorized_member.status == "accepted":
-            raise UserAlreadyEnrolledError()
-
-        tutor = self.get_tutor(invitation.tutor_id)
-
+        # ... rest of the logic remains the same ...
         if any(s.id == student_user.id for s in tutor.students):
             raise UserAlreadyEnrolledError()
 
@@ -117,12 +101,7 @@ class TutorService(TutorServiceProtocol):
             raise SelfEnrollmentError()
 
         self.tutor_repo.add_student_to_tutor(tutor, student_user)
-        self.invitation_repo.update_member_status(
-            invitation, student_user.email, "accepted"
-        )
-
         logger.info(f"Student {student_user.id} enrolled in Tutor {tutor.id}")
-
         return tutor
 
     def link_document_to_tutor(self, tutor: Tutor, document: Document) -> None:
@@ -150,3 +129,34 @@ class TutorService(TutorServiceProtocol):
         if not is_teacher and not is_student:
             raise UserNotEnrolledError()
         return tutor
+
+    @traceable(name="Remove Student Access")
+    def remove_student_access(
+        self, tutor_id: int, student_email: str, requesting_user: User
+    ) -> None:
+        """
+        Orchestrates the removal of a student's access by calling the repository
+        to handle all database operations atomically.
+        """
+        tutor = self.verify_user_is_tutor_owner(tutor_id, requesting_user)
+
+        self.tutor_repo.remove_student_by_email(tutor, student_email)
+
+        logger.info(
+            f"Revoked access for email '{student_email}' from Tutor {tutor_id} "
+            f"by Teacher {requesting_user.id}."
+        )
+
+    @traceable(name="Delete Tutor")
+    def delete_tutor(self, tutor_id: int, requesting_user: User) -> list[int]:
+        """
+        Orchestrates the deletion of a Tutor and returns a list of its
+        previously associated document IDs.
+        """
+        tutor = self.verify_user_is_tutor_owner(tutor_id, requesting_user)
+        doc_ids_to_check = [doc.id for doc in tutor.documents]
+
+        self.tutor_repo.delete_tutor(tutor.id)
+        logger.info(f"Deleted Tutor {tutor_id} by Teacher {requesting_user.id}.")
+
+        return doc_ids_to_check
