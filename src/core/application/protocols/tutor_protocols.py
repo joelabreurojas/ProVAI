@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Optional, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from src.core.domain.models import Document, Tutor, User
-    from src.core.domain.schemas import TutorCreate
+    from src.core.domain.schemas import TutorCreate, TutorUpdate
 
 
 @runtime_checkable
@@ -19,6 +19,8 @@ class TutorRepositoryProtocol(Protocol):
     def get_tutor_by_token(self, token: str) -> Optional["Tutor"]: ...
 
     def get_tutors_for_user(self, user: "User") -> list["Tutor"]: ...
+
+    def update_tutor(self, tutor: "Tutor", tutor_update: "TutorUpdate") -> "Tutor": ...
 
     def add_authorized_emails(self, tutor: "Tutor", emails: list[str]) -> None: ...
 
@@ -46,6 +48,10 @@ class TutorServiceProtocol(Protocol):
     def get_tutor(self, tutor_id: int) -> "Tutor": ...
 
     def get_tutors_for_user(self, user: "User") -> list["Tutor"]: ...
+
+    def update_tutor(
+        self, tutor_id: int, tutor_update: "TutorUpdate", requesting_user: "User"
+    ) -> "Tutor": ...
 
     def add_authorized_students(
         self, tutor_id: int, requesting_user: "User", student_emails: list[str]

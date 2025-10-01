@@ -3,7 +3,7 @@ from sqlalchemy.orm import joinedload
 
 from src.core.application.protocols import TutorRepositoryProtocol
 from src.core.domain.models import Document, Invitation, Tutor, User
-from src.core.domain.schemas import TutorCreate
+from src.core.domain.schemas import TutorCreate, TutorUpdate
 
 
 class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
@@ -35,19 +35,6 @@ class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
         """Retrieves a single tutor by its unique invitation token."""
         return self.db.query(Tutor).filter(Tutor.token == token).first()
 
-    def add_authorized_emails(self, tutor: Tutor, emails: list[str]) -> None:
-        """Adds new, unique emails to the tutor's invitation whitelist."""
-        existing_emails = {auth.student_email for auth in tutor.authorized_students}
-        for email in set(emails):  # De-duplicate input list
-            if email not in existing_emails:
-                new_auth = Invitation(tutor_id=tutor.id, student_email=email)
-                self.db.add(new_auth)
-        self.db.commit()
-
-    def get_authorized_emails(self, tutor: Tutor) -> list[str]:
-        """Retrieves the list of emails authorized to enroll in the tutor."""
-        return [auth.student_email for auth in tutor.authorized_students]
-
     def get_tutors_for_user(self, user: User) -> list[Tutor]:
         """
         Retrieves all tutors a user is associated with, either as a
@@ -65,6 +52,30 @@ class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
             .one()
         )
         return sorted(user_with_tutors.enrolled_tutors, key=lambda t: t.course_name)
+
+    def update_tutor(self, tutor: Tutor, tutor_update: TutorUpdate) -> Tutor:
+        """Updates a tutor's attributes in the database."""
+        update_data = tutor_update.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(tutor, key, value)
+
+        self.db.add(tutor)
+        self.db.commit()
+        self.db.refresh(tutor)
+        return tutor
+
+    def add_authorized_emails(self, tutor: Tutor, emails: list[str]) -> None:
+        """Adds new, unique emails to the tutor's invitation whitelist."""
+        existing_emails = {auth.student_email for auth in tutor.authorized_students}
+        for email in set(emails):  # De-duplicate input list
+            if email not in existing_emails:
+                new_auth = Invitation(tutor_id=tutor.id, student_email=email)
+                self.db.add(new_auth)
+        self.db.commit()
+
+    def get_authorized_emails(self, tutor: Tutor) -> list[str]:
+        """Retrieves the list of emails authorized to enroll in the tutor."""
+        return [auth.student_email for auth in tutor.authorized_students]
 
     def add_student_to_tutor(self, tutor: Tutor, student: User) -> None:
         """

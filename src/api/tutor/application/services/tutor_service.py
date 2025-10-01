@@ -17,7 +17,7 @@ from src.core.application.protocols import (
     TutorServiceProtocol,
 )
 from src.core.domain.models import Document, Tutor, User
-from src.core.domain.schemas import TutorCreate
+from src.core.domain.schemas import TutorCreate, TutorUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,17 @@ class TutorService(TutorServiceProtocol):
     def get_tutors_for_user(self, user: User) -> list[Tutor]:
         """Pass-through method to get all tutors for a given user."""
         return self.tutor_repo.get_tutors_for_user(user)
+
+    @traceable(name="Update Tutor")
+    def update_tutor(
+        self, tutor_id: int, tutor_update: TutorUpdate, requesting_user: User
+    ) -> Tutor:
+        """
+        Updates a tutor's details after verifying the requesting user is the owner.
+        """
+        tutor = self.verify_user_is_tutor_owner(tutor_id, requesting_user)
+
+        return self.tutor_repo.update_tutor(tutor, tutor_update)
 
     @traceable(name="Add Authorized Students")
     def add_authorized_students(

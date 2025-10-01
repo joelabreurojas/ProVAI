@@ -309,3 +309,67 @@ def test_upload_succeeds_for_valid_file_within_size_limit(
         headers=teacher_headers,
     )
     assert response.status_code == 201
+
+
+def test_teacher_can_update_their_own_tutor(
+    client: TestClient, db_session: SQLAlchemySession
+) -> None:
+    """Tests that a teacher can successfully update a tutor they own."""
+    context = setup_users_and_tutor(client, db_session)
+    tutor_id = context["tutor_id"]
+    teacher_headers = context["teacher_headers"]
+
+    update_payload = {
+        "course_name": "Updated Course Name",
+        "description": "This is an updated description.",
+    }
+    response = client.patch(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}",
+        json=update_payload,
+        headers=teacher_headers,
+    )
+    assert response.status_code == 200
+    response_data = response.json()
+    assert response_data["course_name"] == "Updated Course Name"
+    assert response_data["description"] == "This is an updated description."
+
+
+def test_non_owner_cannot_update_tutor(
+    client: TestClient, db_session: SQLAlchemySession
+) -> None:
+    """
+    Tests that a user (even another teacher or an enrolled student) cannot
+    update a tutor they do not own.
+    """
+    context = setup_users_and_tutor(client, db_session)
+    tutor_id = context["tutor_id"]
+
+    # Enroll Student A so they have access, but not ownership
+    tutor_details_res = client.get(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}",
+        headers=context["teacher_headers"],
+    )
+    invitation_token = tutor_details_res.json()["token"]
+    client.post(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}/authorized-emails",
+        json={"emails": [STUDENT_A_EMAIL]},
+        headers=context["teacher_headers"],
+    )
+    client.post(
+        f"{settings.API_ROOT_PATH}/enrollments",
+        json={"invitation_token": invitation_token},
+        headers=context["student_a_headers"],
+    )
+
+    update_payload = {"description": "Attempted update by non-owner."}
+    response = client.patch(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}",
+        json=update_payload,
+        headers=context["student_a_headers"],  # Authenticated as Student A
+    )
+
+    # The service's verify_user_is_tutor_owner will fail.
+    assert response.status_code == 403
+    assert (
+        response.json()["error_code"] == "INSUFFICIENT_PERMISSIONS"
+    )  # Or TUTOR_OWNERSHIP_ERROR depending on service logic order

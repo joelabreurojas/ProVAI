@@ -15,6 +15,7 @@ from src.core.domain.schemas import (
     TutorCreate,
     TutorResponse,
     TutorResponseWithToken,
+    TutorUpdate,
 )
 from src.core.infrastructure.limiter import limiter
 from src.core.infrastructure.settings import settings
@@ -72,6 +73,23 @@ async def get_tutor_details(
         tutor_id=tutor_id, user=current_user
     )
     return tutor
+
+
+@router.patch("/{tutor_id}", response_model=TutorResponse)
+async def update_tutor_details(
+    tutor_id: int,
+    tutor_data: TutorUpdate,
+    current_user: User = Depends(get_current_user),
+    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
+) -> Tutor:
+    """
+    Update a tutor's details (e.g., course_name, description).
+    Only the owner (teacher) of the tutor can perform this action.
+    """
+    updated_tutor = tutor_service.update_tutor(
+        tutor_id=tutor_id, tutor_update=tutor_data, requesting_user=current_user
+    )
+    return updated_tutor
 
 
 @router.post(

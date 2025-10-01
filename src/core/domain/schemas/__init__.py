@@ -16,6 +16,7 @@ from .tutor_schemas import (
     TutorInvitationResponse,
     TutorResponse,
     TutorResponseWithToken,
+    TutorUpdate,
 )
 from .user_schemas import PasswordUpdate, UserBase, UserCreate, UserResponse, UserUpdate
 
@@ -29,6 +30,7 @@ __all__ = [
     "Token",
     "TutorBase",
     "TutorCreate",
+    "TutorUpdate",
     "TutorResponse",
     "TutorResponseWithToken",
     "TutorInvitationCreate",
