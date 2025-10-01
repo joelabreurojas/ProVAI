@@ -184,13 +184,13 @@ def main() -> None:
         )
         print(f"Tutor '{tutor.course_name}' created with ID: {tutor.id}.")
 
-        invitation_response = container.tutor_service.add_students_to_invitation(
+        container.tutor_service.add_authorized_students(
             tutor_id=tutor.id,
             requesting_user=teacher,
             student_emails=["student@demo.com"],
         )
-        invitation_token = invitation_response.invitation_token
 
+        invitation_token = tutor.token
         if not invitation_token:
             raise ValueError("Failed to create a valid invitation token.")
         print("Invitation token generated.")

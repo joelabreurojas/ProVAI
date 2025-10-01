@@ -212,13 +212,13 @@ def main(doc_path: Path, query: str) -> None:
             teacher=teacher,
         )
 
-        invitation_response = container.tutor_service.add_students_to_invitation(
+        container.tutor_service.add_authorized_students(
             tutor_id=tutor.id,
             requesting_user=teacher,
             student_emails=["student@benchmark.com"],
         )
 
-        invitation_token = invitation_response.invitation_token
+        invitation_token = tutor.token
         if not invitation_token:
             raise ValueError("Failed to create invitation token for benchmark.")
 
