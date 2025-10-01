@@ -118,3 +118,8 @@ class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
             for chunk in document.chunks
         }
         return list(unique_chunk_hashes)
+
+    def delete_tutor(self, tutor: Tutor) -> None:
+        """Deletes a tutor record from the database."""
+        self.db.delete(tutor)
+        self.db.commit()

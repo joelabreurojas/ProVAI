@@ -28,10 +28,7 @@ class TutorService(TutorServiceProtocol):
     related to Tutors, including creation, authorization, and student management.
     """
 
-    def __init__(
-        self,
-        tutor_repo: TutorRepositoryProtocol,
-    ):
+    def __init__(self, tutor_repo: TutorRepositoryProtocol):
         self.tutor_repo = tutor_repo
 
     @traceable(name="Create Tutor")
@@ -132,3 +129,14 @@ class TutorService(TutorServiceProtocol):
         if not is_teacher and not is_student:
             raise UserNotEnrolledError()
         return tutor
+
+    @traceable(name="Delete Tutor")
+    def delete_tutor(self, tutor_id: int, requesting_user: User) -> list[int]:
+        tutor = self.verify_user_is_tutor_owner(tutor_id, requesting_user)
+
+        doc_ids_to_check = [doc.id for doc in tutor.documents]
+
+        self.tutor_repo.delete_tutor(tutor)
+        logger.info(f"Deleted Tutor {tutor_id} by Teacher {requesting_user.id}.")
+
+        return doc_ids_to_check

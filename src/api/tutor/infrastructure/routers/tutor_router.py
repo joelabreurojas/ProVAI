@@ -1,12 +1,25 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 from pydantic import BaseModel, EmailStr
 
 from src.api.auth.infrastructure.dependencies import get_current_user
-from src.api.rag.infrastructure.dependencies import get_ingestion_service
+from src.api.rag.infrastructure.dependencies import (
+    get_document_service,
+    get_ingestion_service,
+)
 from src.api.tutor.infrastructure.dependencies import get_tutor_service
 from src.core.application.protocols import (
+    DocumentServiceProtocol,
     IngestionServiceProtocol,
     TutorServiceProtocol,
 )
@@ -162,3 +175,24 @@ async def upload_document_to_tutor(
         "message": message,
         "document_id": new_document.id,
     }
+
+
+@router.delete("/{tutor_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_tutor(
+    tutor_id: int,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
+    doc_service: DocumentServiceProtocol = Depends(get_document_service),
+) -> None:
+    """
+    Deletes a tutor and schedules background jobs for cascading garbage collection.
+    """
+    doc_ids_to_check = tutor_service.delete_tutor(
+        tutor_id=tutor_id, requesting_user=current_user
+    )
+
+    # The response will be sent to the user immediately, and FastAPI will
+    # run this loop in the background.
+    for doc_id in doc_ids_to_check:
+        background_tasks.add_task(doc_service.handle_potential_orphan, doc_id)

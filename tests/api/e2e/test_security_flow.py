@@ -373,3 +373,26 @@ def test_non_owner_cannot_update_tutor(
     assert (
         response.json()["error_code"] == "INSUFFICIENT_PERMISSIONS"
     )  # Or TUTOR_OWNERSHIP_ERROR depending on service logic order
+
+
+def test_teacher_can_delete_their_own_tutor(
+    client: TestClient, db_session: SQLAlchemySession
+) -> None:
+    """Tests that a teacher can successfully delete a tutor they own."""
+    context = setup_users_and_tutor(client, db_session)
+    tutor_id = context["tutor_id"]
+    teacher_headers = context["teacher_headers"]
+
+    # Delete the tutor
+    response = client.delete(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}",
+        headers=teacher_headers,
+    )
+    assert response.status_code == 204
+
+    # Verify the tutor is gone
+    get_response = client.get(
+        f"{settings.API_ROOT_PATH}/tutors/{tutor_id}",
+        headers=teacher_headers,
+    )
+    assert get_response.status_code == 404  # Not Found
