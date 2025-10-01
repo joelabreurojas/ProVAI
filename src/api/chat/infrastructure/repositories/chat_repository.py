@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session as SQLAlchemySession
 
 from src.core.application.protocols import ChatRepositoryProtocol
 from src.core.domain.models import Chat, Message
+from src.core.domain.schemas import ChatUpdate, MessageUpdate
 
 
 class SQLAlchemyChatRepository(ChatRepositoryProtocol):
@@ -31,9 +32,52 @@ class SQLAlchemyChatRepository(ChatRepositoryProtocol):
             .all()
         )
 
+    def update_chat(self, chat: Chat, chat_update: ChatUpdate) -> Chat:
+        chat.title = chat_update.title
+        self.db.add(chat)
+        self.db.commit()
+        self.db.refresh(chat)
+        return chat
+
+    def delete_chat(self, chat: Chat) -> None:
+        self.db.delete(chat)
+        self.db.commit()
+
     def add_message(self, chat_id: int, role: str, content: str) -> Message:
         db_message = Message(chat_id=chat_id, role=role, content=content)
         self.db.add(db_message)
         self.db.commit()
         self.db.refresh(db_message)
         return db_message
+
+    def get_message_by_id(self, message_id: int) -> Message | None:
+        return self.db.get(Message, message_id)
+
+    def get_preceding_user_message(self, ai_message: Message) -> Message | None:
+        """
+        Finds the most recent user message in the same chat that occurred
+        before the given AI message.
+        """
+        return (
+            self.db.query(Message)
+            .filter(
+                Message.chat_id == ai_message.chat_id,
+                Message.role == "user",
+                Message.timestamp < ai_message.timestamp,
+            )
+            .order_by(Message.timestamp.desc())
+            .first()
+        )
+
+    def update_message(
+        self, message: Message, message_update: MessageUpdate
+    ) -> Message:
+        message.content = message_update.content
+        self.db.add(message)
+        self.db.commit()
+        self.db.refresh(message)
+        return message
+
+    def delete_message(self, message: Message) -> None:
+        self.db.delete(message)
+        self.db.commit()

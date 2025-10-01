@@ -2,7 +2,9 @@ from .chat_schemas import (
     ChatBase,
     ChatCreate,
     ChatResponse,
+    ChatUpdate,
     MessageResponse,
+    MessageUpdate,
     QueryRequest,
     QueryResponse,
 )
@@ -23,7 +25,9 @@ from .user_schemas import PasswordUpdate, UserBase, UserCreate, UserResponse, Us
 __all__ = [
     "ChatBase",
     "ChatCreate",
+    "ChatUpdate",
     "ChatResponse",
+    "MessageUpdate",
     "MessageResponse",
     "QueryRequest",
     "QueryResponse",

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ChatBase(BaseModel):
@@ -14,6 +14,10 @@ class ChatCreate(ChatBase):
     pass
 
 
+class ChatUpdate(BaseModel):
+    title: str = Field(..., min_length=3, max_length=100)
+
+
 class ChatResponse(ChatBase):
     """Schema for returning chat data to the client."""
 
@@ -22,9 +26,14 @@ class ChatResponse(ChatBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class MessageUpdate(BaseModel):
+    content: str = Field(..., min_length=1)
+
+
 class MessageResponse(BaseModel):
     """Schema for returning chat message data to the client."""
 
+    id: int
     role: str
     content: str
     model_config = ConfigDict(from_attributes=True)
