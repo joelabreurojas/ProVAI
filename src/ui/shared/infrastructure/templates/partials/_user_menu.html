@@ -1,0 +1,36 @@
+{#
+  A self-contained, reusable component for the user account menu dropdown.
+  It expects the `user` object to be in the context.
+#}
+<div x-data="{ open: false }" class="relative">
+    <!-- Dropdown Menu -->
+    <div 
+        x-show="open" 
+        x-cloak 
+        @click.away="open = false"
+        class="absolute bottom-full mb-2 w-full min-w-max bg-nord-bg border border-nord-border rounded-md shadow-lg py-1 z-10" 
+        x-transition
+    >
+        <a href="/account" class="cursor-pointer block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-nord-border hover:text-white">Account Settings</a>
+        <form
+            hx-post="/auth/logout"
+            hx-target="body"
+            hx-push-url="true"
+            @submit.prevent="
+                localStorage.removeItem('provai_sidebar_view');
+                $event.target.submit();
+            "
+        >
+             {% include "partials/_csrf_token_input.html" %}
+            <button type="submit" class="cursor-pointer block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-nord-border hover:text-white">Logout</button>
+        </form>
+    </div>
+    
+    <!-- User Button Trigger -->
+    <button @click="open = !open" class="cursor-pointer w-full flex items-center p-2 rounded-md hover:bg-nord-border transition-colors text-left" title="Account Options">
+        <span class="flex-shrink-0 h-8 w-8 rounded-full bg-gray-600 flex items-center justify-center text-sm font-bold text-white">
+            {{ user.name[0] }}
+        </span>
+        <span class="ml-3 text-sm font-medium text-gray-300 truncate {% if isMobile %}hidden{% endif %}">{{ user.email }}</span>
+    </button>
+</div>

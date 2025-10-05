@@ -8,7 +8,7 @@ from src.ui.shared.infrastructure.dependencies import (
     get_sidebar_context,
     validate_csrf_token,
 )
-from src.ui.shared.infrastructure.utils import htmx_refresh_csrf, render_template
+from src.ui.shared.infrastructure.utils import htmx_trigger, render_template
 
 router = APIRouter(prefix="/account", tags=["UI - Account"], include_in_schema=False)
 
@@ -54,9 +54,6 @@ async def handle_update_profile(
             "toast_category": "success",
             "toast_message": "Profile updated successfully!",
         }
-        response: Response = htmx_refresh_csrf(
-            render_template("partials/_toast.html", context), request
-        )
 
     else:
         error_message = api_response.json().get("detail", "Failed to update profile.")
@@ -65,7 +62,10 @@ async def handle_update_profile(
             "toast_category": "error",
             "toast_message": error_message,
         }
-        response = render_template("partials/_toast.html", context)
+
+    template = render_template("partials/_toast.html", context)
+
+    response: Response = htmx_trigger(template, events={}, request=request)
 
     return response
 
@@ -96,9 +96,6 @@ async def handle_update_password(
             "toast_category": "success",
             "toast_message": "Password updated successfully!",
         }
-        response: Response = htmx_refresh_csrf(
-            render_template("partials/_toast.html", context), request
-        )
 
     else:
         error_message = api_response.json().get("detail", "Failed to update password.")
@@ -107,7 +104,11 @@ async def handle_update_password(
             "toast_category": "error",
             "toast_message": error_message,
         }
-        response = render_template("partials/_toast.html", context)
+
+    template = render_template("partials/_toast.html", context)
+    custom_events = {"clearPasswordForm": "true"}
+
+    response: Response = htmx_trigger(template, events=custom_events, request=request)
 
     return response
 

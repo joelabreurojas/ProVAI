@@ -36,22 +36,15 @@ class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
         return self.db.query(Tutor).filter(Tutor.token == token).first()
 
     def get_tutors_for_user(self, user: User) -> list[Tutor]:
-        """
-        Retrieves all tutors a user is associated with, either as a
-        teacher or an enrolled student.
-        """
-        if user.role == "teacher":
-            # Teachers see all tutors they've created
-            return self.db.query(Tutor).filter(Tutor.teacher_id == user.id).all()
-
-        # Students see tutors they are enrolled in
-        user_with_tutors = (
+        """Retrieves all tutors a user is associated with."""
+        user_tutors = (
             self.db.query(User)
+            .options(joinedload(User.created_tutors), joinedload(User.enrolled_tutors))
             .filter(User.id == user.id)
-            .options(joinedload(User.enrolled_tutors))
             .one()
         )
-        return sorted(user_with_tutors.enrolled_tutors, key=lambda t: t.course_name)
+        all_tutors = set(user_tutors.created_tutors) | set(user_tutors.enrolled_tutors)
+        return sorted(all_tutors, key=lambda t: t.course_name.lower())
 
     def update_tutor(self, tutor: Tutor, tutor_update: TutorUpdate) -> Tutor:
         """Updates a tutor's attributes in the database."""

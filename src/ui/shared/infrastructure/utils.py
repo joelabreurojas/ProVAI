@@ -1,4 +1,5 @@
 import datetime
+import json
 from typing import Any
 
 from fastapi import Request
@@ -51,14 +52,28 @@ def render_template(
     )
 
 
-def htmx_refresh_csrf(
-    response: _TemplateResponse, request: Request
+def htmx_trigger(
+    response: _TemplateResponse,
+    events: dict[str, Any],
+    refresh_csrf: bool = True,
+    request: Request | None = None,
 ) -> _TemplateResponse:
     """
-    Takes a TemplateResponse and adds an HX-Trigger header to refresh the
-    CSRF token on the client-side after a successful swap.
+    Takes a TemplateResponse and adds an HX-Trigger header with multiple events.
+    If refresh_csrf is True, it will also generate a new CSRF token and
+    include the 'refreshCSRF' event.
     """
-    new_csrf_token = csrf_service.generate_token()
-    request.session["csrf_token"] = new_csrf_token
-    response.headers["HX-Trigger"] = f'{{"refreshCSRF": "{new_csrf_token}"}}'
+    if refresh_csrf:
+        if not request:
+            raise ValueError(
+                "A 'request' object is required to refresh the CSRF token."
+            )
+
+        new_csrf_token = csrf_service.generate_token()
+        request.session["csrf_token"] = new_csrf_token
+
+        # Add the CSRF event to our dictionary of events
+        events["refreshCSRF"] = {"value": new_csrf_token}
+
+    response.headers["HX-Trigger"] = json.dumps(events)
     return response
