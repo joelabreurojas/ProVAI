@@ -35,7 +35,15 @@
     </div>
 
     <!-- Update Password Section -->
-    <div class="bg-nord-bg-2 border border-nord-border rounded-lg shadow-lg">
+    <div
+        class="bg-nord-bg-2 border border-nord-border rounded-lg shadow-lg"
+        x-data="{ current_password: '', new_password: '', confirm_password: '' }"
+        @clear-password-form.window="
+            current_password = '';
+            new_password = '';
+            confirm_password = '';
+        "
+    >
         <div class="p-6 border-b border-nord-border">
             <h2 class="text-xl font-semibold text-white">Update Password</h2>
             <p class="mt-1 text-sm text-gray-400">Ensure your account is using a long, random password to stay secure.</p>
@@ -50,7 +58,7 @@
             <div x-data="{ show: false }">
                 <label for="current_password" class="block text-sm font-medium text-nord-text">Current Password</label>
                 <div class="mt-1 relative">
-                    <input id="current_password" name="current_password" :type="show ? 'text' : 'password'" required class="w-full bg-nord-bg border border-nord-border rounded-md p-2">
+                    <input id="current_password" name="current_password" :type="show ? 'text' : 'password'" required class="w-full bg-nord-bg border border-nord-border rounded-md p-2" x-model="current_password">
                     <div class="absolute cursor-pointer inset-y-0 right-0 pr-3 flex items-center">
                         <button @click="show = !show" type="button" class="cursor-pointer text-gray-400 hover:text-white">
                             <svg x-show="!show" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -62,7 +70,7 @@
             <div x-data="{ show: false }">
                 <label for="new_password" class="block text-sm font-medium text-nord-text">New Password</label>
                 <div class="mt-1 relative">
-                    <input id="new_password" name="new_password" :type="show ? 'text' : 'password'" required class="w-full bg-nord-bg border border-nord-border rounded-md p-2">
+                    <input id="new_password" name="new_password" :type="show ? 'text' : 'password'" required class="w-full bg-nord-bg border border-nord-border rounded-md p-2" x-model="new_password">
                     <div class="absolute cursor-pointer inset-y-0 right-0 pr-3 flex items-center">
                         <button @click="show = !show" type="button" class="cursor-pointer text-gray-400 hover:text-white">
                             <svg x-show="!show" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -74,7 +82,7 @@
             <div x-data="{ show: false }">
                 <label for="confirm_password" class="block text-sm font-medium text-nord-text">Confirm New Password</label>
                 <div class="mt-1 relative">
-                    <input id="confirm_password" name="confirm_password" :type="show ? 'text' : 'password'" required class="w-full bg-nord-bg border border-nord-border rounded-md p-2">
+                    <input id="confirm_password" name="confirm_password" :type="show ? 'text' : 'password'" required class="w-full bg-nord-bg border border-nord-border rounded-md p-2" x-model="confirm_password">
                     <div class="absolute cursor-pointer inset-y-0 right-0 pr-3 flex items-center">
                         <button @click="show = !show" type="button" class="cursor-pointer text-gray-400 hover:text-white">
                             <svg x-show="!show" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
