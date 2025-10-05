@@ -71,7 +71,7 @@ async def handle_login_form(
 
     if api_response.status_code != status.HTTP_200_OK:
         error_message = api_response.json().get(
-            "message", "Incorrect email or password."
+            "detail", "Incorrect email or password."
         )
         context = {"request": request, "error_message": error_message}
         return render_template("partials/_login_form.html", context)
@@ -124,31 +124,19 @@ async def handle_register_form(
         return Response(
             status_code=status.HTTP_200_OK, headers={"HX-Redirect": "/auth/login"}
         )
+
     else:
-        error_message = "An unknown registration error occurred."
-        try:
-            error_json = api_response.json()
-            # Handle Pydantic's detailed validation errors (422)
-            if "detail" in error_json and isinstance(error_json["detail"], list):
-                # Get the message from the first error object
-                raw_msg = error_json["detail"][0].get("msg", "Invalid input.")
-                # Clean up the "Value error, " prefix if Pydantic adds it
-                if raw_msg.startswith("Value error, "):
-                    error_message = raw_msg.split(", ", 1)[1]
-                else:
-                    error_message = raw_msg
-            # Handle our custom application exceptions (e.g., 409 Conflict)
-            elif "message" in error_json:
-                error_message = error_json["message"]
-            # Fallback for other FastAPI errors
-            elif "detail" in error_json:
-                error_message = error_json["detail"]
+        error_message = api_response.json().get(
+            "detail", "An unknown registration error occurred."
+        )
+        context = {
+            "request": request,
+            "error_message": error_message,
+            # Preserve user input on failure
+            "submitted_name": name,
+            "submitted_email": email,
+        }
 
-        except (KeyError, IndexError, AttributeError, TypeError):
-            # If the JSON structure is unexpected, use a generic message
-            error_message = "An unexpected error occurred during registration."
-
-        context = {"request": request, "error_message": error_message}
         response: Response = render_template("partials/_register_form.html", context)
 
         return response
