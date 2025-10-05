@@ -3,9 +3,10 @@
 {% block app_content %}
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
+<!-- This div will receive toast notifications from HTMX swaps -->
+<div id="toast-container"></div>
+
 <div class="space-y-10">
-    <!-- This div will receive toast notifications from HTMX swaps -->
-    <div id="toast-container"></div>
 
     <!-- Profile Settings Section -->
     <div class="bg-nord-bg-2 border border-nord-border rounded-lg shadow-lg">

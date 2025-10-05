@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Form, Request, Response, status
 from fastapi.responses import RedirectResponse
 
 from src.core.domain.models import User
+from src.core.infrastructure.settings import settings
 from src.ui.shared.infrastructure.dependencies import (
     get_authenticated_bff_api_client,
     get_optional_current_user_from_cookie,
@@ -158,7 +159,11 @@ async def serve_forgot_password_page(
     if user:
         return RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
 
-    context = {"request": request, "title": "Reset Your Password"}
+    context = {
+        "request": request,
+        "title": "Reset Your Password",
+        "support_email": settings.SUPPORT_EMAIL,
+    }
     response: Response = render_template("forgot-password.html", context)
 
     return response
