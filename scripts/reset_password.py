@@ -77,7 +77,7 @@ def main() -> None:
         logger.info(f"   TEMPORARY PASSWORD: {new_password}")
         logger.info("=" * 40 + "\n")
         logger.info(
-            "Please provide this password to the user and advise them to change it immediately."
+            "Please provide this password to the user and advise them to change it."
         )
 
     except Exception as e:

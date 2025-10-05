@@ -5,19 +5,20 @@ from fastapi.responses import JSONResponse
 
 
 async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
+    request: Request, exc: Exception
 ) -> JSONResponse:
     """
     Handles Pydantic's RequestValidationError to provide a cleaner,
-    more user-friendly error message.
+    more user-friendly error message, while being type-safe.
     """
-    # Get the first error from the list
-    first_error = exc.errors()[0]
+    clean_msg = "Validation error"  # Default message
 
-    raw_msg = first_error.get("msg", "Validation error")
+    if isinstance(exc, RequestValidationError):
+        first_error = exc.errors()[0]
 
-    # Clean up the "Value error, " prefix
-    clean_msg = raw_msg.removeprefix("Value error, ")
+        raw_msg = first_error.get("msg", "Validation error")
+
+        clean_msg = raw_msg.removeprefix("Value error, ")
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
