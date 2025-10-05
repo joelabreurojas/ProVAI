@@ -2,10 +2,15 @@
 
 {% block app_content %}
 <div class="bg-nord-bg-2 border border-nord-border rounded-lg shadow-lg p-8 h-full flex items-center justify-center">
-    <div class="text-center">
-        <h1 class="text-3xl font-bold tracking-tight text-white">
-            Welcome back, {{ user.name.split()[0] }}!
-        </h1>
+    <div class="text-center w-full">
+        <div class="flex flex-col items-center">
+            <h1 class="text-3xl font-bold tracking-tight text-white">
+                Welcome back,
+            </h1>
+            <span class="block w-full truncate text-3xl font-bold tracking-tight text-nord-accent mt-1" title="{{ user.name.split()[0] }}">
+                {{ user.name.split()[0] }}
+            </span>
+        </div>
         <p class="mt-4 text-lg text-gray-400">
             {% if user.role == 'teacher' %}
                 Ready to see how your classes are progressing?
@@ -13,7 +18,13 @@
                 What would you like to learn today?
             {% endif %}
         </p>
-        <p class="mt-2 text-sm text-gray-500">Select a Tutor from the sidebar to begin.</p>
+        <p class="mt-2 text-sm text-gray-500">
+            {% if user.role == 'teacher' %}
+                Select an Assistant or Tutor from the sidebar to begin.
+            {% else %}
+                Select a Tutor from the sidebar to begin.
+            {% endif %}
+        </p>
     </div>
 </div>
 {% endblock %}

@@ -1,3 +1,4 @@
+import json
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -49,18 +50,6 @@ def get_optional_current_user_from_cookie(
         return user
     except (UserNotFoundError, TokenValidationError):
         return None
-
-
-def get_sidebar_context(
-    user: User = Depends(get_current_user_from_cookie),
-    tutor_service: TutorServiceProtocol = Depends(),
-) -> dict[str, Any]:
-    """
-    A dependency that provides all necessary context for rendering the
-    shared application layout, including the user and their tutors.
-    """
-    tutors = tutor_service.get_tutors_for_user(user)
-    return {"user": user, "tutors": tutors}
 
 
 async def validate_csrf_token(
@@ -115,3 +104,22 @@ async def get_authenticated_bff_api_client(
 
     async with httpx.AsyncClient(base_url=base_url, headers=headers) as client:
         yield client
+
+
+def get_sidebar_context(
+    user: User = Depends(get_current_user_from_cookie),
+    tutor_service: TutorServiceProtocol = Depends(),
+) -> dict[str, Any]:
+    """Provides all necessary context for rendering the shared application layout."""
+    tutors = tutor_service.get_tutors_for_user(user)
+
+    tutor_list_for_json = [
+        {"id": t.id, "course_name": t.course_name, "teacher_id": t.teacher_id}
+        for t in tutors
+    ]
+
+    return {
+        "user": user,
+        "tutors": tutors,
+        "tutors_json": json.dumps(tutor_list_for_json),
+    }

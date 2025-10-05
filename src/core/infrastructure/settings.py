@@ -19,6 +19,7 @@ class _EnvironmentSettings(BaseSettings):
     ENV_STATE: str = ""
     DB_URL: str = ""
     INTERNAL_API_URL: str = ""
+    SUPPORT_EMAIL: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -61,6 +62,9 @@ def _load_settings() -> DevConfig | TestConfig | ProdConfig:
 
     if env.INTERNAL_API_URL:
         config.INTERNAL_API_URL = env.INTERNAL_API_URL
+
+    if env.SUPPORT_EMAIL:
+        config.SUPPORT_EMAIL = env.SUPPORT_EMAIL
 
     return config
 

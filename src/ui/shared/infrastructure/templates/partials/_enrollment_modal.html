@@ -4,7 +4,7 @@ Controlled by Alpine.js. #}
   x-show="showEnrollModal"
   x-cloak
   class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-  @click.away="showEnrollModal = false"
+  @click="showEnrollModal = false"
   x-transition:enter="transition ease-out duration-300"
   x-transition:enter-start="opacity-0"
   x-transition:enter-end="opacity-100"
@@ -30,19 +30,25 @@ Controlled by Alpine.js. #}
 
     <form
       class="mt-4 space-y-4"
-      hx-post="/dashboard/enrollments"
-      hx-swap="none"
+      hx-post="/actions/enroll"
+      hx-target="#toast-container"
+      hx-swap="innerHTML"
+      hx-indicator="#enroll-spinner"
     >
       {% include "partials/_csrf_token_input.html" %}
+      
+      {# Add the hidden input to pass the current view state #}
+      {# --- END EDITS --- #}
+      
       <div>
         <label
-          for="invitation_token"
+          for="token"
           class="block text-sm font-medium text-nord-text"
           >Invitation Token</label
         >
         <input
-          id="invitation_token"
-          name="invitation_token"
+          id="token"
+          name="token"
           type="text"
           required
           placeholder="Enter the token provided by your teacher"
@@ -50,8 +56,10 @@ Controlled by Alpine.js. #}
         />
       </div>
 
-      <div class="flex justify-end pt-2">
-        <button type="submit" class="btn btn-primary btn-normal">Enroll</button>
+      {# Add the htmx-indicator spinner and adjust flex alignment #}
+      <div class="flex justify-end items-center pt-2">
+          <span id="enroll-spinner" class="htmx-indicator text-sm text-gray-400 mr-4">Enrolling...</span>
+          <button type="submit" class="btn btn-primary btn-normal">Enroll</button>
       </div>
     </form>
   </div>

@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from slowapi.errors import RateLimitExceeded
 
 from src.api.modules import (
@@ -9,6 +10,7 @@ from src.core.application.exceptions import AppException
 from src.core.infrastructure.handlers import (
     app_exception_handler,
     rate_limit_exception_handler,
+    validation_exception_handler,
 )
 from src.core.infrastructure.limiter import limiter
 from src.core.infrastructure.logging_config import setup_logging
@@ -48,6 +50,7 @@ def create_app() -> FastAPI:
 
     app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
     app.add_exception_handler(AppException, app_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
     register_api_routers(app)
     register_ui_routers(app)

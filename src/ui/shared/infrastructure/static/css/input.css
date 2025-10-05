@@ -79,3 +79,24 @@ It imports the core layers and defines our custom theme directly.
 		}
 	}
 }
+
+/* Custom Scrollbar Utilities */
+@layer utilities {
+	/* For WebKit Browsers (Chrome, Safari, Edge) */
+	.custom-scrollbar::-webkit-scrollbar {
+		width: 4px;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-thumb {
+		background-color: var(--color-nord-border); /* nord8 */
+		border-radius: 10px;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-button {
+		display: none !important;
+	}
+}
