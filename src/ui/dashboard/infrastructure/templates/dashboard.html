@@ -2,8 +2,8 @@
 
 {% block app_content %}
 <div class="bg-nord-bg-2 border border-nord-border rounded-lg shadow-lg p-8 h-full flex items-center justify-center">
-    <div class="text-center">
-        <h1 class="text-3xl font-bold tracking-tight text-white">
+    <div class="text-center w-full">
+        <h1 class="text-3xl font-bold tracking-tight text-white truncate">
             Welcome back, {{ user.name.split()[0] }}!
         </h1>
         <p class="mt-4 text-lg text-gray-400">
@@ -13,7 +13,13 @@
                 What would you like to learn today?
             {% endif %}
         </p>
-        <p class="mt-2 text-sm text-gray-500">Select a Tutor from the sidebar to begin.</p>
+        <p class="mt-2 text-sm text-gray-500">
+            {% if user.role == 'teacher' %}
+                Select an Assistant or Tutor from the sidebar to begin.
+            {% else %}
+                Select a Tutor from the sidebar to begin.
+            {% endif %}
+        </p>
     </div>
 </div>
 {% endblock %}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark scroll-smooth">
+<html lang="en" class="dark scroll-smooth custom-scrollbar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,13 +12,11 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='/favicon/favicon-16x16.png') }}">
     <link rel="manifest" href="{{ url_for('static', path='/favicon/site.webmanifest') }}">
     <link rel="shortcut icon" href="{{ url_for('static', path='/favicon/favicon.ico') }}">
-
+    
     <style>[x-cloak] { display: none !important; }</style>
     
-   <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js" integrity="sha384-ZBXiYtYQ6hJ2Y0ZNoYuI+Nq5MqWBr+chMrS/RkXpNzQCApHEhOt2aY8EJgqwHLkJ" crossorigin="anonymous"></script>
-    
-    <script defer src="https://unpkg.com/alpinejs-intersect-class@1.x.x/dist/cdn.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js" integrity="sha384-ZBXiYtYQ6hJ2Y0ZNoYuI+Nq5MqWBr+chMrS/RkXpNzQCApHEhOt2aY8EJgqwHLkJ" crossorigin="anonymous"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     {% block head_scripts %}{% endblock %}
@@ -27,31 +25,35 @@
     <header>
         {% if navbar_type == 'public' %}
             {% include "partials/_public-navbar.html" %}
-        {% elif navbar_type == 'app' %}
-            {% include "partials/_app-navbar.html" %}
         {% endif %}
     </header>
 
     <main>
-        {% if toast_message %}
-            {% include "partials/_toast.html" %}
-        {% endif %}
+        <div id="toast-container">
+            {% if toast_message %}
+                {% include "partials/_toast.html" %}
+            {% endif %}
+        </div>
+
         {% block content %}{% endblock %}
     </main>
 
-    <footer>
-        {% include "partials/_footer.html" %}
-        {% block footer_scripts %}
-        <script>
-            // This script listens for our custom 'refreshCSRF' event triggered by HTMX
-            document.body.addEventListener('refreshCSRF', function(evt) {
-                const csrfInputs = document.querySelectorAll('input[name="csrf_token"]');
-                csrfInputs.forEach(input => {
+    {% if navbar_type == 'public' %}
+        <footer>
+            {% include "partials/_footer.html" %}
+        </footer>
+    {% endif %}
+    
+    {% block footer_scripts %}
+    <script>
+        document.body.addEventListener('refreshCSRF', function(evt) {
+            if (evt.detail && evt.detail.value) {
+                document.querySelectorAll('input[name="csrf_token"]').forEach(input => {
                     input.value = evt.detail.value;
                 });
-            });
-        </script>
-        {% endblock %}
-    </footer>
+            }
+        });
+    </script>
+    {% endblock %}
 </body>
 </html>
