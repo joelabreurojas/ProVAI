@@ -1,5 +1,6 @@
-from typing import Any
+from typing import Annotated, Any
 
+from fastapi import Form
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
@@ -14,7 +15,14 @@ class TutorBase(BaseModel):
 class TutorCreate(TutorBase):
     """Schema for creating a new tutor."""
 
-    pass
+    @classmethod
+    def as_form(
+        cls,
+        course_name: Annotated[str, Form(min_length=3, max_length=100)],
+        description: Annotated[str | None, Form(max_length=500)] = None,
+        # Roadmap cannot be sent via a simple form, so it's omitted
+    ) -> "TutorCreate":
+        return cls(course_name=course_name, description=description)
 
 
 class TutorUpdate(BaseModel):
