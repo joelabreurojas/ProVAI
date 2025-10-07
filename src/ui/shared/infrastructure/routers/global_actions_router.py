@@ -16,7 +16,9 @@ from src.ui.shared.infrastructure.dependencies import (
 )
 from src.ui.shared.infrastructure.utils import htmx_trigger, render_template
 
-router = APIRouter(prefix="/actions", tags=["UI - Global Actions"])
+router = APIRouter(
+    prefix="/actions", tags=["UI - Global Actions"], include_in_schema=False
+)
 
 
 @router.post("/create-tutor")
@@ -44,7 +46,9 @@ async def handle_create_tutor(
         return htmx_trigger(response, events=events, request=request)
 
     except ValidationError as e:
-        error_message = e.errors()[0]["msg"].removeprefix("Value error, ")
+        error_message = (
+            e.errors()[0]["msg"].removeprefix("Value error, ").replace("String", "Name")
+        )
         context = {
             "request": request,
             "toast_category": "error",

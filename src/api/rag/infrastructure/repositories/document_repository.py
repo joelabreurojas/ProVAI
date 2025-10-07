@@ -10,8 +10,8 @@ class SQLAlchemyDocumentRepository(DocumentRepositoryProtocol):
     def __init__(self, db: SQLAlchemySession) -> None:
         self.db = db
 
-    def create_document(self, file_name: str) -> Document:
-        db_document = Document(file_name=file_name)
+    def create_document(self, file_name: str, storage_path: str) -> Document:
+        db_document = Document(file_name=file_name, storage_path=storage_path)
         self.db.add(db_document)
         self.db.commit()
         self.db.refresh(db_document)

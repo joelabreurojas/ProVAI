@@ -6,6 +6,7 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
 
+from src.core.infrastructure.settings import settings
 from src.ui.modules import discover_ui_templates
 from src.ui.shared.infrastructure.security import csrf_service
 
@@ -18,6 +19,7 @@ def global_context(request: Request) -> dict[str, Any]:
     """
     return {
         "now": datetime.datetime.now(datetime.UTC),
+        "settings": settings,
         # We can add any other global variables here in the future
         # e.g., "current_user": get_optional_current_user_from_cookie(request)
     }

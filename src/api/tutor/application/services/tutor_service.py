@@ -9,6 +9,7 @@ from src.core.application.exceptions import (
     SelfEnrollmentError,
     TutorNotFoundError,
     TutorOwnershipError,
+    UnenrollmentAuthorizationError,
     UserAlreadyEnrolledError,
     UserNotEnrolledError,
 )
@@ -146,6 +147,31 @@ class TutorService(TutorServiceProtocol):
             f"Revoked access for email '{student_email}' from Tutor {tutor_id} "
             f"by Teacher {requesting_user.id}."
         )
+
+    @traceable(name="Unenroll Student")
+    def unenroll_student(
+        self, tutor_id: int, student_to_unenroll: User, requesting_user: User
+    ) -> None:
+        """
+        Unenrolls a student from a tutor, with authorization checks.
+        A user can only unenroll themselves.
+        """
+        if requesting_user.id != student_to_unenroll.id:
+            raise UnenrollmentAuthorizationError()
+
+        tutor = self.tutor_repo.get_tutor_by_id(tutor_id)
+        if not tutor:
+            raise TutorNotFoundError()
+
+        if student_to_unenroll not in tutor.students:
+            logger.warning(
+                f"User {student_to_unenroll.id} attempted to unenroll from "
+                f"Tutor {tutor_id} but was not enrolled."
+            )
+            return
+
+        self.tutor_repo.remove_student_from_tutor(tutor, student_to_unenroll)
+        logger.info(f"User {student_to_unenroll.id} unenrolled from Tutor {tutor_id}.")
 
     @traceable(name="Delete Tutor")
     def delete_tutor(self, tutor_id: int, requesting_user: User) -> list[int]:

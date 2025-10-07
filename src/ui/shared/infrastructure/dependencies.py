@@ -89,20 +89,15 @@ async def get_unauthenticated_bff_api_client() -> AsyncGenerator[
 async def get_authenticated_bff_api_client(
     request: Request,
 ) -> AsyncGenerator[httpx.AsyncClient, None]:
-    """
-    A dependency that provides a pre-configured httpx.AsyncClient for
-    UI routers to make internal, server-to-server API calls.
-
-    It automatically includes the user's authorization token from the session.
-    """
     token = request.session.get("user_token")
-    headers = {}
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
     base_url = f"{settings.INTERNAL_API_URL}{settings.API_ROOT_PATH}"
 
-    async with httpx.AsyncClient(base_url=base_url, headers=headers) as client:
+    timeout = httpx.Timeout(120.0, connect=5.0)
+
+    async with httpx.AsyncClient(
+        base_url=base_url, headers=headers, timeout=timeout
+    ) as client:
         yield client
 
 

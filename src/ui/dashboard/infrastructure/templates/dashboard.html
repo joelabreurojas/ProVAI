@@ -1,5 +1,15 @@
 {% extends "layouts/app_layout.html" %}
 
+{% block footer_scripts %}
+    {{ super() }}
+    <script>
+        // When this page loads, dispatch a global event to tell the layout to close the sidebar.
+        document.addEventListener('DOMContentLoaded', () => {
+            window.dispatchEvent(new CustomEvent('close-right-sidebar'));
+        });
+    </script>
+{% endblock %}
+
 {% block app_content %}
 <div class="bg-nord-bg-2 border border-nord-border rounded-lg shadow-lg p-8 h-full flex items-center justify-center">
     <div class="text-center w-full">

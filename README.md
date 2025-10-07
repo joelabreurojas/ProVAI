@@ -87,23 +87,39 @@ ProVAI (Professor Virtual with AI) is an intelligent learning tutor designed to 
 
 &nbsp;
 
-### 🧑‍💼 User Role Management (CLI)
+### 🧑‍💼 Command-Line Interface (CLI)
 
-The application assigns a `student` role to all new users by default. To promote a user to a `teacher`, you must use the command-line interface.
+This project includes command-line scripts for essential administrative tasks.
+
+#### User Role Management
+
+The application assigns a `student` role to all new users by default. To manually assign a role to an user, you must use this script.
 
 1.  **Ensure the user is already registered.**
 2.  **Run the script from your terminal:**
 
     ```bash
-    # Make sure your virtual environment is active or you are inside the Docker container
+    # Make sure you are inside the Docker container
     docker compose exec app bash
     
     # Promote a user to teacher
     python -m scripts.manage_roles --email "your-email@example.com" --role "teacher"
-    
-    # Or demote them back to student
-    python -m scripts.manage_roles --email "your-email@example.com" --role "student"
     ```
+
+#### Password Reset
+
+If a user forgets their password and the automated "Forgot Password" feature is not yet implemented, you can manually reset their password using this script. It will generate a new, secure, temporary password.
+
+1.  **Run the script from your terminal:**
+    ```bash
+    # Make sure you are inside the Docker container
+    docker compose exec app bash
+
+    # Reset the password for a specific user
+    python -m scripts.reset_password --email "user-email@example.com"
+    ```
+
+2.  **Provide the New Password:** The script will output a new password to the console. Securely provide this new password to the user and strongly advise them to change it immediately via their Account page.
 
 &nbsp;
 
@@ -115,10 +131,7 @@ ProVAI is built on a foundation of modern, high-performance technologies, guided
 
 | Category         | Technology                                | Rationale                                                                                                      |
 | :--------------- | :---------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
-ProVAI on  feat/m3-130-132-cli-and-model-refactor [?] is 󰏗 v0.1.0 via  v22.19.0 via  v3.13.5 (provai0
-❯ python -m scripts.manage_roles --email teacher@provai.com --role teacher                                     (base)
-INFO:__main__:Connecting to database specified in ENV_STATE='dev'...
-ERROR:__main__:An unexpected error occurred: When initializing mapper Mapper[Invitation(invitations)], expression 'InvitationMember' failed to locate a name ('InvitationMember'). If this is a class name, consider adding this relationship() to the <class 'src.core.domain.models.invitation.Invitation'> class after both dependent classes have been defined.| **Backend**      | **FastAPI** & **Python 3.13**             | High-performance, async-first API development.                                                                 |
+| **Backend**      | **FastAPI** & **Python 3.13**             | High-performance, async-first API development.                                                                 |
 | **Architecture** | **Hexagonal (Ports & Adapters)**          | A clean, decoupled architecture with a central `core` business domain and independent `api` and `ui` adapters. |
 | **Frontend**     | **Jinja2, Tailwind CSS, HTMX, Alpine.js** | A modern, high-performance stack for server-rendered interactivity.                                            |
 | **AI Engine**    | **LangChain** & **`llama-cpp`**           | Robust orchestration with direct, efficient local model inference.                                             |
@@ -146,15 +159,11 @@ This is a high-level overview of our development milestones, focusing on the pat
 
 **Milestone 3: The Minimum Viable Interface (In Progress)**
 
-- [ ] Build the UI for user interaction, login, and document upload.
-- [ ] Implement "Teacher" and "Student" role-based access control.
-- [ ] Deploy the complete MVP to a public platform.
+- [x] Build the UI for user interaction, login, and document upload.
+- [x] Implement "Teacher" and "Student" role-based access control.
 
 <details>
-  <summary><strong>Post-MVP Vision (ProVAI on  feat/m3-130-132-cli-and-model-refactor [?] is 󰏗 v0.1.0 via  v22.19.0 via  v3.13.5 (provai0
-❯ python -m scripts.manage_roles --email teacher@provai.com --role teacher                                     (base)
-INFO:__main__:Connecting to database specified in ENV_STATE='dev'...
-ERROR:__main__:An unexpected error occurred: When initializing mapper Mapper[Invitation(invitations)], expression 'InvitationMember' failed to locate a name ('InvitationMember'). If this is a class name, consider adding this relationship() to the <class 'src.core.domain.models.invitation.Invitation'> class after both dependent classes have been defined.Milestone g):</strong></summary>
+  <summary><strong>Post-MVP Vision:</strong></summary>
   <br>
   <ul>
       <li>Implement the Learning Support module (Quiz Generation, Roadmaps).</li>

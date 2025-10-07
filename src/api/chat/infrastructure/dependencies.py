@@ -33,10 +33,8 @@ def get_chat_repository(
 @provides(ChatServiceProtocol)
 def get_chat_service(
     chat_repo: ChatRepositoryProtocol = Depends(get_chat_repository),
-    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
-    rag_service: RAGServiceProtocol = Depends(get_rag_service),
-    ingestion_service: IngestionServiceProtocol = Depends(get_ingestion_service),
     tutor_repo: TutorRepositoryProtocol = Depends(get_tutor_repository),
+    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
 ) -> ChatServiceProtocol:
     """
     Assembles the master ChatService orchestrator with all its required
@@ -45,7 +43,5 @@ def get_chat_service(
     return ChatService(
         chat_repo=chat_repo,
         tutor_service=tutor_service,
-        rag_service=rag_service,
-        ingestion_service=ingestion_service,
         tutor_repo=tutor_repo,
     )

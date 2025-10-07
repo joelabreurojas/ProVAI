@@ -3,9 +3,18 @@
 {% block head_scripts %}
 <script>
     document.addEventListener('alpine:init', () => {
+        Alpine.store('appState', {
+            csrfToken: '{{ csrf_token }}'
+        });
+
         Alpine.data('appLayout', () => ({
-            sidebarOpen: Alpine.$persist(true).as('provai_sidebar_open'),
-            searchQuery: '',
+            leftSidebarOpen: Alpine.$persist(true).as('provai_left_sidebar_open'),
+            rightSidebarOpen: Alpine.$persist(false).as('provai_right_sidebar_open'),
+
+            _wasLeftSidebarOpen: true,
+            _wasRightSidebarOpen: false,
+
+            sidebarSearchQuery: '',
             tutors: {{ tutors_json | safe }},
             view: Alpine.$persist('{{ 'assistants' if user.role == "teacher" and (tutors | selectattr('teacher_id', 'equalto', user.id) | list | length > 0) else 'tutors' }}').as('provai_sidebar_view'),
 
@@ -17,11 +26,44 @@
                 if (!this.tutors) return [];
                 return this.tutors.filter(t => t.teacher_id === {{ user.id }});
             },
+
+            init() {
+                const mediaQuery = window.matchMedia('(min-width: 1024px)');
+
+                const handleBreakpointChange = (e) => {
+                    if (e.matches) {
+                        this.leftSidebarOpen = this._wasLeftSidebarOpen;
+                        this.rightSidebarOpen = this._wasRightSidebarOpen;
+                    } else {
+                        this._wasLeftSidebarOpen = this.leftSidebarOpen;
+                        this._wasRightSidebarOpen = this.rightSidebarOpen;
+
+                        this.leftSidebarOpen = false;
+                        this.rightSidebarOpen = false;
+                    }
+                };
+
+                // Add a listener that fires whenever the breakpoint is crossed
+                mediaQuery.addEventListener('change', handleBreakpointChange);
+
+                // Run it once on initial load to set the correct state
+                handleBreakpointChange(mediaQuery);
+            },
+
             async refreshTutors() {
                 try {
                     const response = await fetch('/actions/tutors-data');
                     if (!response.ok) { throw new Error('Network response was not ok'); }
-                    this.tutors = await response.json();
+                    const newTutors = await response.json();
+                    
+                    this.tutors = newTutors;
+
+                    const currentView = this.view;
+                    this.view = '';
+                    
+                    this.$nextTick(() => {
+                        this.view = currentView;
+                    });
                 } catch (error) {
                     console.error('Failed to refresh tutor list:', error);
                     const toastContainer = document.getElementById('toast-container');
@@ -31,6 +73,18 @@
                 }
             }
         }));
+
+        Alpine.data('smartForm', () => ({
+            csrfToken: '',
+            init() {
+                this.csrfToken = this.$root.csrfToken;
+
+                // Listen for the global refresh event and update our local token
+                window.addEventListener('refresh-csrf-token', (event) => {
+                    this.csrfToken = event.detail.value;
+                });
+            }
+        }));
     });
 </script>
 {% endblock %}
@@ -38,54 +92,104 @@
 {% block content %}
 <div
     x-data="appLayout"
+    @refresh-csrf-token.window="$store.appState.csrfToken = $event.detail.value"
     @refresh-tutor-list.window="refreshTutors()"
-    class="relative min-h-screen bg-nord-bg"
+    @close-right-sidebar.window="rightSidebarOpen = false"
+    @update-title.window="document.title = $event.detail.title"
+    class="relative min-h-screen bg-nord-bg overflow-x-hidden"
 >
-    <!-- Sidebar -->
+    <!-- Left Sidebar (Navigation) -->
     <aside
-        class="fixed top-0 left-0 h-full w-72 bg-nord-bg-2 border-r border-nord-border
+        class="fixed top-0 left-0 h-full w-56 bg-nord-bg-2 border-r border-nord-border
                flex flex-col z-40
                transform transition-transform duration-300 ease-in-out"
-        :class="{ 'translate-x-0': sidebarOpen, '-translate-x-full': !sidebarOpen }"
+        :class="{ 'translate-x-0': leftSidebarOpen, '-translate-x-full': !leftSidebarOpen }"
         x-cloak
     >
         {% include "partials/_app_sidebar.html" %}
     </aside>
 
-    <!-- Mobile Backdrop -->
-    <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-gray-900/80 z-30 md:hidden" x-cloak></div>
-
-    <!-- Main Content Area -->
-    <div
-        class="transition-all duration-300 ease-in-out"
-        :class="{ 'md:ml-72': sidebarOpen }"
+    <!-- Right Sidebar (Contextual Management) -->
+    <aside
+        class="fixed top-0 right-0 h-full w-76 bg-nord-bg-2 border-l border-nord-border
+               flex flex-col z-40
+               transform transition-transform duration-300 ease-in-out"
+        :class="{ 'translate-x-0': rightSidebarOpen, 'translate-x-full': !rightSidebarOpen }"
+        x-cloak
     >
-        <!-- Minimalist Control Bar -->
-        <header 
-            class="fixed top-0 left-0 right-0 h-[65px] z-30 bg-nord-bg/80 backdrop-blur-sm border-b border-nord-border"
+        {% if contextual_sidebar_url %}
+        <div 
+            id="contextual-sidebar-container" 
+            class="h-full"
+            hx-get="{{ contextual_sidebar_url }}"
+            hx-trigger="load"
+            hx-swap="innerHTML"
         >
-            <div class="flex items-center h-full px-4">
-                <button 
-                    @click="sidebarOpen = true"
-                    type="button" 
-                    class="cursor-pointer p-2 rounded-md text-gray-400 hover:text-white hover:bg-nord-border"
-                    title="Show Sidebar"
-                    x-show="!sidebarOpen"
-                    x-transition
-                >
-                    <span class="sr-only">Show sidebar</span>
-                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
-                </button>
+            <!-- Skeleton screen can go here -->
+            <div class="p-4 animate-pulse">
+                <div class="h-8 bg-nord-bg rounded w-1/2 mb-4"></div>
+                <div class="h-4 bg-nord-bg rounded w-3/4 mb-6"></div>
+                <div class="space-y-3"><div class="h-10 bg-nord-bg rounded"></div></div>
             </div>
-        </header>
+        </div>
+        {% endif %}
+    </aside>
 
-        <!-- Scrollable Main Content -->
-        <main class="focus:outline-none">
-            <div class="pt-24 px-8 py-8">
-                 {% block app_content %}{% endblock %}
+    <!-- Mobile Backdrops -->
+    <div x-show="leftSidebarOpen" @click="leftSidebarOpen = false" class="fixed inset-0 bg-gray-900/80 z-30 lg:hidden" x-cloak></div>
+    <div x-show="rightSidebarOpen" @click="rightSidebarOpen = false" class="fixed inset-0 bg-gray-900/80 z-30 lg:hidden" x-cloak></div>
+
+    <!-- Minimalist Control Bar -->
+    <header 
+        class="fixed top-0 h-[65px] w-full z-20 transition-all duration-300 ease-in-out bg-nord-bg/80 backdrop-blur-sm border-b border-nord-border"
+    >
+        <div class="flex items-center justify-between h-full px-4">
+            <!-- Left Button (Show Left Sidebar) -->
+            <button 
+                @click="leftSidebarOpen = true"
+                type="button" 
+                class="cursor-pointer p-2 rounded-md text-gray-400 hover:text-white hover:bg-nord-border"
+                title="Show Navigation"
+                x-show="!leftSidebarOpen"
+                x-transition
+            >
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+            </button>
+            
+            <!-- Spacer to push right button to the end -->
+            <div class="flex-grow"></div>
+
+            <!-- Right Button (Show Right Sidebar) -->
+            {% if show_contextual_sidebar %}
+            <button 
+                @click="rightSidebarOpen = true"
+                type="button" 
+                class="cursor-pointer p-2 rounded-md text-gray-400 hover:text-white hover:bg-nord-border"
+                title="Show Management Panel"
+                x-show="!rightSidebarOpen"
+                x-transition
+            >
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.991v.08c0 .378.145.75.438.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.333.184-.582.496-.645.87l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.282c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.437-.99v-.08c0-.378-.145-.75-.437-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.076-.124.072-.044.146-.087.22-.128.332-.184.582-.496.645-.87l.213-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </button>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Scrollable Main Content -->
+    <main class="focus:outline-none">
+        <div
+            class="pt-20 pb-4 px-4 transition-all duration-300 ease-in-out"
+            :class="{ 'lg:ml-56': leftSidebarOpen, 'lg:mr-76': rightSidebarOpen }"
+        >
+            <div class="max-w-7xl mx-auto">
+                {% block app_content %}{% endblock %}
             </div>
-        </main>
-        
-    </div>
+        </div>
+    </main>
+    <template x-teleport="body">
+        <div id="global-modal-container">
+            {% block modals %}{% endblock %}
+        </div>
+    </template>
 </div>
 {% endblock %}

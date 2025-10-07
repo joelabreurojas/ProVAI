@@ -1,0 +1,33 @@
+<div
+  x-show="showShareModal"
+  x-cloak
+  class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+  @click="showShareModal = false"
+  @keydown.escape.window="showShareModal = false"
+  x-transition
+>
+  <div 
+    id="share-modal-content-container"
+    class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+    @click.stop
+  >
+    <!-- Skeleton Loader for the entire modal content -->
+    <div class="animate-pulse">
+        <div class="h-6 bg-nord-bg rounded w-3/4 mb-8"></div>
+        <div class="space-y-6">
+            <div>
+                <div class="h-4 bg-nord-bg rounded w-1/4 mb-2"></div>
+                <div class="h-10 bg-nord-bg rounded w-full"></div>
+            </div>
+            <div>
+                <div class="h-4 bg-nord-bg rounded w-1/4 mb-2"></div>
+                <div class="h-20 bg-nord-bg rounded w-full"></div>
+            </div>
+            <div>
+                <div class="h-4 bg-nord-bg rounded w-1/4 mb-2"></div>
+                <div class="h-24 bg-nord-bg rounded w-full"></div>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>

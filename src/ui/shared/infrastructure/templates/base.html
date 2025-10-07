@@ -21,7 +21,11 @@
 
     {% block head_scripts %}{% endblock %}
 </head>
-<body class="bg-nord-bg text-nord-text font-sans antialiased">
+<body 
+    class="bg-nord-bg text-nord-text font-sans antialiased"
+    x-data="{ csrfToken: '{{ csrf_token }}' }"
+    @refresh-csrf-token.window="csrfToken = $event.detail.value"
+>
     <header>
         {% if navbar_type == 'public' %}
             {% include "partials/_public-navbar.html" %}
@@ -48,9 +52,9 @@
     <script>
         document.body.addEventListener('refreshCSRF', function(evt) {
             if (evt.detail && evt.detail.value) {
-                document.querySelectorAll('input[name="csrf_token"]').forEach(input => {
-                    input.value = evt.detail.value;
-                });
+                window.dispatchEvent(new CustomEvent('refresh-csrf-token', { 
+                    detail: { value: evt.detail.value } 
+                }));
             }
         });
     </script>

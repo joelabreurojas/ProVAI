@@ -23,7 +23,7 @@ visibility. #}
       📖 ProVAI
     </a>
     <button
-      @click="sidebarOpen = false"
+      @click="leftSidebarOpen = false"
       class="btn btn-secondary btn-sm"
       title="Hide Sidebar"
     >
@@ -70,7 +70,7 @@ visibility. #}
         type="search"
         placeholder="Search..."
         class="w-full bg-nord-bg border border-nord-border rounded-md p-2 pl-10 text-sm"
-        x-model.debounce.300ms="searchQuery"
+        x-model.debounce.300ms="sidebarSearchQuery"
       />
     </div>
 
@@ -139,12 +139,12 @@ visibility. #}
         hx-swap="innerHTML"
       >
         <template
-          x-for="tutor in ownedAssistants.filter(t => t.course_name.toLowerCase().includes(searchQuery.toLowerCase()))"
+          x-for="tutor in ownedAssistants.filter(t => t.course_name.toLowerCase().includes(sidebarSearchQuery.toLowerCase()))"
           :key="tutor.id"
         >
           <li>
             <a
-              :href="`/chat/${tutor.id}`"
+              :href="`/tutors/${tutor.id}`"
               :title="tutor.course_name"
               class="flex items-center p-2 rounded-md w-full text-gray-300 hover:bg-nord-border hover:text-white transition-colors"
               :class="{ 'bg-nord-border font-semibold text-white': {{ active_tutor_id or 'null' }} === tutor.id }"
@@ -162,13 +162,13 @@ visibility. #}
           </li>
         </template>
         <li
-          x-show="ownedAssistants.length === 0 && searchQuery === ''"
+          x-show="ownedAssistants.length === 0 && sidebarSearchQuery === ''"
           class="px-2 py-4 text-center text-sm text-gray-500"
         >
           Click "Create" to build your first AI assistant.
         </li>
         <li
-          x-show="ownedAssistants.filter(t => t.course_name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery !== ''"
+          x-show="ownedAssistants.filter(t => t.course_name.toLowerCase().includes(sidebarSearchQuery.toLowerCase())).length === 0 && sidebarSearchQuery !== ''"
           class="px-2 py-4 text-center text-sm text-gray-500"
         >
           No assistants found.
@@ -213,12 +213,12 @@ visibility. #}
         hx-swap="innerHTML"
       >
         <template
-          x-for="tutor in enrolledTutors.filter(t => t.course_name.toLowerCase().includes(searchQuery.toLowerCase()))"
+          x-for="tutor in enrolledTutors.filter(t => t.course_name.toLowerCase().includes(sidebarSearchQuery.toLowerCase()))"
           :key="tutor.id"
         >
           <li>
             <a
-              :href="`/chat/${tutor.id}`"
+              :href="`/tutors/${tutor.id}`"
               :title="tutor.course_name"
               class="flex items-center p-2 rounded-md w-full overflow-hidden text-gray-300 hover:bg-nord-border hover:text-white transition-colors"
               :class="{ 'bg-nord-border font-semibold text-white': {{ active_tutor_id or 'null' }} === tutor.id }"
@@ -236,13 +236,13 @@ visibility. #}
           </li>
         </template>
         <li
-          x-show="enrolledTutors.length === 0 && searchQuery === ''"
+          x-show="enrolledTutors.length === 0 && sidebarSearchQuery === ''"
           class="px-2 py-4 text-center text-sm text-gray-500"
         >
           You haven't enrolled yet.
         </li>
         <li
-          x-show="enrolledTutors.filter(t => t.course_name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && searchQuery !== ''"
+          x-show="enrolledTutors.filter(t => t.course_name.toLowerCase().includes(sidebarSearchQuery.toLowerCase())).length === 0 && sidebarSearchQuery !== ''"
           class="px-2 py-4 text-center text-sm text-gray-500"
         >
           No tutors found.
@@ -257,6 +257,12 @@ visibility. #}
   </div>
 
   <!-- Modals -->
-  {% include "partials/_enrollment_modal.html" %} {% if user.role == 'teacher'
-  %} {% include "partials/_create_tutor_modal.html" %} {% endif %}
+  <template x-teleport="body">
+      <div>
+          {% include "partials/_enrollment_modal.html" %}
+          {% if user.role == 'teacher' %}
+              {% include "partials/_create_tutor_modal.html" %}
+          {% endif %}
+      </div>
+  </template>
 </div>
