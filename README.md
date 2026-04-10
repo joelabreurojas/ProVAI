@@ -115,10 +115,7 @@ ProVAI is built on a foundation of modern, high-performance technologies, guided
 
 | Category         | Technology                                | Rationale                                                                                                      |
 | :--------------- | :---------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
-ProVAI on  feat/m3-130-132-cli-and-model-refactor [?] is 󰏗 v0.1.0 via  v22.19.0 via  v3.13.5 (provai0
-❯ python -m scripts.manage_roles --email teacher@provai.com --role teacher                                     (base)
-INFO:__main__:Connecting to database specified in ENV_STATE='dev'...
-ERROR:__main__:An unexpected error occurred: When initializing mapper Mapper[Invitation(invitations)], expression 'InvitationMember' failed to locate a name ('InvitationMember'). If this is a class name, consider adding this relationship() to the <class 'src.core.domain.models.invitation.Invitation'> class after both dependent classes have been defined.| **Backend**      | **FastAPI** & **Python 3.13**             | High-performance, async-first API development.                                                                 |
+| **Backend**      | **FastAPI** & **Python 3.13**             | High-performance, async-first API development.                                                                 |
 | **Architecture** | **Hexagonal (Ports & Adapters)**          | A clean, decoupled architecture with a central `core` business domain and independent `api` and `ui` adapters. |
 | **Frontend**     | **Jinja2, Tailwind CSS, HTMX, Alpine.js** | A modern, high-performance stack for server-rendered interactivity.                                            |
 | **AI Engine**    | **LangChain** & **`llama-cpp`**           | Robust orchestration with direct, efficient local model inference.                                             |
