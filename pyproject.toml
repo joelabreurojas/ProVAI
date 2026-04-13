@@ -49,7 +49,7 @@ dev = [
   "ProVAI[test]",
 ]
 quality = [
-  "mypy>=1.16.1",
+  "mypy>=1.20.1",
   "ruff>=0.12.2",
 ]
 test = [
