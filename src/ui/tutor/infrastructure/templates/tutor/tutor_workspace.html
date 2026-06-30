@@ -1,0 +1,40 @@
+{% extends "layouts/app_layout.html" %}
+
+{% block app_content %}
+<div class="h-full max-h-[calc(100vh-100px)]">
+    <!-- Center Panel: Chats Panel (lazy-loaded) -->
+<div 
+    id="chats-panel-container"
+    class="bg-nord-bg-2 border border-nord-border rounded-lg shadow-lg h-full"
+    x-data="{
+        chats: [],
+        chatSearchQuery: '',
+        get filteredChats() {
+            if (!this.chatSearchQuery) {
+                return this.chats;
+            }
+            return this.chats.filter(c => c.title.toLowerCase().includes(this.chatSearchQuery.toLowerCase()));
+        }
+    }"
+    @update-chats.window="chats = $event.detail"
+    hx-get="/tutors/{{ tutor.id }}/chats-panel"
+    hx-trigger="load, refreshChatPanel from:body"
+    hx-swap="innerHTML"
+>
+    {# --- Skeleton Screen for Chats Panel --- #}
+    <div class="p-4 animate-pulse">
+        <div class="flex justify-between items-center mb-6">
+            <div class="h-8 bg-nord-bg rounded w-1/3"></div>
+            <div class="h-10 bg-nord-bg rounded w-1/4"></div>
+        </div>
+        <div class="h-10 bg-nord-bg rounded w-full mb-6"></div>
+        <div class="space-y-4">
+            <div class="h-16 bg-nord-bg rounded"></div>
+            <div class="h-16 bg-nord-bg rounded"></div>
+            <div class="h-16 bg-nord-bg rounded w-3/4"></div>
+        </div>
+    </div>
+</div>
+
+</div>
+{% endblock %}
