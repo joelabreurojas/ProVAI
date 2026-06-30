@@ -47,7 +47,10 @@ class Tutor(Base):
     documents: Mapped[list["Document"]] = relationship(
         secondary=tutor_document, back_populates="tutors"
     )
-    chats: Mapped[list["Chat"]] = relationship(back_populates="tutor")
+    chats: Mapped[list["Chat"]] = relationship(
+        back_populates="tutor",
+        cascade="all, delete-orphan",
+    )
     authorized_students: Mapped[list["Invitation"]] = relationship(
         back_populates="tutor", cascade="all, delete-orphan"
     )

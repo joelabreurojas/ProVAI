@@ -10,7 +10,7 @@ from src.core.application.protocols import (
     PasswordServiceProtocol,
     UserRepositoryProtocol,
 )
-from src.core.infrastructure.utils import provides  # <--- Import provides
+from src.core.infrastructure.utils import provides
 
 
 @provides(AccountServiceProtocol)

@@ -33,6 +33,14 @@ class TutorUpdate(BaseModel):
     course_name: str | None = Field(None, min_length=3, max_length=100)
     description: str | None = Field(None, max_length=500)
 
+    @classmethod
+    def as_form(
+        cls,
+        course_name: Annotated[str | None, Form(min_length=3, max_length=100)] = None,
+        description: Annotated[str | None, Form(max_length=500)] = None,
+    ) -> "TutorUpdate":
+        return cls(course_name=course_name, description=description)
+
 
 class TutorResponse(TutorBase):
     """Schema for returning tutor data to the client."""
