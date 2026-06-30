@@ -6,6 +6,7 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
 
+from src.core.infrastructure.settings import settings
 from src.ui.modules import discover_ui_templates
 from src.ui.shared.infrastructure.security import csrf_service
 
@@ -18,6 +19,7 @@ def global_context(request: Request) -> dict[str, Any]:
     """
     return {
         "now": datetime.datetime.now(datetime.UTC),
+        "settings": settings,
         # We can add any other global variables here in the future
         # e.g., "current_user": get_optional_current_user_from_cookie(request)
     }
@@ -55,13 +57,19 @@ def render_template(
 def htmx_trigger(
     response: _TemplateResponse,
     events: dict[str, Any],
-    refresh_csrf: bool = True,
+    refresh_csrf: bool = False,
     request: Request | None = None,
 ) -> _TemplateResponse:
     """
     Takes a TemplateResponse and adds an HX-Trigger header with multiple events.
     If refresh_csrf is True, it will also generate a new CSRF token and
     include the 'refreshCSRF' event.
+
+    Note: CSRF rotation is OFF by default. The itsdangerous token is
+    time-limited and cryptographically signed; rotating on every HTMX
+    response causes flicker — forms rendered with token T1 get invalidated
+    when any unrelated HTMX response rotates the session to T2.
+    New tokens are generated on full page loads via render_template().
     """
     if refresh_csrf:
         if not request:
