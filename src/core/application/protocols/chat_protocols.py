@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
+    from src.core.application.protocols.rag_protocols import RAGServiceProtocol
     from src.core.domain.models import Chat, Document, Message, User
     from src.core.domain.schemas import ChatUpdate, MessageUpdate
 
@@ -56,7 +57,13 @@ class ChatServiceProtocol(Protocol):
 
     def delete_chat(self, chat_id: int, requesting_user: "User") -> None: ...
 
-    def post_message(self, chat_id: int, query: str, current_user: "User") -> str: ...
+    def post_message(
+        self,
+        chat_id: int,
+        query: str,
+        current_user: "User",
+        rag_service: "RAGServiceProtocol",
+    ) -> tuple["Message", "Message"]: ...
 
     def log_interaction(
         self,
@@ -64,9 +71,13 @@ class ChatServiceProtocol(Protocol):
         role: str,
         user_query: str | None = None,
         tutor_response: str | None = None,
-    ) -> None: ...
+    ) -> "Message": ...
 
     def get_history(self, chat_id: int, user: "User") -> list["Message"]: ...
+
+    def get_message_by_id_for_user(
+        self, message_id: int, user: "User"
+    ) -> "Message": ...
 
     def regenerate_response(
         self, message_id: int, requesting_user: "User"
