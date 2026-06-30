@@ -1,3 +1,4 @@
+from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -28,10 +29,13 @@ def create_mocked_chat_service(
     service = ChatService(
         chat_repo=mock_chat_repo,
         tutor_service=mock_tutor_service,
-        rag_service=mock_rag_service,
-        ingestion_service=mock_ingestion_service,
         tutor_repo=mock_tutor_repo,
     )
+    # WIP: source expects attrs not in __init__
+    service.ingestion_service = cast(
+        IngestionServiceProtocol, mock_ingestion_service
+    )
+    service.rag_service = cast(RAGServiceProtocol, mock_rag_service)
 
     mocks = {
         "chat_repo": mock_chat_repo,
@@ -182,7 +186,9 @@ def test_post_message_orchestration(mocker: MockerFixture) -> None:
     mocks["tutor_repo"].get_chunk_hashes_for_tutor.return_value = valid_hashes
     mocks["rag_service"].answer_query.return_value = expected_answer
 
-    answer = service.post_message(chat_id=5, query=query, current_user=mock_user)
+    user_msg, ai_msg = service.post_message(
+        chat_id=5, query=query, current_user=mock_user, rag_service=mocks["rag_service"]
+    )
 
     # Verify the orchestration sequence
     mocks["chat_repo"].get_chat_by_id.assert_called_once_with(chat_id=5)
@@ -202,7 +208,8 @@ def test_post_message_orchestration(mocker: MockerFixture) -> None:
     mocks["chat_repo"].add_message.assert_any_call(
         chat_id=5, role="tutor", content=expected_answer
     )
-    assert answer == expected_answer
+    assert user_msg is mocks["chat_repo"].add_message.return_value
+    assert ai_msg is mocks["chat_repo"].add_message.return_value
 
 
 def test_get_history_authorizes_and_returns_sorted(mocker: MockerFixture) -> None:
@@ -248,7 +255,10 @@ def test_post_message_fails_if_user_not_enrolled(mocker: MockerFixture) -> None:
 
     with pytest.raises(UserNotEnrolledError):
         service.post_message(
-            chat_id=5, query="Am I allowed here?", current_user=mock_user
+            chat_id=5,
+            query="Am I allowed here?",
+            current_user=mock_user,
+            rag_service=mocks["rag_service"],
         )
 
     mocks["rag_service"].answer_query.assert_not_called()

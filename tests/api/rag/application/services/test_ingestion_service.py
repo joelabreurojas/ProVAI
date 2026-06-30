@@ -47,12 +47,15 @@ def test_ingestion_new_document_and_new_chunks(mocker: MockerFixture) -> None:
         text_splitter=mock_text_splitter,
         doc_repo=mock_doc_repo,
         chunk_repo=mock_chunk_repo,
+        embedding_service=mocker.MagicMock(),
     )
 
     service.ingest_document(file_bytes=FAKE_PDF_BYTES, file_name="new_doc.pdf")
 
     # Assert Document interactions
-    mock_doc_repo.create_document.assert_called_once_with(file_name="new_doc.pdf")
+    mock_doc_repo.create_document.assert_called_once_with(
+        file_name="new_doc.pdf", storage_path=mocker.ANY
+    )
 
     # Assert Chunk interactions
     mock_chunk_repo.get_existing_chunks_by_hashes.assert_called_once()
@@ -107,6 +110,7 @@ def test_ingestion_new_document_with_existing_chunks(mocker: MockerFixture) -> N
         text_splitter=mock_text_splitter,
         doc_repo=mock_doc_repo,
         chunk_repo=mock_chunk_repo,
+        embedding_service=mocker.MagicMock(),
     )
 
     service.ingest_document(file_bytes=FAKE_PDF_BYTES, file_name="another_doc.pdf")
@@ -146,6 +150,7 @@ def test_ingestion_fails_gracefully_on_pdf_parsing_error(mocker: MockerFixture) 
         text_splitter=mock_text_splitter,
         doc_repo=mock_doc_repo,
         chunk_repo=mock_chunk_repo,
+        embedding_service=mocker.MagicMock(),
     )
 
     with pytest.raises(PDFParsingError):
@@ -194,6 +199,7 @@ def test_ingestion_rolls_back_transaction_on_database_error(
         text_splitter=mock_text_splitter,
         doc_repo=mock_doc_repo,
         chunk_repo=mock_chunk_repo,
+        embedding_service=mocker.MagicMock(),
     )
 
     with pytest.raises(DatabaseError):

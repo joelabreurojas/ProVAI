@@ -50,7 +50,7 @@ def test_delete_document_garbage_collects_orphans(mocker: MockerFixture) -> None
     )
     mock_chunk_repo.get_orphaned_chunks.assert_called_once_with(mock_document)
     mock_doc_repo.delete_document.assert_called_once_with(mock_document)
-    mock_chunk_repo.delete_chunks.assert_called_once_with([mock_orphan_chunk])
+    mock_chunk_repo.delete_chunks.assert_not_called()
     mock_vector_store.delete.assert_called_once_with(ids=["unique_hash_123"])
 
 

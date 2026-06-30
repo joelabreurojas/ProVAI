@@ -146,4 +146,4 @@ def test_full_user_flow(
         headers=student_headers,
     )
     assert query_res.status_code == 200, f"Query failed: {query_res.json()}"
-    assert "mocked llm response" in query_res.json()["answer"]
+    assert "mocked llm response" in query_res.json()["ai_message"]["content"]

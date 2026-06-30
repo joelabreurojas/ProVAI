@@ -58,7 +58,7 @@ COPY ./alembic.ini .
 COPY ./scripts ./scripts
 COPY --from=frontend_builder /app/src/ui/shared/infrastructure/static/css/output.css ./src/ui/shared/infrastructure/static/css/output.css
 
-RUN mkdir -p databases models sample_data vector_store scripts
+RUN mkdir -p databases models store sample_data vector_store scripts
 
 RUN useradd --create-home appuser
 RUN chown -R appuser:appuser /app

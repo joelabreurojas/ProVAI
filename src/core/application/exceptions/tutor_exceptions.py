@@ -29,7 +29,16 @@ class SelfEnrollmentError(AppException):
 
     status_code = 400  # Bad Request
     error_code = ErrorCode.SELF_ENROLLMENT_NOT_ALLOWED
-    message = "A teacher cannot enroll as a student in their own tutor."
+    message = "A teacher cannot enroll in their own assistant."
+
+
+class UnenrollmentAuthorizationError(AppException):
+    def __init__(self, message: str = "A user can only unenroll themselves."):
+        super().__init__(
+            status_code=403,
+            error_code=ErrorCode.UNENROLLMENT_NOT_AUTHORIZED,
+            message=message,
+        )
 
 
 class TutorNotFoundError(AppException):

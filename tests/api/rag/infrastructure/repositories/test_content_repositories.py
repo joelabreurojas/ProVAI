@@ -16,7 +16,7 @@ def test_document_and_chunk_linking(db_session: Session) -> None:
     doc_repo = SQLAlchemyDocumentRepository(db_session)
     chunk_repo = SQLAlchemyChunkRepository(db_session)
 
-    doc = doc_repo.create_document("test_doc.pdf")
+    doc = doc_repo.create_document("test_doc.pdf", storage_path="/tmp/test_storage/")
     chunk_hash = hashlib.sha256("test content".encode()).hexdigest()
     chunk = chunk_repo.create_chunk(chunk_hash)
     db_session.commit()
