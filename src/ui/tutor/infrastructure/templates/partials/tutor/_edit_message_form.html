@@ -1,0 +1,36 @@
+<div 
+    class="flex items-start gap-4 w-full flex-row-reverse"
+    x-init="$nextTick(() => { htmx.process($el) })"
+>
+  <!-- Avatar -->
+  <div class="flex-shrink-0 h-8 w-8 rounded-full bg-nord-accent flex items-center justify-center text-sm font-bold text-white">
+    {{ user.name[0] | upper }}
+  </div>
+  <!-- Edit Form -->
+  <form
+    class="flex-grow"
+    method="post"
+    hx-post="/chats/{{ message.id }}/edit-message"
+    hx-target="#message-group-{{ message.id }}"
+    hx-swap="innerHTML"
+  >
+    {% include "partials/_csrf_token_input.html" %}
+    <textarea
+      name="content"
+      class="w-full bg-nord-bg border border-nord-accent rounded-lg p-3 text-sm resize-y"
+      autofocus
+    >{{ message.content }}</textarea>
+    <div class="mt-2 flex items-center justify-end space-x-2">
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm"
+        hx-get="/chats/{{ message.id }}/message-bubble"
+        hx-target="#message-group-{{ message.id }}"
+        hx-swap="innerHTML"
+      >
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+    </div>
+  </form>
+</div>
