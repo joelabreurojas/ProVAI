@@ -35,7 +35,7 @@ htmlcov/
 *.db-journal*
 vector_store/*
 sample_data/*
-storage/*
+storage/
 
 # Log & Temporary Files
 *.log
