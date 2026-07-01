@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from fastapi import (
@@ -10,15 +11,18 @@ from fastapi import (
     UploadFile,
     status,
 )
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, EmailStr
 
 from src.api.auth.infrastructure.dependencies import get_current_user
 from src.api.rag.infrastructure.dependencies import (
+    get_document_repository,
     get_document_service,
     get_ingestion_service,
 )
 from src.api.tutor.infrastructure.dependencies import get_tutor_service
 from src.core.application.protocols import (
+    DocumentRepositoryProtocol,
     DocumentServiceProtocol,
     IngestionServiceProtocol,
     TutorServiceProtocol,
@@ -30,6 +34,7 @@ from src.core.domain.schemas import (
     TutorResponseWithToken,
     TutorUpdate,
 )
+from src.core.infrastructure.constants import PROJECT_ROOT
 from src.core.infrastructure.limiter import limiter
 from src.core.infrastructure.settings import settings
 
@@ -178,6 +183,28 @@ async def upload_document_to_tutor(
 
 
 @router.delete(
+    "/{tutor_id}/documents/{document_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Unlink a document from a tutor's knowledge base",
+)
+async def unlink_document_from_tutor(
+    tutor_id: int,
+    document_id: int,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
+    doc_service: DocumentServiceProtocol = Depends(get_document_service),
+) -> None:
+    """
+    Unlinks a document from a tutor. If the document becomes orphaned (no longer
+    linked to any tutors), it will be garbage collected in the background.
+    """
+    tutor_service.verify_user_is_tutor_owner(tutor_id, current_user)
+
+    doc_service.delete_document_from_tutor(document_id, tutor_id)
+
+
+@router.delete(
     "/{tutor_id}/authorized-emails/{student_email}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Remove a student's access to a Tutor",
@@ -223,3 +250,43 @@ async def delete_tutor(
     # run this loop in the background.
     for doc_id in doc_ids_to_check:
         background_tasks.add_task(doc_service.handle_potential_orphan, doc_id)
+
+
+@router.get(
+    "/{tutor_id}/documents/{document_id}/download",
+    response_class=FileResponse,
+    summary="Download a document from the tutor's knowledge base",
+)
+async def download_document(
+    tutor_id: int,
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
+    doc_repo: DocumentRepositoryProtocol = Depends(get_document_repository),
+) -> FileResponse:
+    """
+    Securely streams a document file to the user after verifying their access.
+    """
+    tutor = tutor_service.verify_user_can_access_tutor(tutor_id, current_user)
+
+    if not any(doc.id == document_id for doc in tutor.documents):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found or not associated with this tutor.",
+        )
+
+    db_doc = doc_repo.get_document_by_id(document_id)
+    if not db_doc or not db_doc.storage_path:
+        raise HTTPException(status_code=404, detail="Document file record not found.")
+
+    absolute_file_path = PROJECT_ROOT / db_doc.storage_path
+
+    if not os.path.exists(absolute_file_path):
+        raise HTTPException(status_code=404, detail="File not found on server storage.")
+
+    return FileResponse(
+        path=absolute_file_path,
+        filename=db_doc.file_name,
+        media_type="application/pdf",
+        content_disposition_type="attachment",
+    )
