@@ -32,9 +32,7 @@ def create_mocked_chat_service(
         tutor_repo=mock_tutor_repo,
     )
     # WIP: source expects attrs not in __init__
-    service.ingestion_service = cast(
-        IngestionServiceProtocol, mock_ingestion_service
-    )
+    service.ingestion_service = cast(IngestionServiceProtocol, mock_ingestion_service)
     service.rag_service = cast(RAGServiceProtocol, mock_rag_service)
 
     mocks = {

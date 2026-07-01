@@ -31,6 +31,7 @@ dependencies = [
   "python-multipart>=0.0.20",
   "sentence-transformers>=5.0.0",
   "slowapi>=0.1.9",
+  "starlette>=1.0.0",
   "sqlalchemy>=2.0.41",
   "tavily-python>=0.7.9",
   "torch>=2.7.1",
