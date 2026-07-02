@@ -1,4 +1,4 @@
-<div id="messaging-interface" class="p-4 flex flex-col h-full">
+<div id="messaging-interface" class="p-4 flex flex-col h-full" x-data="chatForm()">
   <!-- Header -->
   <div
     id="messaging-header-container"
@@ -80,7 +80,7 @@
         {% include "partials/tutor/_message_bubble.html" %}
     {% else %}
     <div class="h-full flex items-center justify-center text-gray-500">
-      <p class="pt-18">Send a message to start the conversation.</p>
+      <p class="pt-20">Send a message to start the conversation.</p>
     </div>
     {% endfor %}
   </div>
@@ -91,10 +91,7 @@
       x-ref="chatForm"
       method="post"
       class="group"
-      hx-post="/chats/{{ chat.id }}/send-message"
-      hx-target="#message-list"
-      hx-swap="beforeend"
-      @htmx:after-request="if(event.detail.successful) $refs.chatForm.reset()"
+      @submit.prevent="sendMessage"
     >
       {% include "partials/_csrf_token_input.html" %}
       <div class="flex items-center bg-nord-bg border border-nord-border rounded-lg focus-within:ring-2 focus-within:ring-nord-accent">
@@ -105,13 +102,14 @@
             placeholder="Ask a question about the course material..."
             autofocus
             x-on:keydown.enter.prevent.stop="
-                if (($event.ctrlKey || $event.metaKey) && !$el.closest('.htmx-request')) {
-                    $el.closest('form').requestSubmit();
+                if (($event.ctrlKey || $event.metaKey) && !sending) {
+                    $refs.chatForm.requestSubmit();
                 }
             "
           ></textarea>
           <button
             type="submit"
+            :disabled="sending"
             class="btn btn-primary btn-sm p-2 m-2 flex-shrink-0 group-[.htmx-request]:opacity-50"
             title="Send Message (Ctrl+Enter)"
           >
@@ -122,3 +120,144 @@
     </form>
   </div>
 </div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('chatForm', () => ({
+      sending: false,
+      async sendMessage() {
+        if (this.sending) return;
+        const form = this.$refs.chatForm;
+        const formData = new FormData(form);
+        const query = formData.get('query')?.trim();
+        if (!query) return;
+
+        this.sending = true;
+        const ts = Date.now();
+        const userTempId = 'temp-user-' + ts;
+        const aiTempId = 'temp-ai-' + ts;
+
+        // Create user message bubble
+        const userHtml = `
+          <div id="${userTempId}" class="message-group">
+            <div class="flex items-start gap-4 group flex-row-reverse">
+              <div class="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold text-white bg-nord-accent">
+                {{ user.name[0] | upper }}
+              </div>
+              <div class="p-3 rounded-lg prose prose-invert max-w-none prose-p:my-0 prose-pre:my-0 bg-nord-accent text-white">
+                ${this.escapeHtml(query)}
+              </div>
+            </div>
+          </div>`;
+
+        // Create AI bubble placeholder with cursor
+        const aiHtml = `
+          <div id="${aiTempId}" class="message-group">
+            <div class="flex items-start gap-4 group">
+              <div class="flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold text-white bg-gray-600">
+                A
+              </div>
+              <div id="streaming-content-${ts}" class="p-3 rounded-lg prose prose-invert max-w-none prose-p:my-0 prose-pre:my-0 bg-nord-bg text-gray-300">
+                <span class="text-gray-500 animate-pulse">▊</span>
+              </div>
+            </div>
+          </div>`;
+
+        // Remove empty state if present
+        const msgList = document.getElementById('message-list');
+        if (!msgList) return;
+        const emptyState = msgList.querySelector('.h-full.flex.items-center.justify-center');
+        if (emptyState) emptyState.remove();
+
+        // Append both bubbles
+        msgList.insertAdjacentHTML('beforeend', userHtml + aiHtml);
+        this.scrollToBottom();
+
+        let userMsgId = null;
+        let aiMsgId = null;
+
+        try {
+          const response = await fetch('/chats/{{ chat.id }}/send-message-stream', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) throw new Error('Stream request failed');
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          const aiContentEl = document.getElementById('streaming-content-' + ts);
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const parts = buffer.split('\n');
+            buffer = parts.pop() || '';
+
+            for (const line of parts) {
+              const trimmed = line.trim();
+              if (trimmed.startsWith('data: ')) {
+                try {
+                  const event = JSON.parse(trimmed.slice(6));
+                  if (event.type === 'user_message') {
+                    userMsgId = event.message_id;
+                  } else if (event.type === 'token') {
+                    if (aiContentEl) {
+                      // Remove cursor placeholder on first token
+                      if (aiContentEl.querySelector('.text-gray-500')) {
+                        aiContentEl.innerHTML = '';
+                      }
+                      aiContentEl.innerHTML += this.escapeHtml(event.content);
+                      this.scrollToBottom();
+                    }
+                  } else if (event.type === 'done') {
+                    aiMsgId = event.message_id;
+                    // Replace temp bubbles with server-rendered versions
+                    if (userMsgId) {
+                      htmx.ajax('GET', '/chats/' + userMsgId + '/message-bubble', {
+                        target: '#' + userTempId,
+                        swap: 'outerHTML',
+                      });
+                    }
+                    if (aiMsgId) {
+                      htmx.ajax('GET', '/chats/' + aiMsgId + '/message-bubble', {
+                        target: '#' + aiTempId,
+                        swap: 'outerHTML',
+                      });
+                    }
+                  }
+                } catch (_e) {
+                  // Parse error, skip malformed event
+                }
+              }
+            }
+          }
+        } catch (_err) {
+          // Show error in AI bubble
+          const aiContentEl = document.getElementById('streaming-content-' + ts);
+          if (aiContentEl) {
+            aiContentEl.innerHTML = '<span class="text-red-400">Error getting response. Please try again.</span>';
+          }
+        } finally {
+          this.sending = false;
+          form.reset();
+          this.scrollToBottom();
+        }
+      },
+
+      escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      },
+
+      scrollToBottom() {
+        const el = document.getElementById('message-list');
+        if (el) el.scrollTop = el.scrollHeight;
+      },
+    }));
+  });
+</script>

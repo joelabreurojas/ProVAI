@@ -1,10 +1,10 @@
 # In src/ui/chat/infrastructure/routers/chat_router.py
 
-from typing import Any, cast
+from typing import Any, AsyncGenerator
 
 import httpx
 from fastapi import APIRouter, Depends, Form, Request, Response, status
-from starlette.templating import _TemplateResponse
+from fastapi.responses import StreamingResponse
 
 from src.core.application.protocols import ChatServiceProtocol, TutorServiceProtocol
 from src.core.domain.models import Message, User
@@ -76,6 +76,42 @@ async def get_messaging_interface(
     return htmx_trigger(response, events={}, request=request)
 
 
+@router.post("/{chat_id}/send-message-stream")
+async def handle_send_message_stream(
+    request: Request,
+    chat_id: int,
+    query: str = Form(...),
+    user: User = Depends(get_current_user_from_cookie),
+    client: httpx.AsyncClient = Depends(get_authenticated_bff_api_client),
+    _csrf: None = Depends(validate_csrf_token),
+) -> StreamingResponse:
+    """BFF that proxies SSE streaming from the API.
+
+    NOTE: We use client directly (not 'async with') because the dependency
+    generator keeps the client alive until the StreamingResponse completes.
+    Extra context managers would close the client before streaming finishes.
+    """
+    api_response = await client.post(
+        f"/chats/{chat_id}/query-stream",
+        json={"query": query},
+    )
+    api_response.raise_for_status()
+
+    async def proxy_stream() -> AsyncGenerator[bytes, None]:
+        async for chunk in api_response.aiter_bytes():
+            yield chunk
+
+    return StreamingResponse(
+        proxy_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @router.post("/{chat_id}/send-message")
 async def handle_send_message(
     request: Request,
@@ -107,8 +143,9 @@ async def handle_send_message(
         ).body
     ).decode()
 
+    # Build response with rendered bubbles
     response = Response(content=user_bubble_html + ai_bubble_html)
-    return htmx_trigger(cast(_TemplateResponse, response), events={}, request=request)
+    return response
 
 
 @router.post("/{chat_id}/delete")
@@ -125,7 +162,8 @@ async def handle_delete_chat_from_workspace(
     tutor_id = chat.tutor_id
 
     async with client as c:
-        await c.delete(f"/chats/{chat.id}")
+        api_response = await c.delete(f"/chats/{chat.id}")
+    api_response.raise_for_status()
 
     request.session["toast_message"] = "Chat deleted successfully."
     request.session["toast_category"] = "success"
@@ -249,7 +287,8 @@ async def handle_delete_message(
 ) -> Response:
     """BFF for deleting a single message."""
     async with client as c:
-        await c.delete(f"/messages/{message_id}")
+        api_response = await c.delete(f"/messages/{message_id}")
+    api_response.raise_for_status()
     return Response(status_code=status.HTTP_200_OK)
 
 
