@@ -17,7 +17,7 @@
     class="p-3 rounded-lg prose prose-invert max-w-none prose-p:my-0 prose-pre:my-0"
     :class="{ 'bg-nord-accent text-white': '{{ message.role }}' === 'user', 'bg-nord-bg text-gray-300': '{{ message.role }}' !== 'user' }"
   >
-    {{ message.content | safe }}
+    {{ message.content }}
   </div>
 
   <!-- Interaction Buttons -->

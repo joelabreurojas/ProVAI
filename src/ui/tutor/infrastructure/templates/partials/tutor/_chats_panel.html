@@ -1,6 +1,6 @@
 <div 
     class="p-4 flex flex-col h-full" 
-    x-init="chats = JSON.parse('{{ chats_json | e | safe }}')"
+    x-init="chats = JSON.parse('{{ chats_json | safe }}')"
     hx-get="/tutors/{{ tutor.id }}/chats-panel"
     hx-trigger="refreshChatPanel from:body"
     hx-target="this"

@@ -1,4 +1,5 @@
 import logging
+import threading
 
 from src.api.ai.application.services import EmbeddingService, LLMService
 from src.core.application.protocols import (
@@ -15,6 +16,7 @@ class ModelCache:
     the application's lifespan.
     """
 
+    _lock = threading.Lock()
     _llm_service: LLMServiceProtocol | None = None
     _embedding_service: EmbeddingServiceProtocol | None = None
 
@@ -24,10 +26,11 @@ class ModelCache:
         Loads all AI models into memory. This should be called only once
         during the application startup event.
         """
-        if cls._llm_service is None:
-            cls._llm_service = LLMService()
-        if cls._embedding_service is None:
-            cls._embedding_service = EmbeddingService()
+        with cls._lock:
+            if cls._llm_service is None:
+                cls._llm_service = LLMService()
+            if cls._embedding_service is None:
+                cls._embedding_service = EmbeddingService()
 
     @classmethod
     def get_llm_service(cls) -> LLMServiceProtocol:

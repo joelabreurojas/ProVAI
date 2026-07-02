@@ -23,10 +23,14 @@ class SQLAlchemyTutorRepository(TutorRepositoryProtocol):
         return db_tutor
 
     def get_tutor_by_id(self, tutor_id: int) -> Tutor | None:
-        """Retrieves a single tutor by its primary key, eagerly loading students."""
+        """Retrieves a tutor by primary key, eagerly loading relationships."""
         return (
             self.db.query(Tutor)
-            .options(joinedload(Tutor.students))
+            .options(
+                joinedload(Tutor.students),
+                joinedload(Tutor.documents),
+                joinedload(Tutor.authorized_students),
+            )
             .filter(Tutor.id == tutor_id)
             .first()
         )
