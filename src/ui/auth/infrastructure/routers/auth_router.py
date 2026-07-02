@@ -64,11 +64,10 @@ async def handle_login_form(
         get_authenticated_bff_api_client
     ),
 ) -> Response:
-    # Use 'async with' to get the actual client from the context manager
-    async with unauthenticated_client_manager as client:
-        api_response = await client.post(
-            "/auth/token", data={"email": email, "password": password}
-        )
+    # Use the dependency-injected client directly (FastAPI handles lifecycle)
+    api_response = await unauthenticated_client_manager.post(
+        "/auth/token", data={"email": email, "password": password}
+    )
 
     if api_response.status_code != status.HTTP_200_OK:
         error_message = api_response.json().get(
@@ -80,12 +79,12 @@ async def handle_login_form(
     token_data = api_response.json()
     token = token_data.get("access_token")
 
-    # This is a temporary measure to update the session for the next dependency
-    request.session["user_token"] = token
-
-    # Use the dependency-injected authenticated client to fetch the user profile
-    async with authenticated_client_manager as authenticated_client:
-        me_response = await authenticated_client.get("/users/me")
+    # The authenticated_client_manager was resolved before the token was set,
+    # so it doesn't have the auth header. Pass it explicitly per-request.
+    me_response = await authenticated_client_manager.get(
+        "/users/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     if me_response.status_code != status.HTTP_200_OK:
         context = {
@@ -116,8 +115,7 @@ async def handle_register_form(
     ),
 ) -> Response:
     user_data = {"name": name, "email": email, "password": password}
-    async with unauthenticated_client_manager as client:
-        api_response = await client.post("/auth/register", json=user_data)
+    api_response = await unauthenticated_client_manager.post("/auth/register", json=user_data)
 
     if api_response.status_code == status.HTTP_201_CREATED:
         request.session["toast_message"] = "Registration successful! Please log in."

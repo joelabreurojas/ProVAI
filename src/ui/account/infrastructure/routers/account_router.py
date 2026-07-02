@@ -43,10 +43,9 @@ async def handle_update_profile(
     ),
 ) -> Response:
     """BFF endpoint to handle profile update form submission."""
-    async with authenticated_client_manager as client:
-        api_response = await client.patch(
-            "/account/profile", json={"name": name, "email": email}
-        )
+    api_response = await authenticated_client_manager.patch(
+        "/account/profile", json={"name": name, "email": email}
+    )
 
     if api_response.status_code == status.HTTP_200_OK:
         context = {
@@ -87,8 +86,7 @@ async def handle_update_password(
         "new_password": new_password,
         "confirm_password": confirm_password,
     }
-    async with authenticated_client_manager as client:
-        api_response = await client.patch("/account/password", json=payload)
+    api_response = await authenticated_client_manager.patch("/account/password", json=payload)
 
     if api_response.status_code == status.HTTP_204_NO_CONTENT:
         context = {
@@ -122,8 +120,7 @@ async def handle_delete_account(
     ),
 ) -> Response:
     """BFF endpoint to handle the account deletion confirmation."""
-    async with authenticated_client_manager as client:
-        api_response = await client.delete("/account")
+    api_response = await authenticated_client_manager.delete("/account")
 
     if api_response.status_code == status.HTTP_204_NO_CONTENT:
         request.session.clear()
