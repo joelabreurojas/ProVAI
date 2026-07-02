@@ -26,7 +26,7 @@ It imports the core layers and defines our custom theme directly.
 @layer components {
 	/* 1. Base Button Style (All shared properties go here) */
 	.btn {
-		@apply inline-flex items-center justify-center rounded-md text-sm font-semibold shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 cursor-pointer disabled:opacity-50;
+		@apply inline-flex items-center justify-center rounded-md text-sm font-semibold shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 cursor-pointer disabled:opacity-50;
 	}
 
 	/* 2. Primary Variant (Only color and border styles) */
@@ -42,6 +42,10 @@ It imports the core layers and defines our custom theme directly.
 	/* 4. Tertiary Variant (This is a text-only style, so it doesn't need the .btn base) */
 	.btn-tertiary {
 		@apply text-sm text-gray-400 hover:text-nord-accent hover:underline cursor-pointer;
+	}
+
+	.btn-danger {
+		@apply border-transparent bg-red-700 text-white shadow-sm hover:bg-red-800 disabled:bg-red-900 disabled:text-gray-500 disabled:cursor-not-allowed;
 	}
 
 	/* --- Size Modifiers --- */

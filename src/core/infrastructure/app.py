@@ -1,7 +1,11 @@
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from slowapi.errors import RateLimitExceeded
 
+from src.api.ai.infrastructure.model_cache import model_cache
 from src.api.modules import (
     register_api_dependencies,
     register_api_routers,
@@ -25,6 +29,12 @@ from src.ui.modules import (
 from src.ui.shared.infrastructure.middlewares import AuthRedirectMiddleware
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    model_cache.load_models()
+    yield
+
+
 def create_app() -> FastAPI:
     """Application factory, creating and configuring the FastAPI app."""
     setup_logging()
@@ -37,6 +47,7 @@ def create_app() -> FastAPI:
         version=settings.VERSION,
         contact=settings.CONTACT,
         license_info=settings.LICENSE_INFO,
+        lifespan=lifespan,
     )
 
     register_api_dependencies(app)

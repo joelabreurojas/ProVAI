@@ -1,5 +1,7 @@
 import hashlib
 import logging
+import uuid
+from pathlib import Path
 
 import fitz
 from langchain_chroma import Chroma
@@ -16,9 +18,11 @@ from src.core.application.exceptions import (
 from src.core.application.protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
+    EmbeddingServiceProtocol,
     IngestionServiceProtocol,
 )
 from src.core.domain.models import Chunk, Document
+from src.core.infrastructure.constants import PROJECT_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +40,7 @@ class IngestionService(IngestionServiceProtocol):
         text_splitter: RecursiveCharacterTextSplitter,
         doc_repo: DocumentRepositoryProtocol,
         chunk_repo: ChunkRepositoryProtocol,
+        embedding_service: EmbeddingServiceProtocol,
     ):
         self.db = db
         self.vector_store = vector_store
@@ -48,6 +53,21 @@ class IngestionService(IngestionServiceProtocol):
         Processes a PDF, creating all necessary Document and Chunk records,
         and returns the created Document object. It does not know about Tutors.
         """
+        # Generate a unique filename to prevent conflicts
+        unique_id = uuid.uuid4()
+        storage_dir = PROJECT_ROOT / "storage" / "original_docs"
+        storage_dir.mkdir(parents=True, exist_ok=True)
+
+        # We use a unique ID for the filename but keep the original extension
+        file_extension = Path(file_name).suffix
+        safe_filename = f"{unique_id}{file_extension}"
+        storage_path = storage_dir / safe_filename
+
+        # Save the original file to disk
+        with open(storage_path, "wb") as f:
+            f.write(file_bytes)
+
+        relative_path = str(storage_path.relative_to(PROJECT_ROOT))
         try:
             langchain_docs = self._load_pdf_from_bytes(file_bytes)
         except RuntimeError as e:
@@ -55,7 +75,9 @@ class IngestionService(IngestionServiceProtocol):
             raise PDFParsingError() from e
 
         try:
-            db_document = self.doc_repo.create_document(file_name=file_name)
+            db_document = self.doc_repo.create_document(
+                file_name=file_name, storage_path=relative_path
+            )
             chunks = self._split_documents(langchain_docs)
 
             all_hashes = [

@@ -34,3 +34,23 @@ async def enroll_student(
     return StudentEnrollmentResponse(
         tutor_id=tutor.id, user_id=current_user.id, role="student"
     )
+
+
+@router.delete(
+    "/tutors/{tutor_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Unenroll the current user from a Tutor",
+)
+async def unenroll_from_tutor(
+    tutor_id: int,
+    current_user: User = Depends(get_current_user),
+    tutor_service: TutorServiceProtocol = Depends(get_tutor_service),
+) -> None:
+    """
+    Unenrolls the currently authenticated user from a specific Tutor.
+    """
+    tutor_service.unenroll_student(
+        tutor_id=tutor_id,
+        student_to_unenroll=current_user,
+        requesting_user=current_user,
+    )

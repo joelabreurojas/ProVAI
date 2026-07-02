@@ -1,16 +1,23 @@
+import json
+from typing import Generator
+
 from fastapi import APIRouter, Depends, Request, status
+from fastapi.responses import StreamingResponse
 
 from src.api.auth.infrastructure.dependencies import get_current_user
 from src.api.chat.infrastructure.dependencies import get_chat_service
-from src.core.application.protocols import ChatServiceProtocol
-from src.core.domain.models import User
+from src.api.rag.infrastructure.dependencies import (
+    get_rag_service,
+)
+from src.core.application.protocols import ChatServiceProtocol, RAGServiceProtocol
+from src.core.domain.models import Message, User
 from src.core.domain.schemas import (
     ChatCreate,
     ChatResponse,
     ChatUpdate,
+    ConversationTurnResponse,
     MessageResponse,
     QueryRequest,
-    QueryResponse,
 )
 from src.core.infrastructure.limiter import limiter
 
@@ -28,7 +35,7 @@ async def create_new_chat(
     chat_service: ChatServiceProtocol = Depends(get_chat_service),
 ) -> ChatResponse:
     """
-    Creates a new, private chat session for the current user with a specific tutor.
+    Creates a new, private chat session for the current user.
     """
     new_chat = chat_service.create_new_chat(
         tutor_id=chat_data.tutor_id, user=current_user, title=chat_data.title
@@ -62,7 +69,30 @@ async def get_chat_history(
     return [MessageResponse.model_validate(msg) for msg in history]
 
 
-@router.post("/{chat_id}/query", response_model=QueryResponse)
+@router.post("/{chat_id}/query-stream")
+async def stream_message_to_chat(
+    request: Request,
+    chat_id: int,
+    query_data: QueryRequest,
+    current_user: User = Depends(get_current_user),
+    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    rag_service: RAGServiceProtocol = Depends(get_rag_service),
+) -> StreamingResponse:
+    """Posts a message and streams the AI response via SSE."""
+
+    def event_stream() -> Generator[str, None, None]:
+        for event in chat_service.post_message_streaming(
+            chat_id=chat_id,
+            query=query_data.query,
+            current_user=current_user,
+            rag_service=rag_service,
+        ):
+            yield f"data: {json.dumps(event)}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@router.post("/{chat_id}/query", response_model=ConversationTurnResponse)
 @limiter.limit("20/minute")
 async def post_message_to_chat(
     request: Request,
@@ -70,12 +100,21 @@ async def post_message_to_chat(
     query_data: QueryRequest,
     current_user: User = Depends(get_current_user),
     chat_service: ChatServiceProtocol = Depends(get_chat_service),
-) -> QueryResponse:
-    """Posts a new message to a chat and gets a response from the AI Tutor."""
-    answer = chat_service.post_message(
-        chat_id=chat_id, query=query_data.query, current_user=current_user
+    rag_service: RAGServiceProtocol = Depends(get_rag_service),
+) -> ConversationTurnResponse:
+    """Posts a new message and returns both the user and AI message objects."""
+    user_msg: Message
+    ai_msg: Message
+    user_msg, ai_msg = chat_service.post_message(
+        chat_id=chat_id,
+        query=query_data.query,
+        current_user=current_user,
+        rag_service=rag_service,
     )
-    return QueryResponse(answer=answer)
+    return ConversationTurnResponse(
+        user_message=MessageResponse.model_validate(user_msg),
+        ai_message=MessageResponse.model_validate(ai_msg),
+    )
 
 
 @router.patch("/{chat_id}", response_model=ChatResponse)

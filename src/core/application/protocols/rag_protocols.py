@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Optional, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Generator, Optional, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from src.core.domain.models import Chunk, Document
@@ -25,7 +25,7 @@ class ChunkRepositoryProtocol(Protocol):
 class DocumentRepositoryProtocol(Protocol):
     """Defines the contract for the document data repository."""
 
-    def create_document(self, file_name: str) -> "Document": ...
+    def create_document(self, file_name: str, storage_path: str) -> "Document": ...
 
     def get_document_by_id(self, document_id: int) -> Optional["Document"]: ...
 
@@ -57,3 +57,7 @@ class RAGServiceProtocol(Protocol):
     """Defines the contract for the main RAG orchestration service."""
 
     def answer_query(self, query: str, context_filter: dict[str, Any]) -> str: ...
+
+    def answer_query_streaming(
+        self, query: str, context_filter: dict[str, Any]
+    ) -> Generator[str, None, None]: ...

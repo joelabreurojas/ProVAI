@@ -1,0 +1,66 @@
+{#
+  A reusable, high-impact action confirmation modal.
+  This version has been simplified to rely on the global csrfToken state.
+#}
+<div
+  x-show="showConfirmModal"
+  x-cloak
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+  @click="showConfirmModal = false"
+  @keydown.escape.window="showConfirmModal = false"
+  x-transition
+>
+  <div
+    class="w-full max-w-md bg-nord-bg-2 border border-nord-border p-6 rounded-lg shadow-2xl"
+    @click.stop
+    x-data="{ userInput: '' }"
+  >
+    <h3 class="text-lg font-bold text-white" x-text="modalTitle"></h3>
+    <p class="mt-2 text-sm text-gray-400" x-text="modalMessage"></p>
+
+    <p class="mt-4 text-sm text-gray-300">
+      To confirm, please type "<strong
+        class="text-red-400"
+        x-text="modalConfirmationWord"
+      ></strong>" in the box below.
+    </p>
+
+    <input
+      type="text"
+      x-model="userInput"
+      class="mt-2 w-full bg-nord-bg border border-nord-border rounded-md p-2 text-sm"
+      :placeholder="modalConfirmationWord"
+      @keydown.enter.prevent="
+          if (userInput === modalConfirmationWord) {
+              $refs.confirmButton.click();
+          }
+      "
+    />
+
+    <div class="mt-6 flex justify-end space-x-4">
+      <button
+        @click="showConfirmModal = false"
+        type="button"
+        class="btn btn-secondary btn-normal"
+      >
+        Cancel
+      </button>
+      
+      <form
+          method="POST"
+          :action="modalActionUrl"
+      >
+        {% include "partials/_csrf_token_input.html" %}
+        
+        <button
+            type="submit"
+            class="btn btn-normal btn-danger"
+            :disabled="userInput !== modalConfirmationWord"
+            x-ref="confirmButton"
+        >
+            Confirm
+        </button>
+    </form>
+    </div>
+  </div>
+</div>

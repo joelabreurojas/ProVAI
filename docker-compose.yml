@@ -12,6 +12,7 @@ services:
       # Data persistence
       - ./databases:/app/databases
       - ./vector_store:/app/vector_store
+      - ./store:/app/store
       - ./assets:/app/assets:ro
       - ./models:/app/models:ro
       - ./sample_data:/app/sample_data:ro

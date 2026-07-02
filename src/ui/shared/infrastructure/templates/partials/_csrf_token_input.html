@@ -1,2 +1,5 @@
-{# Renders the hidden input field for CSRF protection in forms. #}
-<input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+{% if user %}
+    <input type="hidden" name="csrf_token" x-model="$store.appState.csrfToken">
+{% else %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{% endif %}

@@ -1,0 +1,142 @@
+{# A modal for teachers to upload new documents to a Tutor's knowledge base.
+This version has been simplified to rely on the global csrfToken state. #}
+<div
+  id="upload-modal"
+  x-show="showUploadModal"
+  x-cloak
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+  @click="showUploadModal = false"
+  @keydown.escape.window="showUploadModal = false"
+  x-transition
+>
+  <div
+    class="w-full max-w-lg bg-nord-bg-2 border border-nord-border p-6 rounded-lg shadow-2xl"
+    @click.stop
+    x-data="{ file: null, fileName: '' }"
+    @dragover.prevent
+    @drop.prevent="
+        const dataTransfer = $event.dataTransfer;
+        if (dataTransfer.files.length > 0) {
+            const fileInput = $refs.fileInput;
+            fileInput.files = dataTransfer.files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    "
+  >
+    <div
+      class="flex justify-between items-center border-b border-nord-border pb-3"
+    >
+      <h3 class="text-lg font-bold text-white">Upload to Knowledge Base</h3>
+      <button
+        @click="showUploadModal = false"
+        class="btn btn-secondary btn-sm text-2xl"
+      >
+        &times;
+      </button>
+    </div>
+
+    <form
+      class="mt-4 space-y-4"
+      hx-post="/tutors/{{ tutor.id }}/upload-document"
+      hx-encoding="multipart/form-data"
+      hx-target="#toast-container"
+      hx-swap="innerHTML"
+      hx-indicator="#upload-spinner"
+    >
+      {% include "partials/_csrf_token_input.html" %}
+
+      <div>
+        <label class="block text-sm font-medium text-nord-text mb-2"
+          >PDF File</label
+        >
+
+        <label
+          for="document_file"
+          class="mt-1 cursor-pointer w-full flex justify-center items-center px-6 py-10 bg-nord-bg border-2 border-nord-border border-dashed rounded-md hover:border-nord-accent transition-colors"
+        >
+          <div class="text-center">
+            <svg
+              class="mx-auto h-12 w-12 text-gray-400"
+              stroke="currentColor"
+              fill="none"
+              viewBox="0 0 48 48"
+              aria-hidden="true"
+            >
+              <path
+                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <p class="mt-1 text-sm text-gray-400">
+              <span class="font-semibold text-nord-accent"
+                >Click to upload</span
+              >
+              or drag and drop
+            </p>
+            <p class="text-xs text-gray-500">
+              PDF up to {{ settings.MAX_UPLOAD_SIZE_MB }}MB
+            </p>
+            <p
+              x-show="fileName"
+              class="mt-2 text-sm text-green-400"
+              x-text="`Selected: ${fileName}`"
+              x-cloak
+            ></p>
+          </div>
+        </label>
+
+        <input
+          id="document_file"
+          name="file"
+          type="file"
+          required
+          accept=".pdf"
+          class="sr-only"
+          x-ref="fileInput"
+          @change="
+                    file = $event.target.files[0];
+                    fileName = file ? file.name : '';
+                "
+        />
+      </div>
+
+      <div class="flex justify-end items-center pt-2">
+        <div
+          id="upload-spinner"
+          class="htmx-indicator text-sm text-gray-400 mr-4 flex items-center"
+        >
+          <svg
+            class="animate-spin h-4 w-4 text-white mr-2"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <span>Processing...</span>
+        </div>
+        <button
+          type="submit"
+          class="btn btn-primary btn-normal"
+          :disabled="!file"
+        >
+          Upload Document
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

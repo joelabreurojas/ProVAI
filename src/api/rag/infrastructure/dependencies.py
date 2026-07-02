@@ -90,6 +90,7 @@ def get_ingestion_service(
     text_splitter: RecursiveCharacterTextSplitter = Depends(get_text_splitter),
     doc_repo: DocumentRepositoryProtocol = Depends(get_document_repository),
     chunk_repo: ChunkRepositoryProtocol = Depends(get_chunk_repository),
+    embedding_service: EmbeddingServiceProtocol = Depends(get_embedding_service),
 ) -> IngestionServiceProtocol:
     return IngestionService(
         db=db,
@@ -97,6 +98,7 @@ def get_ingestion_service(
         text_splitter=text_splitter,
         doc_repo=doc_repo,
         chunk_repo=chunk_repo,
+        embedding_service=embedding_service,
     )
 
 

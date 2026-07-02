@@ -49,3 +49,8 @@ class QueryResponse(BaseModel):
     """Schema for returning a query response from the chatbot."""
 
     answer: str
+
+
+class ConversationTurnResponse(BaseModel):
+    user_message: MessageResponse
+    ai_message: MessageResponse

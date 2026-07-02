@@ -30,6 +30,7 @@ from .tutor_exceptions import (
     SelfEnrollmentError,
     TutorNotFoundError,
     TutorOwnershipError,
+    UnenrollmentAuthorizationError,
     UserAlreadyEnrolledError,
     UserNotEnrolledError,
 )
@@ -61,6 +62,7 @@ __all__ = [
     "InvitationEmailMismatchError",
     "InvitationNotFoundError",
     "SelfEnrollmentError",
+    "UnenrollmentAuthorizationError",
     "TutorNotFoundError",
     "TutorOwnershipError",
     "UserAlreadyEnrolledError",

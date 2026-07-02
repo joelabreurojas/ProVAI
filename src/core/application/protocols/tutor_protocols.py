@@ -40,6 +40,8 @@ class TutorRepositoryProtocol(Protocol):
         self, tutor: "Tutor", document: "Document"
     ) -> None: ...
 
+    def remove_student_from_tutor(self, tutor: "Tutor", student: "User") -> None: ...
+
     def delete_tutor(self, tutor_id: int) -> None: ...
 
 
@@ -66,6 +68,10 @@ class TutorServiceProtocol(Protocol):
     def enroll_student_from_token(
         self, token: str, student_user: "User"
     ) -> "Tutor": ...
+
+    def unenroll_student(
+        self, tutor_id: int, student_to_unenroll: "User", requesting_user: "User"
+    ) -> None: ...
 
     def link_document_to_tutor(self, tutor: "Tutor", document: "Document") -> None: ...
 

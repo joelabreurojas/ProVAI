@@ -1,4 +1,5 @@
 import logging
+import os
 
 from langchain_chroma import Chroma
 
@@ -9,13 +10,16 @@ from src.core.application.protocols import (
     DocumentServiceProtocol,
     TutorRepositoryProtocol,
 )
+from src.core.domain.models import Document
+from src.core.infrastructure.constants import PROJECT_ROOT
 
 logger = logging.getLogger(__name__)
 
 
 class DocumentService(DocumentServiceProtocol):
     """
-    Manages the lifecycle of documents, including deletion and garbage collection.
+    Manages the lifecycle of documents, including deletion and garbage collection
+    of both database records and physical files.
     """
 
     def __init__(
@@ -32,8 +36,8 @@ class DocumentService(DocumentServiceProtocol):
 
     def delete_document_from_tutor(self, document_id: int, tutor_id: int) -> None:
         """
-        Removes a document's link to a tutor and performs garbage collection
-        on any chunks that are no longer referenced by any other documents.
+        Removes a document's link to a tutor and, if the document becomes
+        orphaned, triggers a full garbage collection.
         """
         tutor = self.tutor_repo.get_tutor_by_id(tutor_id)
         if not tutor:
@@ -45,54 +49,51 @@ class DocumentService(DocumentServiceProtocol):
 
         self.tutor_repo.remove_document_from_tutor(tutor, document)
 
-        if not document.tutors:
-            logger.info(
-                f"Document {document_id} is now orphaned. Starting garbage collection."
-            )
-
-            orphaned_chunks = self.chunk_repo.get_orphaned_chunks(document)
-            chunk_hashes_to_delete = [c.content_hash for c in orphaned_chunks]
-
-            if orphaned_chunks:
-                self.chunk_repo.delete_chunks(orphaned_chunks)
-
-            self.doc_repo.delete_document(document)
-
-            if chunk_hashes_to_delete:
-                self.vector_store.delete(ids=chunk_hashes_to_delete)
-                logger.info(
-                    f"Garbage collected {len(chunk_hashes_to_delete)} orphaned chunks \
-                    from vector store."
-                )
+        # After unlinking, re-fetch to get the updated relationship count
+        updated_document = self.doc_repo.get_document_by_id(document_id)
+        if updated_document and not updated_document.tutors:
+            self._garbage_collect_orphaned_document(updated_document)
 
     def handle_potential_orphan(self, document_id: int) -> None:
         """
-        Checks if a document is orphaned (not linked to any tutors) and, if so,
-        performs a full garbage collection on it and its exclusive chunks.
+        Checks if a document is orphaned and, if so, performs garbage collection.
         """
-        # Re-fetch the document from the DB to get its current, accurate state.
         db_doc = self.doc_repo.get_document_by_id(document_id)
+        if db_doc and not db_doc.tutors:
+            self._garbage_collect_orphaned_document(db_doc)
 
-        # If the document was already deleted by another process, or if it's
-        # still linked to other tutors, do nothing.
-        if not db_doc or db_doc.tutors:
-            return
+    def _garbage_collect_orphaned_document(self, document: Document) -> None:
+        """
+        Private helper to perform all cleanup for an orphaned document.
+        """
+        logger.info(
+            f"Document {document.id} ('{document.file_name}') is orphaned. "
+            "Starting full garbage collection."
+        )
 
-        logger.info(f"Document {document_id} is confirmed orphaned. Starting GC.")
+        # Delete the physical file from storage
+        if document.storage_path:
+            absolute_file_path = PROJECT_ROOT / document.storage_path
+            try:
+                if os.path.exists(absolute_file_path):
+                    os.remove(absolute_file_path)
+                    logger.info(f"Deleted physical file: {absolute_file_path}")
+                else:
+                    logger.warning(
+                        f"Orphaned file not found at path: {absolute_file_path}"
+                    )
+            except OSError as e:
+                logger.error(
+                    f"Error deleting file {absolute_file_path}: {e}", exc_info=True
+                )
 
-        # Same GC logic from delete_document_from_tutor
-        orphaned_chunks = self.chunk_repo.get_orphaned_chunks(db_doc)
+        # Find and delete chunks from vector store
+        orphaned_chunks = self.chunk_repo.get_orphaned_chunks(document)
         chunk_hashes_to_delete = [c.content_hash for c in orphaned_chunks]
-
-        # Delete from relational DB
-        if orphaned_chunks:
-            self.chunk_repo.delete_chunks(orphaned_chunks)
-        self.doc_repo.delete_document(db_doc)
-
-        # Delete from vector store
         if chunk_hashes_to_delete:
             self.vector_store.delete(ids=chunk_hashes_to_delete)
-            logger.info(
-                f"Garbage collected {len(chunk_hashes_to_delete)} "
-                "orphaned chunks from vector store."
-            )
+            logger.info(f"Garbage collected {len(chunk_hashes_to_delete)} chunks.")
+
+        # Delete the records from the relational database
+        self.doc_repo.delete_document(document)
+        logger.info(f"Deleted Document record {document.id} from database.")
