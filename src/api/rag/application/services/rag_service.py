@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Generator
 
 from langchain_chroma import Chroma
 from langchain_community.llms.llamacpp import LlamaCpp
@@ -49,6 +49,18 @@ class RAGService(RAGServiceProtocol):
         answer: str = rag_chain.invoke(query)
 
         return answer
+
+    @traceable(name="Answer Pipeline Streaming")
+    def answer_query_streaming(
+        self, query: str, context_filter: dict[str, Any]
+    ) -> Generator[str, None, None]:
+        """Streams tokens from the RAG pipeline."""
+        retriever = self.vector_store.as_retriever(
+            search_kwargs={"k": 4, "filter": context_filter}
+        )
+        rag_chain = self._build_rag_chain(retriever)
+        for chunk in rag_chain.stream(query):
+            yield chunk
 
     def _build_rag_chain(self, retriever: VectorStoreRetriever) -> Runnable[str, str]:
         """Builds the RAG chain. Extracted for testability."""

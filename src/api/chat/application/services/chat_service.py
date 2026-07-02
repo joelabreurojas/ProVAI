@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Generator
 
 from langsmith import traceable
 
@@ -84,7 +85,10 @@ class ChatService(ChatServiceProtocol):
         chat = self.get_chat(chat_id, current_user)
         tutor = self.tutor_service.get_tutor(chat.tutor_id)
         self.tutor_service.verify_user_is_tutor_owner(tutor.id, current_user)
-        assert self.ingestion_service is not None
+        if self.ingestion_service is None:
+            raise RuntimeError(
+                "IngestionService not injected. Was ChatService properly wired?"
+            )
         new_document = self.ingestion_service.ingest_document(file_bytes, file_name)
         self.tutor_repo.link_document_to_tutor(tutor, new_document)
         return new_document
@@ -131,6 +135,43 @@ class ChatService(ChatServiceProtocol):
 
         # Return both created message objects
         return user_msg, ai_msg
+
+    @traceable(name="Post Message Streaming")
+    def post_message_streaming(
+        self,
+        chat_id: int,
+        query: str,
+        current_user: User,
+        rag_service: RAGServiceProtocol,
+    ) -> Generator[dict[str, Any], None, None]:
+        """Orchestrates query -> RAG streaming -> persist -> yield events."""
+        chat = self.get_chat(chat_id, current_user)
+        self._authorize_chat_owner(chat, current_user)
+
+        # Log user message
+        user_msg = self.log_interaction(chat_id, user_query=query, role="user")
+        yield {"type": "user_message", "message_id": user_msg.id}
+
+        # Get AI answer via streaming
+        valid_chunk_hashes = self.tutor_repo.get_chunk_hashes_for_tutor(chat.tutor_id)
+        collected: list[str] = []
+        answer: str | None = None
+
+        if not valid_chunk_hashes:
+            answer = (
+                "This tutor has no documents yet. The teacher must upload a document."
+            )
+            yield {"type": "token", "content": answer}
+        else:
+            context_filter = {"content_hash": {"$in": valid_chunk_hashes}}
+            for token in rag_service.answer_query_streaming(query, context_filter):
+                collected.append(token)
+                yield {"type": "token", "content": token}
+
+        # Persist AI message
+        full_answer = "".join(collected) if collected else answer
+        ai_msg = self.log_interaction(chat_id, tutor_response=full_answer, role="tutor")
+        yield {"type": "done", "message_id": ai_msg.id, "content": full_answer}
 
     def log_interaction(
         self,
@@ -186,7 +227,10 @@ class ChatService(ChatServiceProtocol):
             new_answer = "This tutor no longer has documents to reference."
         else:
             context_filter = {"content_hash": {"$in": valid_chunk_hashes}}
-            assert self.rag_service is not None
+            if self.rag_service is None:
+                raise RuntimeError(
+                    "RAGService not injected. Was ChatService properly wired?"
+                )
             new_answer = self.rag_service.answer_query(
                 original_user_message.content, context_filter
             )

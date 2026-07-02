@@ -1,4 +1,8 @@
+import json
+from typing import Generator
+
 from fastapi import APIRouter, Depends, Request, status
+from fastapi.responses import StreamingResponse
 
 from src.api.auth.infrastructure.dependencies import get_current_user
 from src.api.chat.infrastructure.dependencies import get_chat_service
@@ -63,6 +67,29 @@ async def get_chat_history(
     """Retrieves the full message history for a specific chat session."""
     history = chat_service.get_history(chat_id=chat_id, user=current_user)
     return [MessageResponse.model_validate(msg) for msg in history]
+
+
+@router.post("/{chat_id}/query-stream")
+async def stream_message_to_chat(
+    request: Request,
+    chat_id: int,
+    query_data: QueryRequest,
+    current_user: User = Depends(get_current_user),
+    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    rag_service: RAGServiceProtocol = Depends(get_rag_service),
+) -> StreamingResponse:
+    """Posts a message and streams the AI response via SSE."""
+
+    def event_stream() -> Generator[str, None, None]:
+        for event in chat_service.post_message_streaming(
+            chat_id=chat_id,
+            query=query_data.query,
+            current_user=current_user,
+            rag_service=rag_service,
+        ):
+            yield f"data: {json.dumps(event)}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @router.post("/{chat_id}/query", response_model=ConversationTurnResponse)

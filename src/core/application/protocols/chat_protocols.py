@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Generator, Optional, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from src.core.application.protocols.rag_protocols import RAGServiceProtocol
@@ -64,6 +64,14 @@ class ChatServiceProtocol(Protocol):
         current_user: "User",
         rag_service: "RAGServiceProtocol",
     ) -> tuple["Message", "Message"]: ...
+
+    def post_message_streaming(
+        self,
+        chat_id: int,
+        query: str,
+        current_user: "User",
+        rag_service: "RAGServiceProtocol",
+    ) -> Generator[dict[str, Any], None, None]: ...
 
     def log_interaction(
         self,
