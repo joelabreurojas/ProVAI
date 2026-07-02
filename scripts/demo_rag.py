@@ -2,7 +2,7 @@
 A headless script to run a full, end-to-end demo of the ProVAI RAG engine.
 
 This script simulates the definitive, decoupled user workflow. It is a practical
-demonstration of how the ChatService orchestrates all other feature modules.
+demonstration of how the ChatOrchestratorService orchestrates all other feature modules.
 
 Example:
 python -m scripts.demo_rag
@@ -27,7 +27,7 @@ from src.api.auth.infrastructure.dependencies import (
 )
 from src.api.chat.infrastructure.dependencies import (
     get_chat_repository,
-    get_chat_service,
+    get_chat_orchestrator_service,
 )
 from src.api.rag.infrastructure.dependencies import (
     get_chunk_repository,
@@ -97,7 +97,7 @@ class AppContainer:
         )
 
         # The Orchestrator
-        self.chat_service = get_chat_service(
+        self.chat_service = get_chat_orchestrator_service(
             chat_repo=self.chat_repo,
             tutor_service=self.tutor_service,
             rag_service=self.rag_service,

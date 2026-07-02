@@ -36,7 +36,7 @@ class ChatRepositoryProtocol(Protocol):
 
 
 @runtime_checkable
-class ChatServiceProtocol(Protocol):
+class ChatOrchestratorServiceProtocol(Protocol):
     """Defines the contract for the main Chat orchestrator service."""
 
     def create_new_chat(self, tutor_id: int, user: "User", title: str) -> "Chat": ...

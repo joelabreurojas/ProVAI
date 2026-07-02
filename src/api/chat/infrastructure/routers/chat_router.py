@@ -5,11 +5,14 @@ from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import StreamingResponse
 
 from src.api.auth.infrastructure.dependencies import get_current_user
-from src.api.chat.infrastructure.dependencies import get_chat_service
+from src.api.chat.infrastructure.dependencies import get_chat_orchestrator_service
 from src.api.rag.infrastructure.dependencies import (
     get_rag_service,
 )
-from src.core.application.protocols import ChatServiceProtocol, RAGServiceProtocol
+from src.core.application.protocols import (
+    ChatOrchestratorServiceProtocol,
+    RAGServiceProtocol,
+)
 from src.core.domain.models import Message, User
 from src.core.domain.schemas import (
     ChatCreate,
@@ -32,7 +35,9 @@ router = APIRouter(prefix="/chats", tags=[TAG["name"]])
 async def create_new_chat(
     chat_data: ChatCreate,
     current_user: User = Depends(get_current_user),
-    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(
+        get_chat_orchestrator_service
+    ),
 ) -> ChatResponse:
     """
     Creates a new, private chat session for the current user.
@@ -47,7 +52,9 @@ async def create_new_chat(
 async def get_user_chats_for_tutor(
     tutor_id: int,
     current_user: User = Depends(get_current_user),
-    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(
+        get_chat_orchestrator_service
+    ),
 ) -> list[ChatResponse]:
     """
     Retrieves all chats for the current user that are associated with a specific tutor.
@@ -62,7 +69,9 @@ async def get_user_chats_for_tutor(
 async def get_chat_history(
     chat_id: int,
     current_user: User = Depends(get_current_user),
-    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(
+        get_chat_orchestrator_service
+    ),
 ) -> list[MessageResponse]:
     """Retrieves the full message history for a specific chat session."""
     history = chat_service.get_history(chat_id=chat_id, user=current_user)
@@ -75,7 +84,9 @@ async def stream_message_to_chat(
     chat_id: int,
     query_data: QueryRequest,
     current_user: User = Depends(get_current_user),
-    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(
+        get_chat_orchestrator_service
+    ),
     rag_service: RAGServiceProtocol = Depends(get_rag_service),
 ) -> StreamingResponse:
     """Posts a message and streams the AI response via SSE."""
@@ -99,7 +110,9 @@ async def post_message_to_chat(
     chat_id: int,
     query_data: QueryRequest,
     current_user: User = Depends(get_current_user),
-    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(
+        get_chat_orchestrator_service
+    ),
     rag_service: RAGServiceProtocol = Depends(get_rag_service),
 ) -> ConversationTurnResponse:
     """Posts a new message and returns both the user and AI message objects."""
@@ -122,7 +135,9 @@ async def update_chat(
     chat_id: int,
     chat_data: ChatUpdate,
     current_user: User = Depends(get_current_user),
-    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(
+        get_chat_orchestrator_service
+    ),
 ) -> ChatResponse:
     """Updates a chat session's details (e.g., renaming it)."""
     updated_chat = chat_service.update_chat(chat_id, chat_data, current_user)
@@ -133,7 +148,9 @@ async def update_chat(
 async def delete_chat(
     chat_id: int,
     current_user: User = Depends(get_current_user),
-    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(
+        get_chat_orchestrator_service
+    ),
 ) -> None:
     """Deletes a chat session and all of its messages."""
     chat_service.delete_chat(chat_id, current_user)

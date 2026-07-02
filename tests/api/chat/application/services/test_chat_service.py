@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from src.api.chat.application.services import ChatService
+from src.api.chat.application.services import ChatOrchestratorService
 from src.core.application.exceptions import ChatNotFoundError, UserNotEnrolledError
 from src.core.application.protocols import (
     ChatRepositoryProtocol,
@@ -18,15 +18,15 @@ from src.core.domain.models import Chat, Document, Message, Tutor, User
 
 def create_mocked_chat_service(
     mocker: MockerFixture,
-) -> tuple[ChatService, dict[str, MagicMock]]:
-    """Creates a ChatService with all its dependencies mocked."""
+) -> tuple[ChatOrchestratorService, dict[str, MagicMock]]:
+    """Creates a ChatOrchestratorService with all its dependencies mocked."""
     mock_chat_repo = mocker.MagicMock(spec=ChatRepositoryProtocol)
     mock_tutor_service = mocker.MagicMock(spec=TutorServiceProtocol)
     mock_rag_service = mocker.MagicMock(spec=RAGServiceProtocol)
     mock_ingestion_service = mocker.MagicMock(spec=IngestionServiceProtocol)
     mock_tutor_repo = mocker.MagicMock(spec=TutorRepositoryProtocol)
 
-    service = ChatService(
+    service = ChatOrchestratorService(
         chat_repo=mock_chat_repo,
         tutor_service=mock_tutor_service,
         tutor_repo=mock_tutor_repo,

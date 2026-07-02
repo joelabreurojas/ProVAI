@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, status
 
 from src.api.auth.infrastructure.dependencies import get_current_user
-from src.api.chat.infrastructure.dependencies import get_chat_service
-from src.core.application.protocols import ChatServiceProtocol
+from src.api.chat.infrastructure.dependencies import get_chat_orchestrator_service
+from src.core.application.protocols import ChatOrchestratorServiceProtocol
 from src.core.domain.models import User
 from src.core.domain.schemas import MessageResponse, MessageUpdate
 
@@ -15,7 +15,9 @@ async def update_message(
     message_id: int,
     message_data: MessageUpdate,
     current_user: User = Depends(get_current_user),
-    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(
+        get_chat_orchestrator_service
+    ),
 ) -> MessageResponse:
     """Updates the content of a user's message."""
     updated_message = chat_service.update_user_message(
@@ -28,7 +30,9 @@ async def update_message(
 async def delete_message(
     message_id: int,
     current_user: User = Depends(get_current_user),
-    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(
+        get_chat_orchestrator_service
+    ),
 ) -> None:
     """Deletes a message from a chat."""
     chat_service.delete_message(message_id, current_user)
@@ -38,7 +42,9 @@ async def delete_message(
 async def regenerate_ai_response(
     message_id: int,
     current_user: User = Depends(get_current_user),
-    chat_service: ChatServiceProtocol = Depends(get_chat_service),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(
+        get_chat_orchestrator_service
+    ),
 ) -> MessageResponse:
     """Regenerates the content of an AI Tutor's message."""
     regenerated_message = chat_service.regenerate_response(message_id, current_user)

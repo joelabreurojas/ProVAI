@@ -18,7 +18,7 @@ from starlette.templating import _TemplateResponse
 
 from src.core.application.exceptions import AppException
 from src.core.application.protocols import (
-    ChatServiceProtocol,
+    ChatOrchestratorServiceProtocol,
     TutorServiceProtocol,
 )
 from src.core.domain.models import User
@@ -70,7 +70,7 @@ async def get_chats_panel(
     request: Request,
     tutor_id: int,
     user: User = Depends(get_current_user_from_cookie),
-    chat_service: ChatServiceProtocol = Depends(),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(),
     tutor_service: TutorServiceProtocol = Depends(),
 ) -> Response:
     """Renders the HTML partial for the Chat Management Hub."""

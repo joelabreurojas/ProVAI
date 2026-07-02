@@ -11,8 +11,8 @@ from src.core.application.exceptions import (
     MessageNotFoundError,
 )
 from src.core.application.protocols import (
+    ChatOrchestratorServiceProtocol,
     ChatRepositoryProtocol,
-    ChatServiceProtocol,
     IngestionServiceProtocol,
     RAGServiceProtocol,
     TutorRepositoryProtocol,
@@ -24,7 +24,7 @@ from src.core.domain.schemas import ChatUpdate, MessageUpdate
 logger = logging.getLogger(__name__)
 
 
-class ChatService(ChatServiceProtocol):
+class ChatOrchestratorService(ChatOrchestratorServiceProtocol):
     def __init__(
         self,
         chat_repo: ChatRepositoryProtocol,
@@ -87,7 +87,7 @@ class ChatService(ChatServiceProtocol):
         self.tutor_service.verify_user_is_tutor_owner(tutor.id, current_user)
         if self.ingestion_service is None:
             raise RuntimeError(
-                "IngestionService not injected. Was ChatService properly wired?"
+                "IngestionService not injected. ChatOrchestratorService not wired?"
             )
         new_document = self.ingestion_service.ingest_document(file_bytes, file_name)
         self.tutor_repo.link_document_to_tutor(tutor, new_document)
@@ -229,7 +229,7 @@ class ChatService(ChatServiceProtocol):
             context_filter = {"content_hash": {"$in": valid_chunk_hashes}}
             if self.rag_service is None:
                 raise RuntimeError(
-                    "RAGService not injected. Was ChatService properly wired?"
+                    "RAGService not injected. ChatOrchestratorService not wired?"
                 )
             new_answer = self.rag_service.answer_query(
                 original_user_message.content, context_filter
