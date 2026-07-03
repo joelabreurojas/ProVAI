@@ -4,7 +4,7 @@ from typing import Any
 
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
-from starlette.templating import _TemplateResponse
+from starlette.responses import Response
 
 from src.core.infrastructure.settings import settings
 from src.ui.modules import discover_ui_templates
@@ -30,7 +30,7 @@ def render_template(
     context: dict[str, Any],
     status_code: int = 200,
     headers: dict[str, str] | None = None,
-) -> _TemplateResponse:
+) -> Response:
     """
     A helper function to render a Jinja2 template with our global context.
     This is the definitive and ONLY way templates should be rendered.
@@ -55,11 +55,11 @@ def render_template(
 
 
 def htmx_trigger(
-    response: _TemplateResponse,
+    response: Response,
     events: dict[str, Any],
     refresh_csrf: bool = False,
     request: Request | None = None,
-) -> _TemplateResponse:
+) -> Response:
     """
     Takes a TemplateResponse and adds an HX-Trigger header with multiple events.
     If refresh_csrf is True, it will also generate a new CSRF token and
