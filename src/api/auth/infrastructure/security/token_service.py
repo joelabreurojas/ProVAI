@@ -2,7 +2,7 @@ import datetime
 from datetime import timedelta
 from typing import Any
 
-from jose import ExpiredSignatureError, JWTError, jwt
+import jwt
 
 from src.core.application.exceptions import (
     TokenExpiredError,
@@ -13,7 +13,7 @@ from src.core.infrastructure.settings import settings
 
 
 class TokenService(TokenServiceProtocol):
-    """Concrete implementation for JWT handling using python-jose."""
+    """Concrete implementation for JWT handling using PyJWT."""
 
     def create_access_token(
         self, data: dict[str, Any], expires_delta: timedelta | None = None
@@ -42,8 +42,8 @@ class TokenService(TokenServiceProtocol):
             )
             return payload
 
-        except ExpiredSignatureError as e:
+        except jwt.ExpiredSignatureError as e:
             raise TokenExpiredError() from e
 
-        except JWTError as e:
+        except jwt.InvalidTokenError as e:
             raise TokenValidationError() from e
