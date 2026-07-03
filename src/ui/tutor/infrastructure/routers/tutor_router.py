@@ -14,7 +14,7 @@ from fastapi import (
 )
 from fastapi.responses import RedirectResponse, StreamingResponse
 from pydantic import ValidationError
-from starlette.templating import _TemplateResponse
+from starlette.responses import Response
 
 from src.core.application.exceptions import AppException
 from src.core.application.protocols import (
@@ -486,7 +486,7 @@ async def handle_add_authorized_students(
         request, tutor_id, user, tutor_service
     )
 
-    return htmx_trigger(cast(_TemplateResponse, response), events={}, request=request)
+    return htmx_trigger(cast(Response, response), events={}, request=request)
 
 
 @router.post("/{tutor_id}/authorized-emails/{student_email}/delete")
@@ -526,4 +526,4 @@ async def handle_remove_authorized_student(
         request, tutor_id, user, tutor_service
     )
 
-    return htmx_trigger(cast(_TemplateResponse, response), events={}, request=request)
+    return htmx_trigger(cast(Response, response), events={}, request=request)
