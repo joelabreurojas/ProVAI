@@ -1,6 +1,5 @@
 import os
 import shutil
-from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator, Generator
 
@@ -114,7 +113,6 @@ def app(
     transport = httpx.ASGITransport(app=app)
     api_base_url = f"http://testserver{settings.API_ROOT_PATH}"
 
-    @asynccontextmanager
     async def override_get_unauthenticated_bff_api_client() -> AsyncGenerator[
         httpx.AsyncClient, None
     ]:
@@ -123,7 +121,6 @@ def app(
         ) as client:
             yield client
 
-    @asynccontextmanager
     async def override_get_authenticated_bff_api_client(
         request: Request,
     ) -> AsyncGenerator[httpx.AsyncClient, None]:

@@ -31,8 +31,8 @@ from src.api.auth.infrastructure.dependencies import (
     get_user_repository,
 )
 from src.api.chat.infrastructure.dependencies import (
+    get_chat_orchestrator_service,
     get_chat_repository,
-    get_chat_service,
 )
 from src.api.rag.infrastructure.dependencies import (
     get_chunk_repository,
@@ -126,7 +126,7 @@ class AppContainer:
         )
 
         # The Orchestrator
-        self.chat_service = get_chat_service(
+        self.chat_service = get_chat_orchestrator_service(
             chat_repo=self.chat_repo,
             tutor_service=self.tutor_service,
             rag_service=self.rag_service,

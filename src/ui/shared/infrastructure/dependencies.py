@@ -1,6 +1,5 @@
 import json
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
 from typing import Any
 
 import httpx
@@ -72,7 +71,6 @@ async def validate_csrf_token(
         )
 
 
-@asynccontextmanager
 async def get_unauthenticated_bff_api_client() -> AsyncGenerator[
     httpx.AsyncClient, None
 ]:
@@ -85,7 +83,6 @@ async def get_unauthenticated_bff_api_client() -> AsyncGenerator[
         yield client
 
 
-@asynccontextmanager
 async def get_authenticated_bff_api_client(
     request: Request,
 ) -> AsyncGenerator[httpx.AsyncClient, None]:

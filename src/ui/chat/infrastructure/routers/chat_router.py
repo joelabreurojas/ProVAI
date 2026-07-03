@@ -6,7 +6,10 @@ import httpx
 from fastapi import APIRouter, Depends, Form, Request, Response, status
 from fastapi.responses import StreamingResponse
 
-from src.core.application.protocols import ChatServiceProtocol, TutorServiceProtocol
+from src.core.application.protocols import (
+    ChatOrchestratorServiceProtocol,
+    TutorServiceProtocol,
+)
 from src.core.domain.models import Message, User
 from src.core.domain.schemas import ChatUpdate, MessageUpdate
 from src.ui.shared.infrastructure.dependencies import (
@@ -28,7 +31,7 @@ async def serve_chat_workspace(
     request: Request,
     chat_id: int,
     sidebar_context: dict[str, Any] = Depends(get_sidebar_context),
-    chat_service: ChatServiceProtocol = Depends(),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(),
     tutor_service: TutorServiceProtocol = Depends(),
     user: User = Depends(get_current_user_from_cookie),
 ) -> Response:
@@ -57,7 +60,7 @@ async def get_messaging_interface(
     request: Request,
     chat_id: int,
     user: User = Depends(get_current_user_from_cookie),
-    chat_service: ChatServiceProtocol = Depends(),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(),
     tutor_service: TutorServiceProtocol = Depends(),
 ) -> Response:
     """Renders the HTML partial for the main messaging interface."""
@@ -153,7 +156,7 @@ async def handle_delete_chat_from_workspace(
     request: Request,
     chat_id: int,
     user: User = Depends(get_current_user_from_cookie),
-    chat_service: ChatServiceProtocol = Depends(),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(),
     client: httpx.AsyncClient = Depends(get_authenticated_bff_api_client),
     _csrf: None = Depends(validate_csrf_token),
 ) -> Response:
@@ -182,7 +185,7 @@ async def handle_update_chat_title(
     chat_id: int,
     title: str = Form(...),
     user: User = Depends(get_current_user_from_cookie),
-    chat_service: ChatServiceProtocol = Depends(),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(),
     tutor_service: TutorServiceProtocol = Depends(),
     client: httpx.AsyncClient = Depends(get_authenticated_bff_api_client),
     _csrf: None = Depends(validate_csrf_token),
@@ -203,7 +206,7 @@ async def handle_delete_chat_inline(
     request: Request,
     chat_id: int,
     user: User = Depends(get_current_user_from_cookie),
-    chat_service: ChatServiceProtocol = Depends(),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(),
     tutor_service: TutorServiceProtocol = Depends(),
     client: httpx.AsyncClient = Depends(get_authenticated_bff_api_client),
     _csrf: None = Depends(validate_csrf_token),
@@ -226,7 +229,7 @@ async def get_message_edit_form(
     request: Request,
     message_id: int,
     user: User = Depends(get_current_user_from_cookie),
-    chat_service: ChatServiceProtocol = Depends(),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(),
 ) -> Response:
     """Renders the inline edit form for a single message."""
     message = chat_service.get_message_by_id_for_user(message_id, user)
@@ -245,7 +248,7 @@ async def handle_edit_user_message(
     message_id: int,
     content: str = Form(...),
     user: User = Depends(get_current_user_from_cookie),
-    chat_service: ChatServiceProtocol = Depends(),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(),
     client: httpx.AsyncClient = Depends(get_authenticated_bff_api_client),
     _csrf: None = Depends(validate_csrf_token),
 ) -> Response:
@@ -270,7 +273,7 @@ async def get_message_bubble(
     request: Request,
     message_id: int,
     user: User = Depends(get_current_user_from_cookie),
-    chat_service: ChatServiceProtocol = Depends(),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(),
 ) -> Response:
     """Renders a single message bubble (used for cancel)."""
     message = chat_service.get_message_by_id_for_user(message_id, user)

@@ -6,7 +6,7 @@ from .auth_protocols import (
     TokenServiceProtocol,
     UserRepositoryProtocol,
 )
-from .chat_protocols import ChatRepositoryProtocol, ChatServiceProtocol
+from .chat_protocols import ChatOrchestratorServiceProtocol, ChatRepositoryProtocol
 from .rag_protocols import (
     ChunkRepositoryProtocol,
     DocumentRepositoryProtocol,
@@ -28,7 +28,7 @@ __all__ = [
     "TokenServiceProtocol",
     "UserRepositoryProtocol",
     "ChatRepositoryProtocol",
-    "ChatServiceProtocol",
+    "ChatOrchestratorServiceProtocol",
     "ChunkRepositoryProtocol",
     "DocumentRepositoryProtocol",
     "DocumentServiceProtocol",

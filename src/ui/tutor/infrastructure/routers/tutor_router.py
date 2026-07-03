@@ -18,7 +18,7 @@ from starlette.templating import _TemplateResponse
 
 from src.core.application.exceptions import AppException
 from src.core.application.protocols import (
-    ChatServiceProtocol,
+    ChatOrchestratorServiceProtocol,
     TutorServiceProtocol,
 )
 from src.core.domain.models import User
@@ -70,7 +70,7 @@ async def get_chats_panel(
     request: Request,
     tutor_id: int,
     user: User = Depends(get_current_user_from_cookie),
-    chat_service: ChatServiceProtocol = Depends(),
+    chat_service: ChatOrchestratorServiceProtocol = Depends(),
     tutor_service: TutorServiceProtocol = Depends(),
 ) -> Response:
     """Renders the HTML partial for the Chat Management Hub."""
@@ -130,11 +130,10 @@ async def handle_create_chat(
     """
     tutor_service.verify_user_can_access_tutor(tutor_id, user)
 
-    async with authenticated_client_manager as client:
-        # We'll give the new chat a more descriptive default name
-        api_response = await client.post(
-            "/chats", json={"tutor_id": tutor_id, "title": "New Conversation"}
-        )
+    # We'll give the new chat a more descriptive default name
+    api_response = await authenticated_client_manager.post(
+        "/chats", json={"tutor_id": tutor_id, "title": "New Conversation"}
+    )
     api_response.raise_for_status()
     new_chat_id = api_response.json()["id"]
 
@@ -234,8 +233,7 @@ async def handle_delete_tutor(
 ) -> Response:
     """BFF for deleting a tutor. Sets a flash message and redirects to the dashboard."""
     try:
-        async with authenticated_client_manager as client:
-            api_response = await client.delete(f"/tutors/{tutor_id}")
+        api_response = await authenticated_client_manager.delete(f"/tutors/{tutor_id}")
         api_response.raise_for_status()
 
         request.session["toast_message"] = "Assistant deleted successfully."
@@ -265,8 +263,9 @@ async def handle_unenroll_tutor(
 ) -> Response:
     """BFF for unenrolling from a tutor. Sets a flash message and redirects."""
     try:
-        async with authenticated_client_manager as client:
-            api_response = await client.delete(f"/enrollments/tutors/{tutor_id}")
+        api_response = await authenticated_client_manager.delete(
+            f"/enrollments/tutors/{tutor_id}"
+        )
 
         api_response.raise_for_status()
 
@@ -298,10 +297,9 @@ async def handle_upload_document_form(
     try:
         files = {"file": (file.filename, await file.read(), file.content_type)}
 
-        async with authenticated_client_manager as client:
-            api_response = await client.post(
-                f"/tutors/{tutor_id}/documents", files=files
-            )
+        api_response = await authenticated_client_manager.post(
+            f"/tutors/{tutor_id}/documents", files=files
+        )
 
         api_response.raise_for_status()
 
@@ -336,36 +334,35 @@ async def handle_download_document(
     """
     BFF endpoint that acts as a secure proxy to stream a document from the API.
     """
-    async with authenticated_client_manager as client:
-        async with client.stream(
-            "GET",
-            f"/tutors/{tutor_id}/documents/{document_id}/download",
-        ) as api_response:
-            if api_response.is_error:
-                error_text = await api_response.aread()
-                return Response(
-                    content=f"Error: {api_response.status_code} {error_text.decode()}",
-                    status_code=api_response.status_code,
-                )
-
-            content_disposition = api_response.headers.get("content-disposition")
-            filename = "download.pdf"
-            if content_disposition:
-                try:
-                    filename = content_disposition.split("filename=")[1].strip('"')
-                except IndexError:
-                    pass
-
-            file_bytes = await api_response.aread()
-
-            def file_stream() -> Generator[bytes, None, None]:
-                yield file_bytes
-
-            return StreamingResponse(
-                file_stream(),
-                media_type="application/pdf",
-                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    async with authenticated_client_manager.stream(
+        "GET",
+        f"/tutors/{tutor_id}/documents/{document_id}/download",
+    ) as api_response:
+        if api_response.is_error:
+            error_text = await api_response.aread()
+            return Response(
+                content=f"Error: {api_response.status_code} {error_text.decode()}",
+                status_code=api_response.status_code,
             )
+
+        content_disposition = api_response.headers.get("content-disposition")
+        filename = "download.pdf"
+        if content_disposition:
+            try:
+                filename = content_disposition.split("filename=")[1].strip('"')
+            except IndexError:
+                pass
+
+        file_bytes = await api_response.aread()
+
+        def file_stream() -> Generator[bytes, None, None]:
+            yield file_bytes
+
+        return StreamingResponse(
+            file_stream(),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
 
 @router.post("/{tutor_id}/documents/{document_id}/delete")
@@ -384,10 +381,9 @@ async def handle_delete_document(
     redirect_url = f"/tutors/{tutor_id}"
 
     try:
-        async with authenticated_client_manager as client:
-            api_response = await client.delete(
-                f"/tutors/{tutor_id}/documents/{document_id}"
-            )
+        api_response = await authenticated_client_manager.delete(
+            f"/tutors/{tutor_id}/documents/{document_id}"
+        )
 
         api_response.raise_for_status()
 
@@ -470,10 +466,9 @@ async def handle_add_authorized_students(
 
     try:
         if email_list:
-            async with authenticated_client_manager as client:
-                api_response = await client.post(
-                    f"/tutors/{tutor_id}/authorized-emails", json={"emails": email_list}
-                )
+            api_response = await authenticated_client_manager.post(
+                f"/tutors/{tutor_id}/authorized-emails", json={"emails": email_list}
+            )
             api_response.raise_for_status()
 
     except httpx.HTTPStatusError as e:
@@ -511,10 +506,9 @@ async def handle_remove_authorized_student(
     try:
         tutor_service.verify_user_is_tutor_owner(tutor_id, user)
 
-        async with authenticated_client_manager as client:
-            api_response = await client.delete(
-                f"/tutors/{tutor_id}/authorized-emails/{student_email}"
-            )
+        api_response = await authenticated_client_manager.delete(
+            f"/tutors/{tutor_id}/authorized-emails/{student_email}"
+        )
         api_response.raise_for_status()
 
     except httpx.HTTPStatusError as e:

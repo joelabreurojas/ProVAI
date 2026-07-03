@@ -36,5 +36,6 @@ def discover_ui_templates() -> list[str]:
 
 
 def register_ui_templates(app: FastAPI) -> None:
-    for template_folder in discover_ui_templates():
-        app.state.templates = Jinja2Templates(directory=template_folder)
+    template_folders = discover_ui_templates()
+    if template_folders:
+        app.state.templates = Jinja2Templates(directory=template_folders)
