@@ -31,8 +31,8 @@ from src.api.auth.infrastructure.dependencies import (
     get_user_repository,
 )
 from src.api.chat.infrastructure.dependencies import (
-    get_chat_repository,
     get_chat_orchestrator_service,
+    get_chat_repository,
 )
 from src.api.rag.infrastructure.dependencies import (
     get_chunk_repository,

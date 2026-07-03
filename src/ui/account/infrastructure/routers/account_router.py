@@ -86,7 +86,9 @@ async def handle_update_password(
         "new_password": new_password,
         "confirm_password": confirm_password,
     }
-    api_response = await authenticated_client_manager.patch("/account/password", json=payload)
+    api_response = await authenticated_client_manager.patch(
+        "/account/password", json=payload
+    )
 
     if api_response.status_code == status.HTTP_204_NO_CONTENT:
         context = {

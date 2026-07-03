@@ -263,7 +263,9 @@ async def handle_unenroll_tutor(
 ) -> Response:
     """BFF for unenrolling from a tutor. Sets a flash message and redirects."""
     try:
-        api_response = await authenticated_client_manager.delete(f"/enrollments/tutors/{tutor_id}")
+        api_response = await authenticated_client_manager.delete(
+            f"/enrollments/tutors/{tutor_id}"
+        )
 
         api_response.raise_for_status()
 
@@ -336,31 +338,31 @@ async def handle_download_document(
         "GET",
         f"/tutors/{tutor_id}/documents/{document_id}/download",
     ) as api_response:
-            if api_response.is_error:
-                error_text = await api_response.aread()
-                return Response(
-                    content=f"Error: {api_response.status_code} {error_text.decode()}",
-                    status_code=api_response.status_code,
-                )
-
-            content_disposition = api_response.headers.get("content-disposition")
-            filename = "download.pdf"
-            if content_disposition:
-                try:
-                    filename = content_disposition.split("filename=")[1].strip('"')
-                except IndexError:
-                    pass
-
-            file_bytes = await api_response.aread()
-
-            def file_stream() -> Generator[bytes, None, None]:
-                yield file_bytes
-
-            return StreamingResponse(
-                file_stream(),
-                media_type="application/pdf",
-                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        if api_response.is_error:
+            error_text = await api_response.aread()
+            return Response(
+                content=f"Error: {api_response.status_code} {error_text.decode()}",
+                status_code=api_response.status_code,
             )
+
+        content_disposition = api_response.headers.get("content-disposition")
+        filename = "download.pdf"
+        if content_disposition:
+            try:
+                filename = content_disposition.split("filename=")[1].strip('"')
+            except IndexError:
+                pass
+
+        file_bytes = await api_response.aread()
+
+        def file_stream() -> Generator[bytes, None, None]:
+            yield file_bytes
+
+        return StreamingResponse(
+            file_stream(),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
 
 
 @router.post("/{tutor_id}/documents/{document_id}/delete")

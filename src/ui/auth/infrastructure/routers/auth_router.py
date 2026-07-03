@@ -115,7 +115,9 @@ async def handle_register_form(
     ),
 ) -> Response:
     user_data = {"name": name, "email": email, "password": password}
-    api_response = await unauthenticated_client_manager.post("/auth/register", json=user_data)
+    api_response = await unauthenticated_client_manager.post(
+        "/auth/register", json=user_data
+    )
 
     if api_response.status_code == status.HTTP_201_CREATED:
         request.session["toast_message"] = "Registration successful! Please log in."
